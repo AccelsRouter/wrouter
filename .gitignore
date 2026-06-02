@@ -12,6 +12,8 @@ web/default/dist
 web/classic/dist
 web/node_modules
 web/dist
+aurora/dist
+aurora/node_modules
 .env
 one-api
 new-api

@@ -23,10 +23,10 @@ RUN cd classic && VITE_REACT_APP_VERSION=$(cat /build/VERSION) bun run build
 FROM oven/bun:1@sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7 AS builder-aurora
 
 WORKDIR /build
-COPY web/aurora/package.json .
-COPY web/aurora/bun.lock .
+COPY aurora/package.json .
+COPY aurora/bun.lock .
 RUN bun install
-COPY ./web/aurora .
+COPY ./aurora .
 COPY ./VERSION .
 RUN DISABLE_ESLINT_PLUGIN='true' VITE_REACT_APP_VERSION=$(cat VERSION) bun run build
 
@@ -46,7 +46,7 @@ RUN go mod download
 COPY . .
 COPY --from=builder /build/web/default/dist ./web/default/dist
 COPY --from=builder-classic /build/web/classic/dist ./web/classic/dist
-COPY --from=builder-aurora /build/dist ./web/aurora/dist
+COPY --from=builder-aurora /build/dist ./aurora/dist
 RUN go build -ldflags "-s -w -X 'github.com/QuantumNous/new-api/common.Version=$(cat VERSION)'" -o new-api
 
 FROM debian:bookworm-slim@sha256:f06537653ac770703bc45b4b113475bd402f451e85223f0f2837acbf89ab020a
