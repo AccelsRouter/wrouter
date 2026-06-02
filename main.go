@@ -47,10 +47,10 @@ var classicBuildFS embed.FS
 //go:embed web/classic/dist/index.html
 var classicIndexPage []byte
 
-//go:embed web/aurora/dist
+//go:embed aurora/dist
 var auroraBuildFS embed.FS
 
-//go:embed web/aurora/dist/index.html
+//go:embed aurora/dist/index.html
 var auroraIndexPage []byte
 
 func main() {

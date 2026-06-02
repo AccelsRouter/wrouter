@@ -199,16 +199,19 @@ git merge --abort
 | 部署 | 禁用上游所有 workflow 自动触发 | `.github/workflows/*.yml` | 改为 `workflow_dispatch` only |
 | 部署 | Helm chart 配置 | （在 wspn-helm-deploy-eks-apps） | 外部仓库管理 |
 | 支付 | WCheckout 稳定币支付集成 | 见第 4.2 节文件列表 | _待集成_ |
-| UI 主题 | Aurora 第三主题（Crypto Indigo 配色）| `web/aurora/`；集成点见第 6.1 节 | `web/aurora` 是 `web/default` 的 fork，上游变更不自动同步 |
+| UI 主题 | Aurora 第三主题（Crypto Indigo 配色）| `aurora/`；集成点见第 6.1 节 | `aurora/` 位于仓库根，是 `web/default` 的 fork，上游变更不自动同步 |
 
-### 6.1 web/aurora — forked theme
+### 6.1 aurora — forked theme
 
-`web/aurora` is a fork of `web/default` (a third selectable website theme,
-"aurora", Crypto Indigo palette). Upstream changes to `web/default` do NOT
-flow into aurora automatically — port them manually when desired.
+`aurora/`（仓库根目录）is a fork of `web/default` (a third selectable website
+theme, "aurora", Crypto Indigo palette). 放在仓库根而不是 `web/` 下，是为了与
+upstream 的 `web/` workspace 完全解耦——upstream 同步永远不会触碰 aurora 子树。
+Upstream changes to `web/default` do NOT flow into aurora automatically — port
+them manually when desired.
 
-Aurora's own files never conflict with upstream (new directory). Only these
-additive integration touchpoints need re-merge attention on upstream sync:
+Aurora's own files never conflict with upstream (separate top-level directory).
+Only these additive integration touchpoints need re-merge attention on upstream
+sync:
 
 | 文件 | 集成内容 |
 |---|---|
@@ -221,7 +224,7 @@ additive integration touchpoints need re-merge attention on upstream sync:
 | `.github/workflows/release.yml` | aurora 构建步骤 |
 | `web/default/.../system-settings/general/system-info-section.tsx` | 主题选择器中的 aurora 选项 |
 
-**同步 web/default 后的操作**：只需检查上表中的 7 个文件是否因上游改动产生冲突或需要 port，`web/aurora/` 目录本身不受影响。
+**同步 web/default 后的操作**：只需检查上表中的 7 个文件是否因上游改动产生冲突或需要 port，`aurora/` 目录本身不受影响。
 
 ---
 

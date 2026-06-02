@@ -12,6 +12,8 @@ web/default/dist
 web/classic/dist
 web/node_modules
 web/dist
+aurora/dist
+aurora/node_modules
 .env
 one-api
 new-api
@@ -35,6 +37,7 @@ data/
 .test
 token_estimator_test.go
 skills-lock.json
+.playwright-mcp
 
 # Brainstorming visual companion artifacts
 .superpowers/

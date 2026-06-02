@@ -26,7 +26,7 @@ type ThemeAssets struct {
 func SetWebRouter(router *gin.Engine, assets ThemeAssets) {
 	defaultFS := common.EmbedFolder(assets.DefaultBuildFS, "web/default/dist")
 	classicFS := common.EmbedFolder(assets.ClassicBuildFS, "web/classic/dist")
-	auroraFS := common.EmbedFolder(assets.AuroraBuildFS, "web/aurora/dist")
+	auroraFS := common.EmbedFolder(assets.AuroraBuildFS, "aurora/dist")
 	themeFS := common.NewThemeAwareFS(defaultFS, classicFS, auroraFS)
 
 	router.Use(gzip.Gzip(gzip.DefaultCompression))
