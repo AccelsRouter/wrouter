@@ -1,4 +1,4 @@
-// wspn fork: enterprise inquiry proxy to Lark webhook.
+// Enterprise inquiry proxy to Lark webhook.
 //
 // This file is intentionally isolated so upstream merges never touch it.
 // The only upstream integration point is one route registration in

@@ -1,5 +1,5 @@
 /*
-wspn fork: enterprise contact page entrypoint.
+Enterprise contact page entrypoint.
 */
 import { PublicLayout } from '@/components/layout'
 import { EnterpriseHero } from './components/enterprise-hero'

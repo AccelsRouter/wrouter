@@ -1,5 +1,5 @@
 /*
-wspn fork: public enterprise contact page.
+Public enterprise contact page.
 Lives in aurora's top-level routes tree (not under _authenticated) so
 prospective customers can reach it without an account.
 */

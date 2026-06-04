@@ -1,5 +1,5 @@
 /*
-wspn fork: enterprise inquiry API client.
+Enterprise inquiry API client.
 */
 import { api } from '@/lib/api'
 import type {
@@ -11,7 +11,7 @@ export async function submitEnterpriseInquiry(
   payload: EnterpriseInquiryPayload
 ): Promise<EnterpriseInquiryResponse> {
   const res = await api.post<EnterpriseInquiryResponse>(
-    '/api/wspn/enterprise-inquiry',
+    '/api/enterprise-inquiry',
     payload
   )
   return res.data

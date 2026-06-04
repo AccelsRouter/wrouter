@@ -1,5 +1,5 @@
 /*
-wspn fork: enterprise form constants.
+Enterprise form constants.
 Country list omits regions where we don't provide service.
 */
 

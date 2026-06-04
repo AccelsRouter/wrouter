@@ -1,5 +1,5 @@
 /*
-wspn fork: marketing copy on the enterprise page (left column).
+Marketing copy on the enterprise page (left column).
 */
 import { useTranslation } from 'react-i18next'
 import { Building2, Shield, Zap, Headset } from 'lucide-react'

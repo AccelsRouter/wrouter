@@ -1,6 +1,6 @@
 /*
-wspn fork: enterprise inquiry form (right column on the enterprise page).
-Posts to /api/wspn/enterprise-inquiry which proxies to a Lark webhook.
+Enterprise inquiry form (right column on the enterprise page).
+Posts to /api/enterprise-inquiry which proxies to a Lark webhook.
 */
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'

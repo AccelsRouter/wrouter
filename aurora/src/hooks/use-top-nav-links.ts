@@ -99,7 +99,7 @@ export function useTopNavLinks(): TopNavLink[] {
     links.push({ title: t('About'), href: '/about' })
   }
 
-  // Enterprise (wspn fork)
+  // Enterprise
   if (modules?.enterprise !== false) {
     links.push({ title: t('Enterprise'), href: '/enterprise' })
   }

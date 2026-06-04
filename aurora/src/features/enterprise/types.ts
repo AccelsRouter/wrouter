@@ -1,5 +1,5 @@
 /*
-wspn fork: enterprise inquiry payload type.
+Enterprise inquiry payload type.
 */
 export type EnterpriseInquiryPayload = {
   name: string

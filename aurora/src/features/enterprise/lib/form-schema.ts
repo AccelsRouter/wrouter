@@ -1,5 +1,5 @@
 /*
-wspn fork: enterprise inquiry form zod schema.
+Enterprise inquiry form zod schema.
 */
 import { z } from 'zod'
 
