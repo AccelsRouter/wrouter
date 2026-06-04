@@ -2,7 +2,7 @@
 Marketing copy on the enterprise page (left column).
 */
 import { useTranslation } from 'react-i18next'
-import { Building2, Shield, Zap, Headset } from 'lucide-react'
+import { Building2, Zap, Headset } from 'lucide-react'
 
 export function EnterpriseHero() {
   const { t } = useTranslation()
@@ -13,13 +13,6 @@ export function EnterpriseHero() {
       title: t('Higher throughput, lower latency'),
       body: t(
         'Dedicated capacity across OpenAI, Anthropic, Google, and xAI with auto-failover and regional routing.'
-      ),
-    },
-    {
-      icon: Shield,
-      title: t('Compliance & data residency'),
-      body: t(
-        'Custom data retention, regional deployment, and per-team isolation. SOC 2 / ISO 27001 audits available on request.'
       ),
     },
     {
