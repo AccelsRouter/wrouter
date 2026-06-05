@@ -63,6 +63,7 @@ func SetRelayRouter(router *gin.Engine) {
 	playgroundRouter.Use(middleware.RouteTag("relay"))
 	playgroundRouter.Use(middleware.SystemPerformanceCheck())
 	playgroundRouter.Use(middleware.UserAuth(), middleware.Distribute())
+	playgroundRouter.Use(middleware.GeoBlock())
 	{
 		playgroundRouter.POST("/chat/completions", controller.Playground)
 	}
@@ -75,6 +76,7 @@ func SetRelayRouter(router *gin.Engine) {
 		// WebSocket 路由（统一到 Relay）
 		wsRouter := relayV1Router.Group("")
 		wsRouter.Use(middleware.Distribute())
+		wsRouter.Use(middleware.GeoBlock())
 		wsRouter.GET("/realtime", func(c *gin.Context) {
 			controller.Relay(c, types.RelayFormatOpenAIRealtime)
 		})
@@ -83,6 +85,7 @@ func SetRelayRouter(router *gin.Engine) {
 		//http router
 		httpRouter := relayV1Router.Group("")
 		httpRouter.Use(middleware.Distribute())
+		httpRouter.Use(middleware.GeoBlock())
 
 		// claude related routes
 		httpRouter.POST("/messages", func(c *gin.Context) {
@@ -192,6 +195,7 @@ func SetRelayRouter(router *gin.Engine) {
 	relayGeminiRouter.Use(middleware.TokenAuth())
 	relayGeminiRouter.Use(middleware.ModelRequestRateLimit())
 	relayGeminiRouter.Use(middleware.Distribute())
+	relayGeminiRouter.Use(middleware.GeoBlock())
 	{
 		// Gemini API 路径格式: /v1beta/models/{model_name}:{action}
 		relayGeminiRouter.POST("/models/*path", func(c *gin.Context) {
