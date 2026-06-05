@@ -61,6 +61,9 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.POST("/waffo-pancake/webhook/:env", controller.WaffoPancakeWebhook)
 		apiRouter.POST("/wcheckout/webhook", controller.WCheckoutWebhook)
 
+		// Enterprise inquiry form proxies to Lark webhook.
+		apiRouter.POST("/enterprise-inquiry", middleware.CriticalRateLimit(), controller.PostEnterpriseInquiry)
+
 		// Universal secure verification routes
 		apiRouter.POST("/verify", middleware.UserAuth(), middleware.CriticalRateLimit(), controller.UniversalVerify)
 
