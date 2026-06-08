@@ -36,7 +36,35 @@ import { getSetupStatus } from '@/features/setup/api'
 
 function RootComponent() {
   // Load system configuration (logo, system name, etc.) from backend
-  useSystemConfig({ autoLoad: true })
+  const { logo } = useSystemConfig({ autoLoad: true })
+
+  // Keep the browser-tab favicon in sync with the admin-configured Logo
+  // URL. Without this the <link rel="icon"> in index.html is static and
+  // operators have to edit/redeploy HTML to swap the favicon.
+  useEffect(() => {
+    if (!logo || typeof document === 'undefined') return
+    let link = document.querySelector(
+      "link[rel='icon']"
+    ) as HTMLLinkElement | null
+    if (!link) {
+      link = document.createElement('link')
+      link.rel = 'icon'
+      document.head.appendChild(link)
+    }
+    // Infer MIME type from extension so SVG / PNG / ICO all render.
+    const ext = logo.split('?')[0].split('.').pop()?.toLowerCase()
+    const typeByExt: Record<string, string> = {
+      svg: 'image/svg+xml',
+      png: 'image/png',
+      ico: 'image/x-icon',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      webp: 'image/webp',
+    }
+    const inferredType = ext ? typeByExt[ext] : undefined
+    if (inferredType) link.type = inferredType
+    link.href = logo
+  }, [logo])
 
   useEffect(() => {
     const aff = new URLSearchParams(window.location.search).get('aff')?.trim()
