@@ -15,10 +15,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { SettingsPageFormActions } from '../components/settings-page-context'
 import { SettingsSection } from '../components/settings-section'
 import { useUpdateOption } from '../hooks/use-update-option'
-import {
-  formatCountry,
-  getCountryByCode,
-} from './data/countries'
+import { formatCountry, getCountryByCode } from './countries'
 import { DEFAULT_FAMILIES } from './defaults'
 import type { GeoBlockFamily, GeoBlockPageSettings } from './types'
 
