@@ -17,46 +17,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 /**
- * Home page constants
- * All hardcoded data for home page sections
+ * Home page constants — kept intentionally lean after the landing
+ * redesign. ModelShowcase owns its own icon list; Hero / HowItWorks /
+ * CTA carry their copy inline.
  */
-import { type TFunction } from 'i18next'
-
-// Layout - Main base classes
-export const MAIN_BASE_CLASSES = 'bg-background text-foreground w-full'
-
-// Hero section - AI Applications (Left side)
-export const AI_APPLICATIONS = [
-  'LobeHub.Color',
-  'Dify.Color',
-  'OpenWebUI',
-  'Cline',
-] as const
-
-// Hero section - AI Models (Right side)
-export const AI_MODELS = [
-  'Qwen.Color',
-  'DeepSeek.Color',
-  'Doubao.Color',
-  'OpenAI',
-  'Claude.Color',
-  'Gemini.Color',
-] as const
-
-// Hero section - Gateway Features
-export const GATEWAY_FEATURES = [
-  'Cost Tracking',
-  'Model Access',
-  'Guardrails',
-  'Observability',
-  'Budgets',
-  'Load Balancing',
-  'Rate Limiting',
-  'Token Mgmt',
-  'Prompt Caching',
-  'Pass-Through',
-] as const
-
-export function getGatewayFeatures(t: TFunction) {
-  return GATEWAY_FEATURES.map((feature) => t(feature))
-}
+export {}

@@ -56,18 +56,27 @@ export function ModelShowcase() {
         <AnimateInView animation='fade-up'>
           <div className='border-border/40 bg-card/40 rounded-2xl border p-5 shadow-sm backdrop-blur-sm md:p-8'>
             <div className='grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 md:gap-4'>
-              {SHOWCASE_MODELS.map((name, i) => (
-                <AnimateInView
-                  key={`${name}-${i}`}
-                  delay={i * 35}
-                  animation='scale-in'
-                  className='border-border/40 bg-background/70 hover:border-border hover:bg-background hover:shadow-md group flex aspect-square items-center justify-center rounded-2xl border transition-all duration-300'
-                >
-                  <span className='transition-transform duration-300 group-hover:scale-110'>
-                    {getLobeIcon(name, 28)}
-                  </span>
-                </AnimateInView>
-              ))}
+              {SHOWCASE_MODELS.map((name, i) => {
+                // Strip ".Color" / ".Mono" for the a11y label.
+                const label = name.split('.')[0]
+                return (
+                  <AnimateInView
+                    key={`${name}-${i}`}
+                    delay={i * 35}
+                    animation='scale-in'
+                    className='border-border/40 bg-background/70 hover:border-border hover:bg-background hover:shadow-md group flex aspect-square items-center justify-center rounded-2xl border transition-all duration-300'
+                  >
+                    <span
+                      role='img'
+                      aria-label={label}
+                      title={label}
+                      className='transition-transform duration-300 group-hover:scale-110'
+                    >
+                      {getLobeIcon(name, 28)}
+                    </span>
+                  </AnimateInView>
+                )
+              })}
             </div>
           </div>
         </AnimateInView>
