@@ -1,14 +1,13 @@
 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <!-- WSPN brand palette: bg #0C2E26, accent green #5EF1A0, white -->
-  <rect x="0" y="0" width="100" height="100" rx="22" fill="#0C2E26"/>
-  <g fill="none" stroke="#F5FFFA" stroke-width="2.2" stroke-linecap="round" opacity="0.55">
+  <!-- WSPN brand palette: transparent bg, ink #0C2E26, accent green #5EF1A0 -->
+  <g fill="none" stroke="#0C2E26" stroke-width="2.2" stroke-linecap="round" opacity="0.55">
     <path d="M 16 22 L 70 50"/>
     <path d="M 16 36 L 70 50"/>
     <path d="M 16 50 L 70 50"/>
     <path d="M 16 64 L 70 50"/>
     <path d="M 16 78 L 70 50"/>
   </g>
-  <g fill="#FFFFFF">
+  <g fill="#0C2E26">
     <circle cx="16" cy="22" r="2.2"/>
     <circle cx="16" cy="36" r="2.2"/>
     <circle cx="16" cy="50" r="2.2"/>
