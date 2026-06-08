@@ -7,36 +7,29 @@ import { useTranslation } from 'react-i18next'
 import { AnimateInView } from '@/components/animate-in-view'
 import { getLobeIcon } from '@/lib/lobe-icon'
 
-// Curated set of well-known providers verified against
-// @lobehub/icons (es/<Name>/index.js). `.Color` is dropped for
-// entries that only ship a Mono variant (Moonshot, Suno, Grok,
-// Groq, Ollama, OpenAI), so the call is explicit rather than
-// relying on the loader's silent fallback.
+// Curated set of mainstream LLM providers. Trimmed to the 12 most
+// recognized brands (global + China) so the showcase reads as
+// "here are the names you know" rather than "here are every
+// integration we ship".
+//
+// All names verified against aurora/node_modules/@lobehub/icons/es/
+// `.Color` is dropped for entries that ship only a Mono variant.
 const SHOWCASE_MODELS: string[] = [
+  // Global headliners
   'OpenAI',
   'Claude.Color',
   'Gemini.Color',
   'Grok',
+  // Open source + EU
+  'Meta.Color',
+  'Mistral.Color',
+  // China mainstream
   'DeepSeek.Color',
   'Qwen.Color',
   'Doubao.Color',
-  'Moonshot',
   'Kimi.Color',
-  'Meta.Color',
-  'Mistral.Color',
-  'Cohere.Color',
-  'Perplexity.Color',
-  'Yi.Color',
-  'Hunyuan.Color',
   'Wenxin.Color',
   'Zhipu.Color',
-  'Spark.Color',
-  'Minimax.Color',
-  'Stepfun.Color',
-  'Suno',
-  'Together.Color',
-  'Groq',
-  'Ollama',
 ]
 
 export function ModelShowcase() {
@@ -62,7 +55,7 @@ export function ModelShowcase() {
 
         <AnimateInView animation='fade-up'>
           <div className='border-border/40 bg-card/40 rounded-2xl border p-5 shadow-sm backdrop-blur-sm md:p-8'>
-            <div className='grid grid-cols-4 gap-3 sm:grid-cols-6 md:grid-cols-8 md:gap-4'>
+            <div className='grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 md:gap-4'>
               {SHOWCASE_MODELS.map((name, i) => (
                 <AnimateInView
                   key={`${name}-${i}`}
