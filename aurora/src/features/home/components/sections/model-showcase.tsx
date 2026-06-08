@@ -8,8 +8,10 @@ import { AnimateInView } from '@/components/animate-in-view'
 import { getLobeIcon } from '@/lib/lobe-icon'
 
 // Curated set of well-known providers verified against
-// @lobehub/icons (es/<Name>/index.js). `.Color` variants render
-// with brand colors when the icon ships a colorized version.
+// @lobehub/icons (es/<Name>/index.js). `.Color` is dropped for
+// entries that only ship a Mono variant (Moonshot, Suno, Grok,
+// Groq, Ollama, OpenAI), so the call is explicit rather than
+// relying on the loader's silent fallback.
 const SHOWCASE_MODELS: string[] = [
   'OpenAI',
   'Claude.Color',
@@ -18,7 +20,7 @@ const SHOWCASE_MODELS: string[] = [
   'DeepSeek.Color',
   'Qwen.Color',
   'Doubao.Color',
-  'Moonshot.Color',
+  'Moonshot',
   'Kimi.Color',
   'Meta.Color',
   'Mistral.Color',
@@ -31,7 +33,7 @@ const SHOWCASE_MODELS: string[] = [
   'Spark.Color',
   'Minimax.Color',
   'Stepfun.Color',
-  'Suno.Color',
+  'Suno',
   'Together.Color',
   'Groq',
   'Ollama',
