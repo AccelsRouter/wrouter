@@ -4545,6 +4545,24 @@
     "Submission failed. Please try again later.": "Submission failed. Please try again later.",
     "Inquiry received": "Inquiry received",
     "We've notified our sales engineering team. Someone will reach out within one business day to schedule a call.": "We've notified our sales engineering team. Someone will reach out within one business day to schedule a call.",
-    "Submit another inquiry": "Submit another inquiry"
+    "Submit another inquiry": "Submit another inquiry",
+    "Geo Restrictions": "Geo Restrictions",
+    "Geo-based model restrictions": "Geo-based model restrictions",
+    "Enable geo-based restrictions": "Enable geo-based restrictions",
+    "When enabled, model requests originating from blocked countries (as reported by the CloudFront-Viewer-Country header) will be refused with a 403 response. Requires CloudFront in front of the load balancer.": "When enabled, model requests originating from blocked countries (as reported by the CloudFront-Viewer-Country header) will be refused with a 403 response. Requires CloudFront in front of the load balancer.",
+    "No families configured. Add one to start enforcing geo rules.": "No families configured. Add one to start enforcing geo rules.",
+    "Family key": "Family key",
+    "Stable identifier, lowercase. No spaces.": "Stable identifier, lowercase. No spaces.",
+    "Display label": "Display label",
+    "Model name prefixes": "Model name prefixes",
+    "One prefix per line (case-insensitive). A request matches this family when its model name starts with any prefix.": "One prefix per line (case-insensitive). A request matches this family when its model name starts with any prefix.",
+    "Blocked countries (ISO 3166-1 alpha-2)": "Blocked countries (ISO 3166-1 alpha-2)",
+    "Two-letter codes, one per line. Example: CN, HK": "Two-letter codes, one per line. Example: CN, HK",
+    "Add custom family": "Add custom family",
+    "Remove family": "Remove family",
+    "Save restrictions": "Save restrictions",
+    "Discard changes": "Discard changes",
+    "Every family needs a key.": "Every family needs a key.",
+    "Duplicate family key: {{key}}": "Duplicate family key: {{key}}"
   }
 }

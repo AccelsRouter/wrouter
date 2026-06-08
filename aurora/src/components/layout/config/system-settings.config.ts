@@ -20,6 +20,7 @@ import { type TFunction } from 'i18next'
 import {
   Box,
   CreditCard,
+  Globe,
   Layout,
   Settings,
   Shield,
@@ -29,6 +30,7 @@ import {
 import { getAuthSectionNavItems } from '@/features/system-settings/auth/section-registry.tsx'
 import { getBillingSectionNavItems } from '@/features/system-settings/billing/section-registry.tsx'
 import { getContentSectionNavItems } from '@/features/system-settings/content/section-registry.tsx'
+import { getGeoBlockSectionNavItems } from '@/features/system-settings/geo-block/section-registry.tsx'
 import { getModelsSectionNavItems } from '@/features/system-settings/models/section-registry.tsx'
 import { getOperationsSectionNavItems } from '@/features/system-settings/operations/section-registry.tsx'
 import { getSecuritySectionNavItems } from '@/features/system-settings/security/section-registry.tsx'
@@ -72,6 +74,11 @@ function getSystemSettingsNavGroups(t: TFunction): NavGroup[] {
           title: t('Security & Limits'),
           icon: ShieldAlert,
           items: getSecuritySectionNavItems(t),
+        },
+        {
+          title: t('Geo Restrictions'),
+          icon: Globe,
+          items: getGeoBlockSectionNavItems(t),
         },
         {
           title: t('Console Content'),
