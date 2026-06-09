@@ -27,9 +27,9 @@ const SHOWCASE_MODELS: string[] = [
   'DeepSeek.Color',
   'Qwen.Color',
   'Doubao.Color',
-  'Kimi.Color',
   'Wenxin.Color',
   'Zhipu.Color',
+  'Minimax.Color',
 ]
 
 export function ModelShowcase() {
