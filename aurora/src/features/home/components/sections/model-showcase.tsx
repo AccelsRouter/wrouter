@@ -20,6 +20,7 @@ const SHOWCASE_MODELS: string[] = [
   'Claude.Color',
   'Gemini.Color',
   'Grok',
+  'Perplexity.Color',
   // Open source + EU
   'Meta.Color',
   'Mistral.Color',
@@ -27,7 +28,6 @@ const SHOWCASE_MODELS: string[] = [
   'DeepSeek.Color',
   'Qwen.Color',
   'Doubao.Color',
-  'Kimi.Color',
   'Wenxin.Color',
   'Zhipu.Color',
 ]
