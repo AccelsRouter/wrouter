@@ -20,9 +20,8 @@ const SHOWCASE_MODELS: string[] = [
   'Claude.Color',
   'Gemini.Color',
   'Grok',
-  // Open source + EU
+  // Open source / US
   'Meta.Color',
-  'Mistral.Color',
   // China mainstream
   'DeepSeek.Color',
   'Qwen.Color',
@@ -30,6 +29,7 @@ const SHOWCASE_MODELS: string[] = [
   'Wenxin.Color',
   'Zhipu.Color',
   'Minimax.Color',
+  'Moonshot',
 ]
 
 export function ModelShowcase() {
