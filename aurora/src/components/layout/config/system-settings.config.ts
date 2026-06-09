@@ -25,6 +25,7 @@ import {
   Settings,
   Shield,
   ShieldAlert,
+  Undo2,
   Wrench,
 } from 'lucide-react'
 import { getAuthSectionNavItems } from '@/features/system-settings/auth/section-registry.tsx'
@@ -89,6 +90,16 @@ function getSystemSettingsNavGroups(t: TFunction): NavGroup[] {
           title: t('Operations'),
           icon: Wrench,
           items: getOperationsSectionNavItems(t),
+        },
+        {
+          title: t('Refund Requests'),
+          icon: Undo2,
+          items: [
+            {
+              title: t('All requests'),
+              url: '/system-settings/refunds',
+            },
+          ],
         },
       ],
     },
