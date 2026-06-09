@@ -80,53 +80,28 @@ export function Hero(props: HeroProps) {
       />
 
       <div className='mx-auto flex max-w-4xl flex-col items-center text-center'>
-        {/* Top Pill Badge */}
-        <div
-          className='landing-animate-fade-up mb-5 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-medium opacity-0 shadow-xs'
-          style={{
-            animationDelay: '0ms',
-            borderColor: 'rgba(94, 241, 160, 0.30)',
-            backgroundColor: 'rgba(94, 241, 160, 0.08)',
-            color: '#0C2E26',
-          }}
-        >
-          <span className='relative flex size-1.5'>
-            <span
-              className='absolute inline-flex h-full w-full animate-ping rounded-full opacity-75'
-              style={{ backgroundColor: '#5EF1A0' }}
-            />
-            <span
-              className='relative inline-flex size-1.5 rounded-full'
-              style={{ backgroundColor: '#0C2E26' }}
-            />
-          </span>
-          <span>{t('AI Application Infrastructure Foundation')}</span>
-        </div>
-
         <h1
           className='landing-animate-fade-up bg-clip-text text-[clamp(2.5rem,5vw,3.75rem)] leading-[1.1] font-bold tracking-tight text-transparent'
           style={{
-            animationDelay: '60ms',
+            animationDelay: '0ms',
             backgroundImage:
               'linear-gradient(135deg, #0C2E26 0%, #1A5A48 45%, #5EF1A0 100%)',
           }}
         >
-          {t('Unified API Gateway for')}
-          <br />
-          {t('Vast Range of AI Models')}
+          {t('Route to Any Model. Build Anything')}
         </h1>
         <p
           className='landing-animate-fade-up text-muted-foreground/80 mt-6 max-w-2xl text-base leading-relaxed opacity-0 md:text-[15px]'
-          style={{ animationDelay: '120ms' }}
+          style={{ animationDelay: '80ms' }}
         >
           {t(
-            'Access a vast selection of models via a standard, unified API protocol. Power AI applications, manage digital assets, and connect the Future.'
+            'WRouter provides a unified gateway to a vast AI model ecosystem. One API to power your applications, connect your digital assets, and route you to the AI future.'
           )}
         </p>
 
         <div
           className='landing-animate-fade-up mt-10 flex flex-wrap items-center justify-center gap-3 opacity-0'
-          style={{ animationDelay: '180ms' }}
+          style={{ animationDelay: '160ms' }}
         >
           {props.isAuthenticated ? (
             <>
