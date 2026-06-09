@@ -127,6 +127,14 @@ func SetApiRouter(router *gin.Engine) {
 				// Custom OAuth bindings
 				selfRoute.GET("/oauth/bindings", controller.GetUserOAuthBindings)
 				selfRoute.DELETE("/oauth/bindings/:provider_id", controller.UnbindCustomOAuth)
+
+				// Refund requests (fork addition).
+				selfRoute.GET("/refund/precheck", controller.GetRefundPrecheck)
+				selfRoute.GET("/refund/active", controller.GetMyActiveRefundRequest)
+				selfRoute.GET("/refund", controller.GetMyRefundRequests)
+				selfRoute.POST("/refund", middleware.CriticalRateLimit(), controller.PostRefundRequest)
+				selfRoute.POST("/refund/:id/cancel", controller.PostCancelRefundRequest)
+				selfRoute.POST("/refund/disable-tokens", middleware.CriticalRateLimit(), controller.PostDisableAllTokens)
 			}
 
 			adminRoute := userRoute.Group("/")
@@ -308,6 +316,18 @@ func SetApiRouter(router *gin.Engine) {
 			redemptionRoute.DELETE("/invalid", controller.DeleteInvalidRedemption)
 			redemptionRoute.DELETE("/:id", controller.DeleteRedemption)
 		}
+
+		// Refund requests — admin endpoints (fork addition).
+		refundAdminRoute := apiRouter.Group("/admin/refund")
+		refundAdminRoute.Use(middleware.AdminAuth())
+		{
+			refundAdminRoute.GET("/", controller.AdminListRefundRequests)
+			refundAdminRoute.GET("/:id", controller.AdminGetRefundRequest)
+			refundAdminRoute.POST("/:id/approve", controller.AdminApproveRefundRequest)
+			refundAdminRoute.POST("/:id/reject", controller.AdminRejectRefundRequest)
+			refundAdminRoute.POST("/:id/mark-refunded", controller.AdminMarkRefundRefunded)
+		}
+
 		logRoute := apiRouter.Group("/log")
 		logRoute.GET("/", middleware.AdminAuth(), controller.GetAllLogs)
 		logRoute.DELETE("/", middleware.AdminAuth(), controller.DeleteHistoryLogs)

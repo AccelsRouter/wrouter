@@ -165,6 +165,12 @@ func GetTokenUsage(c *gin.Context) {
 }
 
 func AddToken(c *gin.Context) {
+	// Refund-lock: forbid creating new tokens while a refund request
+	// is open (pending or approved). Users must cancel the refund first.
+	if locked, lockErr := model.HasActiveRefundRequest(c.GetInt("id")); lockErr == nil && locked {
+		common.ApiError(c, fmt.Errorf("您有进行中的退款申请，无法新建 Token。如需继续使用请先撤销退款申请"))
+		return
+	}
 	token := model.Token{}
 	err := c.ShouldBindJSON(&token)
 	if err != nil {
@@ -277,6 +283,15 @@ func UpdateToken(c *gin.Context) {
 		return
 	}
 	if token.Status == common.TokenStatusEnabled {
+		// Refund-lock: forbid re-enabling a disabled token while a
+		// refund request is open. Disabling already-enabled tokens is
+		// still allowed (the user may need to disable to submit a refund).
+		if cleanToken.Status != common.TokenStatusEnabled {
+			if locked, lockErr := model.HasActiveRefundRequest(userId); lockErr == nil && locked {
+				common.ApiError(c, fmt.Errorf("您有进行中的退款申请，无法启用 Token。如需继续使用请先撤销退款申请"))
+				return
+			}
+		}
 		if cleanToken.Status == common.TokenStatusExpired && cleanToken.ExpiredTime <= common.GetTimestamp() && cleanToken.ExpiredTime != -1 {
 			common.ApiErrorI18n(c, i18n.MsgTokenExpiredCannotEnable)
 			return
