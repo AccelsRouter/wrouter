@@ -58,6 +58,7 @@ import { Route as AuthenticatedChatChatIdRouteImport } from './routes/_authentic
 import { Route as authUserResetRouteImport } from './routes/(auth)/user/reset'
 import { Route as AuthenticatedSystemSettingsSiteIndexRouteImport } from './routes/_authenticated/system-settings/site/index'
 import { Route as AuthenticatedSystemSettingsSecurityIndexRouteImport } from './routes/_authenticated/system-settings/security/index'
+import { Route as AuthenticatedSystemSettingsRefundsIndexRouteImport } from './routes/_authenticated/system-settings/refunds/index'
 import { Route as AuthenticatedSystemSettingsOperationsIndexRouteImport } from './routes/_authenticated/system-settings/operations/index'
 import { Route as AuthenticatedSystemSettingsModelsIndexRouteImport } from './routes/_authenticated/system-settings/models/index'
 import { Route as AuthenticatedSystemSettingsGeoBlockIndexRouteImport } from './routes/_authenticated/system-settings/geo-block/index'
@@ -334,6 +335,12 @@ const AuthenticatedSystemSettingsSecurityIndexRoute =
     path: '/security/',
     getParentRoute: () => AuthenticatedSystemSettingsRouteRoute,
   } as any)
+const AuthenticatedSystemSettingsRefundsIndexRoute =
+  AuthenticatedSystemSettingsRefundsIndexRouteImport.update({
+    id: '/refunds/',
+    path: '/refunds/',
+    getParentRoute: () => AuthenticatedSystemSettingsRouteRoute,
+  } as any)
 const AuthenticatedSystemSettingsOperationsIndexRoute =
   AuthenticatedSystemSettingsOperationsIndexRouteImport.update({
     id: '/operations/',
@@ -479,6 +486,7 @@ export interface FileRoutesByFullPath {
   '/system-settings/geo-block/': typeof AuthenticatedSystemSettingsGeoBlockIndexRoute
   '/system-settings/models/': typeof AuthenticatedSystemSettingsModelsIndexRoute
   '/system-settings/operations/': typeof AuthenticatedSystemSettingsOperationsIndexRoute
+  '/system-settings/refunds/': typeof AuthenticatedSystemSettingsRefundsIndexRoute
   '/system-settings/security/': typeof AuthenticatedSystemSettingsSecurityIndexRoute
   '/system-settings/site/': typeof AuthenticatedSystemSettingsSiteIndexRoute
 }
@@ -541,6 +549,7 @@ export interface FileRoutesByTo {
   '/system-settings/geo-block': typeof AuthenticatedSystemSettingsGeoBlockIndexRoute
   '/system-settings/models': typeof AuthenticatedSystemSettingsModelsIndexRoute
   '/system-settings/operations': typeof AuthenticatedSystemSettingsOperationsIndexRoute
+  '/system-settings/refunds': typeof AuthenticatedSystemSettingsRefundsIndexRoute
   '/system-settings/security': typeof AuthenticatedSystemSettingsSecurityIndexRoute
   '/system-settings/site': typeof AuthenticatedSystemSettingsSiteIndexRoute
 }
@@ -607,6 +616,7 @@ export interface FileRoutesById {
   '/_authenticated/system-settings/geo-block/': typeof AuthenticatedSystemSettingsGeoBlockIndexRoute
   '/_authenticated/system-settings/models/': typeof AuthenticatedSystemSettingsModelsIndexRoute
   '/_authenticated/system-settings/operations/': typeof AuthenticatedSystemSettingsOperationsIndexRoute
+  '/_authenticated/system-settings/refunds/': typeof AuthenticatedSystemSettingsRefundsIndexRoute
   '/_authenticated/system-settings/security/': typeof AuthenticatedSystemSettingsSecurityIndexRoute
   '/_authenticated/system-settings/site/': typeof AuthenticatedSystemSettingsSiteIndexRoute
 }
@@ -672,6 +682,7 @@ export interface FileRouteTypes {
     | '/system-settings/geo-block/'
     | '/system-settings/models/'
     | '/system-settings/operations/'
+    | '/system-settings/refunds/'
     | '/system-settings/security/'
     | '/system-settings/site/'
   fileRoutesByTo: FileRoutesByTo
@@ -734,6 +745,7 @@ export interface FileRouteTypes {
     | '/system-settings/geo-block'
     | '/system-settings/models'
     | '/system-settings/operations'
+    | '/system-settings/refunds'
     | '/system-settings/security'
     | '/system-settings/site'
   id:
@@ -799,6 +811,7 @@ export interface FileRouteTypes {
     | '/_authenticated/system-settings/geo-block/'
     | '/_authenticated/system-settings/models/'
     | '/_authenticated/system-settings/operations/'
+    | '/_authenticated/system-settings/refunds/'
     | '/_authenticated/system-settings/security/'
     | '/_authenticated/system-settings/site/'
   fileRoutesById: FileRoutesById
@@ -1170,6 +1183,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSystemSettingsSecurityIndexRouteImport
       parentRoute: typeof AuthenticatedSystemSettingsRouteRoute
     }
+    '/_authenticated/system-settings/refunds/': {
+      id: '/_authenticated/system-settings/refunds/'
+      path: '/refunds'
+      fullPath: '/system-settings/refunds/'
+      preLoaderRoute: typeof AuthenticatedSystemSettingsRefundsIndexRouteImport
+      parentRoute: typeof AuthenticatedSystemSettingsRouteRoute
+    }
     '/_authenticated/system-settings/operations/': {
       id: '/_authenticated/system-settings/operations/'
       path: '/operations'
@@ -1313,6 +1333,7 @@ interface AuthenticatedSystemSettingsRouteRouteChildren {
   AuthenticatedSystemSettingsGeoBlockIndexRoute: typeof AuthenticatedSystemSettingsGeoBlockIndexRoute
   AuthenticatedSystemSettingsModelsIndexRoute: typeof AuthenticatedSystemSettingsModelsIndexRoute
   AuthenticatedSystemSettingsOperationsIndexRoute: typeof AuthenticatedSystemSettingsOperationsIndexRoute
+  AuthenticatedSystemSettingsRefundsIndexRoute: typeof AuthenticatedSystemSettingsRefundsIndexRoute
   AuthenticatedSystemSettingsSecurityIndexRoute: typeof AuthenticatedSystemSettingsSecurityIndexRoute
   AuthenticatedSystemSettingsSiteIndexRoute: typeof AuthenticatedSystemSettingsSiteIndexRoute
 }
@@ -1349,6 +1370,8 @@ const AuthenticatedSystemSettingsRouteRouteChildren: AuthenticatedSystemSettings
       AuthenticatedSystemSettingsModelsIndexRoute,
     AuthenticatedSystemSettingsOperationsIndexRoute:
       AuthenticatedSystemSettingsOperationsIndexRoute,
+    AuthenticatedSystemSettingsRefundsIndexRoute:
+      AuthenticatedSystemSettingsRefundsIndexRoute,
     AuthenticatedSystemSettingsSecurityIndexRoute:
       AuthenticatedSystemSettingsSecurityIndexRoute,
     AuthenticatedSystemSettingsSiteIndexRoute:
