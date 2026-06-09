@@ -20,7 +20,6 @@ const SHOWCASE_MODELS: string[] = [
   'Claude.Color',
   'Gemini.Color',
   'Grok',
-  'Perplexity.Color',
   // Open source + EU
   'Meta.Color',
   'Mistral.Color',
