@@ -30,6 +30,7 @@ const SHOWCASE_MODELS: string[] = [
   'Doubao.Color',
   'Wenxin.Color',
   'Zhipu.Color',
+  'Minimax.Color',
 ]
 
 export function ModelShowcase() {
