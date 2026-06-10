@@ -44,9 +44,13 @@ export async function listMyRefundRequests(
 export async function submitRefundRequest(
   payload: SubmitRefundPayload
 ): Promise<RefundRequest> {
+  // skipErrorHandler: the verification flow (useSecureVerification) owns
+  // the messaging on VERIFICATION_REQUIRED. Without this the global
+  // interceptor would also toast the 403, producing a duplicate.
   const res = await api.post<ApiResp<RefundRequest>>(
     '/api/user/refund',
-    payload
+    payload,
+    { skipErrorHandler: true }
   )
   if (!res.data?.success || !res.data.data)
     throw new Error(res.data?.message || 'Failed to submit refund request')

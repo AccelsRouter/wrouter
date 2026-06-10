@@ -5,7 +5,7 @@ Refund request dialog. Has two view states:
   2. form — the refund submission form (name/email auto-filled,
      amount, method, destination, reason, contact).
 */
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -139,34 +139,40 @@ export function RefundDialog(props: RefundDialogProps) {
     )
   }, [method, t])
 
-  async function onSubmit(values: FormValues) {
-    try {
-      // withVerification runs the call; if the backend responds with
-      // VERIFICATION_REQUIRED it opens the 2FA/Passkey dialog, then
-      // retries automatically once the user verifies.
-      await withVerification(
-        () =>
-          submitRefundRequest({
-            amount_usd: values.amount_usd,
-            method: values.method as RefundMethod,
-            refund_destination: values.refund_destination.trim(),
-            reason: values.reason.trim(),
-            contact_info: (values.contact_info ?? '').trim(),
-          }),
-        {
-          preferredMethod: '2fa',
-          title: t('Verify to submit refund'),
-          description: t(
-            'Confirm your identity with 2FA or Passkey before submitting a refund request.'
-          ),
-        }
-      )
+  // Success side-effects MUST live inside the apiCall closure so they
+  // only fire when the refund actually succeeds. withVerification opens
+  // the 2FA/Passkey dialog on VERIFICATION_REQUIRED and returns null
+  // before the user verifies; the real submit happens on the verified
+  // retry, which re-runs this exact closure. Running setSubmitted/toast
+  // after withVerification() returned would show a fake success when
+  // verification is still pending or the account has no second factor.
+  const onSubmitVerified = useCallback(
+    (values: FormValues) => async () => {
+      await submitRefundRequest({
+        amount_usd: values.amount_usd,
+        method: values.method as RefundMethod,
+        refund_destination: values.refund_destination.trim(),
+        reason: values.reason.trim(),
+        contact_info: (values.contact_info ?? '').trim(),
+      })
       setSubmitted(true)
-      // Invalidate so the wallet banner / token list reflect new state
       queryClient.invalidateQueries({ queryKey: ['refund-precheck'] })
       queryClient.invalidateQueries({ queryKey: ['refund-active'] })
       queryClient.invalidateQueries({ queryKey: ['user-tokens'] })
       toast.success(t('Refund request submitted'))
+    },
+    [queryClient, t]
+  )
+
+  async function onSubmit(values: FormValues) {
+    try {
+      await withVerification(onSubmitVerified(values), {
+        preferredMethod: '2fa',
+        title: t('Verify to submit refund'),
+        description: t(
+          'Confirm your identity with 2FA or Passkey before submitting a refund request.'
+        ),
+      })
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t('Submission failed'))
     }
