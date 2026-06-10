@@ -42,6 +42,10 @@ import {
 } from '@/components/ui/select'
 
 import {
+  SecureVerificationDialog,
+  useSecureVerification,
+} from '@/features/auth/secure-verification'
+import {
   disableAllMyTokens,
   fetchRefundPrecheck,
   submitRefundRequest,
@@ -91,6 +95,19 @@ export function RefundDialog(props: RefundDialogProps) {
     staleTime: 0,
   })
 
+  // Secure verification — the backend requires a fresh 2FA / Passkey
+  // verification before accepting a refund submission.
+  const {
+    open: verificationOpen,
+    methods: verificationMethods,
+    state: verificationState,
+    executeVerification,
+    withVerification,
+    cancel: cancelVerification,
+    setCode: setVerificationCode,
+    switchMethod: switchVerificationMethod,
+  } = useSecureVerification()
+
   useEffect(() => {
     if (!props.open) {
       setSubmitted(false)
@@ -124,13 +141,26 @@ export function RefundDialog(props: RefundDialogProps) {
 
   async function onSubmit(values: FormValues) {
     try {
-      await submitRefundRequest({
-        amount_usd: values.amount_usd,
-        method: values.method as RefundMethod,
-        refund_destination: values.refund_destination.trim(),
-        reason: values.reason.trim(),
-        contact_info: (values.contact_info ?? '').trim(),
-      })
+      // withVerification runs the call; if the backend responds with
+      // VERIFICATION_REQUIRED it opens the 2FA/Passkey dialog, then
+      // retries automatically once the user verifies.
+      await withVerification(
+        () =>
+          submitRefundRequest({
+            amount_usd: values.amount_usd,
+            method: values.method as RefundMethod,
+            refund_destination: values.refund_destination.trim(),
+            reason: values.reason.trim(),
+            contact_info: (values.contact_info ?? '').trim(),
+          }),
+        {
+          preferredMethod: '2fa',
+          title: t('Verify to submit refund'),
+          description: t(
+            'Confirm your identity with 2FA or Passkey before submitting a refund request.'
+          ),
+        }
+      )
       setSubmitted(true)
       // Invalidate so the wallet banner / token list reflect new state
       queryClient.invalidateQueries({ queryKey: ['refund-precheck'] })
@@ -160,6 +190,7 @@ export function RefundDialog(props: RefundDialogProps) {
   }
 
   return (
+    <>
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
       <DialogContent className='sm:max-w-lg'>
         <DialogHeader>
@@ -347,6 +378,22 @@ export function RefundDialog(props: RefundDialogProps) {
         )}
       </DialogContent>
     </Dialog>
+
+    <SecureVerificationDialog
+      open={verificationOpen}
+      onOpenChange={(open) => {
+        if (!open) cancelVerification()
+      }}
+      methods={verificationMethods}
+      state={verificationState}
+      onVerify={async (method, code) => {
+        await executeVerification(method, code)
+      }}
+      onCancel={cancelVerification}
+      onCodeChange={setVerificationCode}
+      onMethodChange={switchVerificationMethod}
+    />
+    </>
   )
 }
 
