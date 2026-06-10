@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/select'
 import { useTopupInfo } from '../hooks/use-topup-info'
 import { useWCheckoutPayment } from '../hooks/use-wcheckout-payment'
+import { useTopupGuard } from '../hooks/use-topup-guard'
 
 interface WCheckoutSelectProps {
   amount: number
@@ -64,6 +65,7 @@ export function WCheckoutSelect({ amount }: WCheckoutSelectProps) {
   const navigate = useNavigate()
   const { topupInfo, loading } = useTopupInfo()
   const { processing, processWCheckoutPayment } = useWCheckoutPayment()
+  const { ensureSecondFactor, guardDialog } = useTopupGuard()
 
   // Group admin-enabled tokens by token type, keeping a list of chains
   // available for each type.
@@ -139,6 +141,7 @@ export function WCheckoutSelect({ amount }: WCheckoutSelectProps) {
 
   const handlePay = async () => {
     if (!tokenId || !amountValid || processing) return
+    if (!(await ensureSecondFactor())) return
     const ok = await processWCheckoutPayment(amount, tokenId)
     if (ok) {
       // Payment page opened in a new tab; return this tab to the wallet with
@@ -157,6 +160,7 @@ export function WCheckoutSelect({ amount }: WCheckoutSelectProps) {
 
   return (
     <SectionPageLayout>
+      {guardDialog}
       <SectionPageLayout.Title>
         {t('WCheckout - Choose Payment Token')}
       </SectionPageLayout.Title>
