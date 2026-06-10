@@ -159,8 +159,9 @@ export function WCheckoutSelect({ amount }: WCheckoutSelectProps) {
     CHAIN_LABELS[c] ? t(CHAIN_LABELS[c]) : c
 
   return (
+    <>
+    {guardDialog}
     <SectionPageLayout>
-      {guardDialog}
       <SectionPageLayout.Title>
         {t('WCheckout - Choose Payment Token')}
       </SectionPageLayout.Title>
@@ -294,5 +295,6 @@ export function WCheckoutSelect({ amount }: WCheckoutSelectProps) {
         </div>
       </SectionPageLayout.Content>
     </SectionPageLayout>
+    </>
   )
 }
