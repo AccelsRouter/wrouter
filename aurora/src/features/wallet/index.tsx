@@ -25,7 +25,11 @@ import { useSystemConfig } from '@/hooks/use-system-config'
 import { useAuthStore } from '@/stores/auth-store'
 import { SectionPageLayout } from '@/components/layout'
 import { Button } from '@/components/ui/button'
-import { RefundDialog, RefundStatusBanner } from '@/features/refund'
+import {
+  RefundDialog,
+  RefundHistoryDialog,
+  RefundStatusBanner,
+} from '@/features/refund'
 import { useTopupGuard } from './hooks/use-topup-guard'
 import { AffiliateRewardsCard } from './components/affiliate-rewards-card'
 import { BillingHistoryDialog } from './components/dialogs/billing-history-dialog'
@@ -73,6 +77,7 @@ export function Wallet(props: WalletProps) {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [transferDialogOpen, setTransferDialogOpen] = useState(false)
   const [refundDialogOpen, setRefundDialogOpen] = useState(false)
+  const [refundHistoryOpen, setRefundHistoryOpen] = useState(false)
   const authEmail = useAuthStore((s) => s.auth.user?.email)
   const { ensureSecondFactor, guardDialog } = useTopupGuard()
   const [billingDialogOpen, setBillingDialogOpen] = useState(false)
@@ -353,15 +358,24 @@ export function Wallet(props: WalletProps) {
                   )}
                 </p>
               </div>
-              <Button
-                variant='outline'
-                size='sm'
-                className='gap-1.5'
-                onClick={() => setRefundDialogOpen(true)}
-              >
-                <Undo2 className='h-3.5 w-3.5' />
-                {t('Request refund')}
-              </Button>
+              <div className='flex shrink-0 items-center gap-2'>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => setRefundHistoryOpen(true)}
+                >
+                  {t('View history')}
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='gap-1.5'
+                  onClick={() => setRefundDialogOpen(true)}
+                >
+                  <Undo2 className='h-3.5 w-3.5' />
+                  {t('Request refund')}
+                </Button>
+              </div>
             </div>
           </div>
         </SectionPageLayout.Content>
@@ -398,6 +412,11 @@ export function Wallet(props: WalletProps) {
         onOpenChange={setRefundDialogOpen}
         username={user?.username}
         email={authEmail}
+      />
+
+      <RefundHistoryDialog
+        open={refundHistoryOpen}
+        onOpenChange={setRefundHistoryOpen}
       />
 
       {guardDialog}

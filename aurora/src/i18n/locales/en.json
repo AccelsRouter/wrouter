@@ -4656,6 +4656,10 @@
     "Not now": "Not now",
     "Go to security settings": "Go to security settings",
     "Verify to submit refund": "Verify to submit refund",
-    "Confirm your identity with 2FA or Passkey before submitting a refund request.": "Confirm your identity with 2FA or Passkey before submitting a refund request."
+    "Confirm your identity with 2FA or Passkey before submitting a refund request.": "Confirm your identity with 2FA or Passkey before submitting a refund request.",
+    "View history": "View history",
+    "Refund history": "Refund history",
+    "Your refund requests and their current status.": "Your refund requests and their current status.",
+    "No refund requests yet.": "No refund requests yet."
   }
 }

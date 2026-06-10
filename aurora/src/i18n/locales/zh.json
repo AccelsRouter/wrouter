@@ -4694,6 +4694,10 @@
     "Not now": "暂不开启",
     "Go to security settings": "前往安全设置",
     "Verify to submit refund": "验证后提交退款",
-    "Confirm your identity with 2FA or Passkey before submitting a refund request.": "提交退款申请前，请使用 2FA 或通行密钥确认您的身份。"
+    "Confirm your identity with 2FA or Passkey before submitting a refund request.": "提交退款申请前，请使用 2FA 或通行密钥确认您的身份。",
+    "View history": "查看记录",
+    "Refund history": "退款记录",
+    "Your refund requests and their current status.": "您的退款申请及当前状态。",
+    "No refund requests yet.": "暂无退款申请。"
   }
 }
