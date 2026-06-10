@@ -10,7 +10,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, AlertTriangle, CheckCircle2, ShieldOff } from 'lucide-react'
+import {
+  Loader2,
+  AlertTriangle,
+  CheckCircle2,
+  ShieldCheck,
+  ShieldOff,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
@@ -43,8 +49,10 @@ import {
 
 import {
   SecureVerificationDialog,
+  checkVerificationMethods,
   useSecureVerification,
 } from '@/features/auth/secure-verification'
+import { useNavigate } from '@tanstack/react-router'
 import {
   disableAllMyTokens,
   fetchRefundPrecheck,
@@ -94,6 +102,21 @@ export function RefundDialog(props: RefundDialogProps) {
     enabled: props.open,
     staleTime: 0,
   })
+
+  // Check second-factor availability up front so we can block the form
+  // before the user fills it in (refund submission requires a fresh
+  // 2FA / Passkey verification on the backend).
+  const { data: verificationMethodsData, isLoading: methodsLoading } = useQuery(
+    {
+      queryKey: ['refund-verification-methods'],
+      queryFn: checkVerificationMethods,
+      enabled: props.open,
+      staleTime: 0,
+    }
+  )
+  const hasSecondFactor =
+    !!verificationMethodsData &&
+    (verificationMethodsData.has2FA || verificationMethodsData.hasPasskey)
 
   // Secure verification — the backend requires a fresh 2FA / Passkey
   // verification before accepting a refund submission.
@@ -208,12 +231,14 @@ export function RefundDialog(props: RefundDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading ? (
+        {isLoading || methodsLoading ? (
           <div className='flex h-40 items-center justify-center'>
             <Loader2 className='text-muted-foreground h-5 w-5 animate-spin' />
           </div>
         ) : submitted ? (
           <SuccessView onClose={() => props.onOpenChange(false)} />
+        ) : !hasSecondFactor ? (
+          <NoSecondFactorBlocker onClose={() => props.onOpenChange(false)} />
         ) : precheck && needsBlocker(precheck) ? (
           <BlockerView
             precheck={precheck}
@@ -408,6 +433,44 @@ function needsBlocker(p: RefundPrecheck): boolean {
     (p.active_tokens ?? 0) > 0 ||
     !!p.active_request ||
     !p.can_submit
+  )
+}
+
+// Shown when the account has no 2FA / Passkey. Refund submission
+// requires a fresh verification, so block before the form and guide
+// the user to enable a second factor.
+function NoSecondFactorBlocker(props: { onClose: () => void }) {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  return (
+    <div className='flex flex-col gap-4 py-2'>
+      <div className='border-amber-500/40 bg-amber-50/50 dark:bg-amber-500/10 flex items-start gap-3 rounded-md border p-4'>
+        <ShieldCheck className='text-amber-500 mt-0.5 h-5 w-5 shrink-0' />
+        <div className='flex flex-col gap-1'>
+          <p className='text-sm font-medium'>
+            {t('Enable two-factor authentication first')}
+          </p>
+          <p className='text-muted-foreground text-xs leading-5'>
+            {t(
+              'For account security, a refund request must be confirmed with 2FA or a Passkey. Please enable one in your security settings first.'
+            )}
+          </p>
+        </div>
+      </div>
+      <div className='flex justify-end gap-2'>
+        <Button variant='outline' onClick={props.onClose}>
+          {t('Not now')}
+        </Button>
+        <Button
+          onClick={() => {
+            props.onClose()
+            navigate({ to: '/profile' })
+          }}
+        >
+          {t('Go to security settings')}
+        </Button>
+      </div>
+    </div>
   )
 }
 

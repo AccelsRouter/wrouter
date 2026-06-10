@@ -4660,6 +4660,7 @@
     "View history": "View history",
     "Refund history": "Refund history",
     "Your refund requests and their current status.": "Your refund requests and their current status.",
-    "No refund requests yet.": "No refund requests yet."
+    "No refund requests yet.": "No refund requests yet.",
+    "For account security, a refund request must be confirmed with 2FA or a Passkey. Please enable one in your security settings first.": "For account security, a refund request must be confirmed with 2FA or a Passkey. Please enable one in your security settings first."
   }
 }
