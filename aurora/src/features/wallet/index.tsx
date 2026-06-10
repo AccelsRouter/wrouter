@@ -320,6 +320,7 @@ export function Wallet(props: WalletProps) {
                   }
                   enableWCheckoutTopup={topupInfo?.enable_wcheckout_topup}
                   wcheckoutMinTopup={topupInfo?.wcheckout_min_topup}
+                  onBeforeStablecoin={ensureSecondFactor}
                 />
               </div>
 

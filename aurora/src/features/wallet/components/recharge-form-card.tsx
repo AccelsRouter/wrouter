@@ -114,6 +114,10 @@ interface RechargeFormCardProps {
   enableWaffoPancakeTopup?: boolean
   enableWCheckoutTopup?: boolean
   wcheckoutMinTopup?: number
+  // Runs before navigating to the stablecoin (WCheckout) page. Returns
+  // false to abort (e.g. the 2FA guard opened). Mirrors the immediate
+  // check the other payment methods do on click.
+  onBeforeStablecoin?: () => Promise<boolean> | boolean
 }
 
 export function RechargeFormCard({
@@ -146,6 +150,7 @@ export function RechargeFormCard({
   enableWaffoPancakeTopup,
   enableWCheckoutTopup,
   wcheckoutMinTopup,
+  onBeforeStablecoin,
 }: RechargeFormCardProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -360,12 +365,18 @@ export function RechargeFormCard({
                           <Button
                             key='__stablecoin'
                             variant='outline'
-                            onClick={() =>
+                            onClick={async () => {
+                              if (
+                                onBeforeStablecoin &&
+                                !(await onBeforeStablecoin())
+                              ) {
+                                return
+                              }
                               void navigate({
                                 to: '/wallet/wcheckout',
                                 search: { amount: topupAmount },
                               })
-                            }
+                            }}
                             disabled={belowMin || !!paymentLoading}
                             className='border-primary/60 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary h-9 min-w-0 justify-start gap-2 rounded-lg px-3'
                           >
