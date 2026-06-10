@@ -4650,6 +4650,12 @@
     "Refund request rejected": "Refund request rejected",
     "Refund marked as refunded · balance debited": "Refund marked as refunded · balance debited",
     "Service not available to users in Mainland China": "Service not available to users in Mainland China",
-    "By proceeding with a top-up you confirm that you are not located in or a resident of Mainland China, and accept full responsibility for compliance with applicable local laws and regulations.": "By proceeding with a top-up you confirm that you are not located in or a resident of Mainland China, and accept full responsibility for compliance with applicable local laws and regulations."
+    "By proceeding with a top-up you confirm that you are not located in or a resident of Mainland China, and accept full responsibility for compliance with applicable local laws and regulations.": "By proceeding with a top-up you confirm that you are not located in or a resident of Mainland China, and accept full responsibility for compliance with applicable local laws and regulations.",
+    "Enable two-factor authentication first": "Enable two-factor authentication first",
+    "For account security, you must enable 2FA (or register a Passkey) before adding funds.": "For account security, you must enable 2FA (or register a Passkey) before adding funds.",
+    "Not now": "Not now",
+    "Go to security settings": "Go to security settings",
+    "Verify to submit refund": "Verify to submit refund",
+    "Confirm your identity with 2FA or Passkey before submitting a refund request.": "Confirm your identity with 2FA or Passkey before submitting a refund request."
   }
 }

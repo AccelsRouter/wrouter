@@ -4688,6 +4688,12 @@
     "Refund request rejected": "退款申请已拒绝",
     "Refund marked as refunded · balance debited": "已标记为退款完成 · 已扣减余额",
     "Service not available to users in Mainland China": "本服务不向中国大陆地区用户提供",
-    "By proceeding with a top-up you confirm that you are not located in or a resident of Mainland China, and accept full responsibility for compliance with applicable local laws and regulations.": "继续充值即表示您确认您不在中国大陆地区，亦非中国大陆居民，并自行承担当地法律法规相关的合规责任。"
+    "By proceeding with a top-up you confirm that you are not located in or a resident of Mainland China, and accept full responsibility for compliance with applicable local laws and regulations.": "继续充值即表示您确认您不在中国大陆地区，亦非中国大陆居民，并自行承担当地法律法规相关的合规责任。",
+    "Enable two-factor authentication first": "请先开启二次验证",
+    "For account security, you must enable 2FA (or register a Passkey) before adding funds.": "为了账户安全，充值前请先开启二次验证（2FA）或注册通行密钥。",
+    "Not now": "暂不开启",
+    "Go to security settings": "前往安全设置",
+    "Verify to submit refund": "验证后提交退款",
+    "Confirm your identity with 2FA or Passkey before submitting a refund request.": "提交退款申请前，请使用 2FA 或通行密钥确认您的身份。"
   }
 }

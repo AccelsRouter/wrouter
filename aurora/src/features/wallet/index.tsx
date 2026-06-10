@@ -26,6 +26,8 @@ import { useAuthStore } from '@/stores/auth-store'
 import { SectionPageLayout } from '@/components/layout'
 import { Button } from '@/components/ui/button'
 import { RefundDialog, RefundStatusBanner } from '@/features/refund'
+import { checkVerificationMethods } from '@/features/auth/secure-verification'
+import { Topup2FAGuardDialog } from './components/dialogs/topup-2fa-guard-dialog'
 import { AffiliateRewardsCard } from './components/affiliate-rewards-card'
 import { BillingHistoryDialog } from './components/dialogs/billing-history-dialog'
 import { CreemConfirmDialog } from './components/dialogs/creem-confirm-dialog'
@@ -72,7 +74,23 @@ export function Wallet(props: WalletProps) {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [transferDialogOpen, setTransferDialogOpen] = useState(false)
   const [refundDialogOpen, setRefundDialogOpen] = useState(false)
+  const [twoFAGuardOpen, setTwoFAGuardOpen] = useState(false)
   const authEmail = useAuthStore((s) => s.auth.user?.email)
+
+  // Returns true when the user has a second factor (2FA or Passkey).
+  // Otherwise opens the guidance dialog and returns false. Top-up
+  // entry points call this before proceeding.
+  const ensureSecondFactor = useCallback(async () => {
+    try {
+      const methods = await checkVerificationMethods()
+      if (methods.has2FA || methods.hasPasskey) return true
+    } catch {
+      // On check failure, fall through to the guard dialog rather than
+      // letting an un-gated top-up proceed.
+    }
+    setTwoFAGuardOpen(true)
+    return false
+  }, [])
   const [billingDialogOpen, setBillingDialogOpen] = useState(false)
   const [redemptionCode, setRedemptionCode] = useState('')
   const [creemDialogOpen, setCreemDialogOpen] = useState(false)
@@ -169,6 +187,9 @@ export function Wallet(props: WalletProps) {
 
   // Handle payment method selection
   const handlePaymentMethodSelect = async (method: PaymentMethod) => {
+    // Gate: require a second factor before any top-up.
+    if (!(await ensureSecondFactor())) return
+
     setSelectedPaymentMethod(method)
     setPaymentLoading(method.type)
 
@@ -223,7 +244,8 @@ export function Wallet(props: WalletProps) {
   }
 
   // Handle Creem product selection
-  const handleCreemProductSelect = (product: CreemProduct) => {
+  const handleCreemProductSelect = async (product: CreemProduct) => {
+    if (!(await ensureSecondFactor())) return
     setSelectedCreemProduct(product)
     setCreemDialogOpen(true)
   }
@@ -241,6 +263,8 @@ export function Wallet(props: WalletProps) {
   }
 
   const handleWaffoMethodSelect = async (_method: unknown, index: number) => {
+    if (!(await ensureSecondFactor())) return
+
     const loadingKey = `waffo-${index}`
     setPaymentLoading(loadingKey)
 
@@ -389,6 +413,11 @@ export function Wallet(props: WalletProps) {
         onOpenChange={setRefundDialogOpen}
         username={user?.username}
         email={authEmail}
+      />
+
+      <Topup2FAGuardDialog
+        open={twoFAGuardOpen}
+        onOpenChange={setTwoFAGuardOpen}
       />
 
       <CreemConfirmDialog
