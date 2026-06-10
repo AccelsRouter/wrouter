@@ -4648,6 +4648,8 @@
     "Action failed": "Action failed",
     "Refund request approved": "Refund request approved",
     "Refund request rejected": "Refund request rejected",
-    "Refund marked as refunded · balance debited": "Refund marked as refunded · balance debited"
+    "Refund marked as refunded · balance debited": "Refund marked as refunded · balance debited",
+    "Service not available to users in Mainland China": "Service not available to users in Mainland China",
+    "By proceeding with a top-up you confirm that you are not located in or a resident of Mainland China, and accept full responsibility for compliance with applicable local laws and regulations.": "By proceeding with a top-up you confirm that you are not located in or a resident of Mainland China, and accept full responsibility for compliance with applicable local laws and regulations."
   }
 }

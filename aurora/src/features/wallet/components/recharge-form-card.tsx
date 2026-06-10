@@ -18,6 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useState, useEffect } from 'react'
 import {
+  AlertTriangle,
   Gift,
   ExternalLink,
   Loader2,
@@ -57,6 +58,31 @@ import type {
   WaffoPayMethod,
 } from '../types'
 import { CreemProductsSection } from './creem-products-section'
+
+// Compliance disclaimer shown at the top of the recharge form.
+// Red-tinted by design — operators want a prominent visual cue that
+// proceeding with a top-up implies a self-declaration of residency.
+function RegionDisclaimer() {
+  const { t } = useTranslation()
+  return (
+    <div
+      role='alert'
+      className='border-red-500/50 bg-red-500/10 text-red-700 dark:border-red-500/40 dark:bg-red-500/15 dark:text-red-300 flex items-start gap-2.5 rounded-md border px-3 py-2.5'
+    >
+      <AlertTriangle className='mt-0.5 h-4 w-4 shrink-0' />
+      <div className='flex flex-col gap-1'>
+        <p className='text-[13px] font-semibold leading-5'>
+          {t('Service not available to users in Mainland China')}
+        </p>
+        <p className='text-[12px] leading-5 opacity-90'>
+          {t(
+            'By proceeding with a top-up you confirm that you are not located in or a resident of Mainland China, and accept full responsibility for compliance with applicable local laws and regulations.'
+          )}
+        </p>
+      </div>
+    </div>
+  )
+}
 
 interface RechargeFormCardProps {
   topupInfo: TopupInfo | null
@@ -221,6 +247,8 @@ export function RechargeFormCard({
       }
       contentClassName='space-y-4 sm:space-y-6'
     >
+      <RegionDisclaimer />
+
       {/* Online Topup Section */}
       {hasAnyTopup ? (
         <div className='space-y-4 sm:space-y-6'>
