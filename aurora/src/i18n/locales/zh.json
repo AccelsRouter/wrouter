@@ -4698,6 +4698,7 @@
     "View history": "查看记录",
     "Refund history": "退款记录",
     "Your refund requests and their current status.": "您的退款申请及当前状态。",
-    "No refund requests yet.": "暂无退款申请。"
+    "No refund requests yet.": "暂无退款申请。",
+    "For account security, a refund request must be confirmed with 2FA or a Passkey. Please enable one in your security settings first.": "为了账户安全，提交退款申请需通过 2FA 或通行密钥确认。请先在安全设置中开启其中一种。"
   }
 }
