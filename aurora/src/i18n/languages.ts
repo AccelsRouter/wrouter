@@ -17,13 +17,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
+// Only Simplified Chinese and English are offered. The other locales
+// (fr/ru/ja/vi) shipped by upstream are not maintained for this fork's
+// added pages, so they would surface untranslated keys — we restrict
+// the picker (and supportedLngs in config.ts) to the two we keep current.
 export const INTERFACE_LANGUAGE_OPTIONS = [
   { code: 'zh', label: '简体中文' },
   { code: 'en', label: 'English' },
-  { code: 'fr', label: 'Français' },
-  { code: 'ru', label: 'Русский' },
-  { code: 'ja', label: '日本語' },
-  { code: 'vi', label: 'Tiếng Việt' },
 ] as const
 
 export type InterfaceLanguageCode =
