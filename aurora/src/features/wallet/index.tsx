@@ -354,7 +354,7 @@ export function Wallet(props: WalletProps) {
                 </p>
                 <p className='text-muted-foreground text-xs leading-5'>
                   {t(
-                    'You can request a refund for any unused wallet balance. Manual review takes about 10 business days.'
+                    'You can request a refund for any unused wallet balance. Manual review takes about 15 business days.'
                   )}
                 </p>
               </div>
