@@ -330,6 +330,14 @@ func SetApiRouter(router *gin.Engine) {
 			refundAdminRoute.POST("/:id/mark-refunded", controller.AdminMarkRefundRefunded)
 		}
 
+		// Recharge orders — admin listing with username (fork addition).
+		// Reconcile reuses POST /api/user/topup/complete.
+		topupAdminRoute := apiRouter.Group("/admin/topup-orders")
+		topupAdminRoute.Use(middleware.AdminAuth())
+		{
+			topupAdminRoute.GET("/", controller.AdminListTopUpOrders)
+		}
+
 		logRoute := apiRouter.Group("/log")
 		logRoute.GET("/", middleware.AdminAuth(), controller.GetAllLogs)
 		logRoute.DELETE("/", middleware.AdminAuth(), controller.DeleteHistoryLogs)

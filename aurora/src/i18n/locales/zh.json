@@ -4706,6 +4706,10 @@
     "Reconcile failed": "补单失败",
     "Search by username / trade no.": "按用户名 / 订单号搜索",
     "No recharge orders found.": "未找到充值订单。",
-    "Reconcile": "补单"
+    "Reconcile": "补单",
+    "Trade No.": "订单编号",
+    "Action": "操作",
+    "Confirm reconcile": "确认补单",
+    "Manually mark this order as paid and credit the balance. Only do this after confirming the payment actually arrived.": "手动将此订单标记为已支付并入账。请在确认款项确实到账后再操作。"
   }
 }

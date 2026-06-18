@@ -4,6 +4,7 @@ Admin top-up (recharge order) types. Mirrors backend model.TopUp.
 export type TopUpOrder = {
   id: number
   user_id: number
+  username: string
   amount: number // quota credited
   money: number // fiat/USD amount charged
   trade_no: string

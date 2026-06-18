@@ -1,8 +1,11 @@
 /*
-Admin top-up orders page — list all users' recharge orders with
-keyword search, pagination, and manual reconcile (补单) for
-non-completed orders. Parity with classic's TopupHistoryModal admin
-mode. Backend: GET /api/user/topup, POST /api/user/topup/complete.
+Admin top-up orders page — table of all users' recharge orders with
+username, channel, trade no., amount, status, created/completed times,
+keyword search (username or trade no.), pagination, and manual
+reconcile (补单, with confirmation) for non-completed orders.
+
+Backend: GET /api/admin/topup-orders (fork, joins username),
+POST /api/user/topup/complete (upstream).
 */
 import { useState } from 'react'
 import {
@@ -11,12 +14,20 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import { Loader2, RefreshCw, Search, Inbox, CheckCircle2 } from 'lucide-react'
+import { Loader2, RefreshCw, Search, Inbox } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { SectionPageLayout } from '@/components/layout'
 import { completeTopUp, listTopUps } from './api'
 import type { TopUpOrder } from './types'
@@ -29,6 +40,7 @@ export function TopUpAdmin() {
   const [page, setPage] = useState(1)
   const [keywordInput, setKeywordInput] = useState('')
   const [keyword, setKeyword] = useState('')
+  const [confirmOrder, setConfirmOrder] = useState<TopUpOrder | null>(null)
 
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['admin-topup-list', page, keyword],
@@ -42,6 +54,7 @@ export function TopUpAdmin() {
     onSuccess: () => {
       toast.success(t('Order reconciled'))
       queryClient.invalidateQueries({ queryKey: ['admin-topup-list'] })
+      setConfirmOrder(null)
     },
     onError: (e) => {
       toast.error(e instanceof Error ? e.message : t('Reconcile failed'))
@@ -104,15 +117,62 @@ export function TopUpAdmin() {
               </p>
             </div>
           ) : (
-            <div className='flex flex-col gap-2'>
-              {items.map((o) => (
-                <TopUpRow
-                  key={o.id}
-                  order={o}
-                  onComplete={() => completeMutation.mutate(o.trade_no)}
-                  completing={completeMutation.isPending}
-                />
-              ))}
+            <div className='border-border/60 overflow-x-auto rounded-md border'>
+              <table className='w-full text-sm'>
+                <thead className='bg-muted/40 text-muted-foreground text-xs'>
+                  <tr>
+                    <Th>{t('Username')}</Th>
+                    <Th>{t('Channel')}</Th>
+                    <Th>{t('Trade No.')}</Th>
+                    <Th className='text-right'>{t('Amount')}</Th>
+                    <Th>{t('Status')}</Th>
+                    <Th>{t('Created')}</Th>
+                    <Th>{t('Completed')}</Th>
+                    <Th className='text-right'>{t('Action')}</Th>
+                  </tr>
+                </thead>
+                <tbody className='divide-border/60 divide-y'>
+                  {items.map((o) => (
+                    <tr key={o.id} className='hover:bg-muted/30'>
+                      <Td>
+                        <span className='font-medium'>{o.username || '-'}</span>
+                        <span className='text-muted-foreground ml-1 text-xs'>
+                          #{o.user_id}
+                        </span>
+                      </Td>
+                      <Td>{payLabel(o)}</Td>
+                      <Td>
+                        <span className='font-mono text-[11px]'>
+                          {o.trade_no}
+                        </span>
+                      </Td>
+                      <Td className='text-right font-semibold tabular-nums'>
+                        ${o.money.toFixed(2)}
+                      </Td>
+                      <Td>
+                        <StatusBadge status={o.status} />
+                      </Td>
+                      <Td className='text-muted-foreground whitespace-nowrap text-xs'>
+                        {fmtTime(o.create_time)}
+                      </Td>
+                      <Td className='text-muted-foreground whitespace-nowrap text-xs'>
+                        {fmtTime(o.complete_time)}
+                      </Td>
+                      <Td className='text-right'>
+                        {o.status !== 'success' && (
+                          <Button
+                            size='sm'
+                            variant='outline'
+                            onClick={() => setConfirmOrder(o)}
+                          >
+                            {t('Reconcile')}
+                          </Button>
+                        )}
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
 
@@ -140,59 +200,78 @@ export function TopUpAdmin() {
             </div>
           )}
         </div>
+
+        <Dialog
+          open={!!confirmOrder}
+          onOpenChange={(o) => !o && setConfirmOrder(null)}
+        >
+          <DialogContent className='sm:max-w-md'>
+            <DialogHeader>
+              <DialogTitle>{t('Confirm reconcile')}</DialogTitle>
+              <DialogDescription>
+                {t(
+                  'Manually mark this order as paid and credit the balance. Only do this after confirming the payment actually arrived.'
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            {confirmOrder && (
+              <div className='border-border/60 bg-muted/30 flex flex-col gap-1 rounded-md border p-3 text-sm'>
+                <Row label={t('Username')} value={confirmOrder.username || `#${confirmOrder.user_id}`} />
+                <Row label={t('Amount')} value={`$${confirmOrder.money.toFixed(2)}`} />
+                <Row label={t('Channel')} value={payLabel(confirmOrder)} />
+                <Row label={t('Trade No.')} value={confirmOrder.trade_no} mono />
+              </div>
+            )}
+            <DialogFooter className='gap-2'>
+              <Button
+                variant='outline'
+                onClick={() => setConfirmOrder(null)}
+                disabled={completeMutation.isPending}
+              >
+                {t('Cancel')}
+              </Button>
+              <Button
+                onClick={() =>
+                  confirmOrder &&
+                  completeMutation.mutate(confirmOrder.trade_no)
+                }
+                disabled={completeMutation.isPending}
+                className='gap-1.5'
+              >
+                {completeMutation.isPending && (
+                  <Loader2 className='h-4 w-4 animate-spin' />
+                )}
+                {t('Confirm reconcile')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </SectionPageLayout.Content>
     </SectionPageLayout>
   )
 }
 
-function TopUpRow(props: {
-  order: TopUpOrder
-  onComplete: () => void
-  completing: boolean
-}) {
-  const { t } = useTranslation()
-  const o = props.order
-  const isSuccess = o.status === 'success'
+function Th(props: { children: React.ReactNode; className?: string }) {
   return (
-    <div className='border-border/60 bg-card grid grid-cols-[auto_1fr_auto] items-center gap-4 rounded-md border p-4'>
-      <div className='flex flex-col items-start gap-1'>
-        <span className='text-muted-foreground font-mono text-xs'>#{o.id}</span>
-        <StatusBadge status={o.status} />
-      </div>
-      <div className='flex min-w-0 flex-col gap-0.5'>
-        <span className='truncate text-sm font-medium'>
-          {t('User')} #{o.user_id}
-          <span className='text-muted-foreground ml-2 text-xs'>
-            {payLabel(o)}
-          </span>
-        </span>
-        <span className='text-muted-foreground truncate font-mono text-[11px]'>
-          {o.trade_no}
-        </span>
-        <span className='text-muted-foreground text-xs'>
-          {t('Created')}: {fmtTime(o.create_time)}
-          {o.complete_time > 0 && (
-            <> · {t('Completed')}: {fmtTime(o.complete_time)}</>
-          )}
-        </span>
-      </div>
-      <div className='flex flex-col items-end gap-1.5'>
-        <span className='text-base font-semibold tabular-nums'>
-          ${o.money.toFixed(2)}
-        </span>
-        {!isSuccess && (
-          <Button
-            size='sm'
-            variant='outline'
-            className='gap-1'
-            onClick={props.onComplete}
-            disabled={props.completing}
-          >
-            <CheckCircle2 className='h-3.5 w-3.5' />
-            {t('Reconcile')}
-          </Button>
-        )}
-      </div>
+    <th
+      className={`px-3 py-2 text-left font-medium ${props.className ?? ''}`}
+    >
+      {props.children}
+    </th>
+  )
+}
+
+function Td(props: { children: React.ReactNode; className?: string }) {
+  return <td className={`px-3 py-2 align-middle ${props.className ?? ''}`}>{props.children}</td>
+}
+
+function Row(props: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className='flex items-center justify-between gap-2'>
+      <span className='text-muted-foreground text-xs'>{props.label}</span>
+      <span className={`text-sm ${props.mono ? 'font-mono text-[11px]' : ''}`}>
+        {props.value}
+      </span>
     </div>
   )
 }
@@ -223,7 +302,9 @@ function StatusBadge({ status }: { status: string }) {
     label: status || '-',
   }
   return (
-    <span className={`${s.cls} rounded-full px-2 py-0.5 text-[10px] font-semibold`}>
+    <span
+      className={`${s.cls} inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold`}
+    >
       {s.label}
     </span>
   )
