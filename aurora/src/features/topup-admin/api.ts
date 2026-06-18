@@ -22,7 +22,7 @@ export async function listTopUps(params: {
   qs.set('page_size', String(params.pageSize))
   if (params.keyword) qs.set('keyword', params.keyword)
   const res = await api.get<ApiResp<TopUpListResponse>>(
-    `/api/user/topup?${qs.toString()}`
+    `/api/admin/topup-orders/?${qs.toString()}`
   )
   if (!res.data?.success || !res.data.data)
     throw new Error(res.data?.message || 'Failed to load top-up orders')

@@ -4668,6 +4668,10 @@
     "Reconcile failed": "Reconcile failed",
     "Search by username / trade no.": "Search by username / trade no.",
     "No recharge orders found.": "No recharge orders found.",
-    "Reconcile": "Reconcile"
+    "Reconcile": "Reconcile",
+    "Trade No.": "Trade No.",
+    "Action": "Action",
+    "Confirm reconcile": "Confirm reconcile",
+    "Manually mark this order as paid and credit the balance. Only do this after confirming the payment actually arrived.": "Manually mark this order as paid and credit the balance. Only do this after confirming the payment actually arrived."
   }
 }
