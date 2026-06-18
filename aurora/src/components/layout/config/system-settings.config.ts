@@ -22,6 +22,7 @@ import {
   CreditCard,
   Globe,
   Layout,
+  Receipt,
   Settings,
   Shield,
   ShieldAlert,
@@ -98,6 +99,16 @@ function getSystemSettingsNavGroups(t: TFunction): NavGroup[] {
             {
               title: t('All requests'),
               url: '/system-settings/refunds',
+            },
+          ],
+        },
+        {
+          title: t('Recharge Orders'),
+          icon: Receipt,
+          items: [
+            {
+              title: t('All orders'),
+              url: '/system-settings/topups',
             },
           ],
         },
