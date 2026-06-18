@@ -56,6 +56,7 @@ import { Route as AuthenticatedErrorsErrorRouteImport } from './routes/_authenti
 import { Route as AuthenticatedDashboardSectionRouteImport } from './routes/_authenticated/dashboard/$section'
 import { Route as AuthenticatedChatChatIdRouteImport } from './routes/_authenticated/chat/$chatId'
 import { Route as authUserResetRouteImport } from './routes/(auth)/user/reset'
+import { Route as AuthenticatedSystemSettingsTopupsIndexRouteImport } from './routes/_authenticated/system-settings/topups/index'
 import { Route as AuthenticatedSystemSettingsSiteIndexRouteImport } from './routes/_authenticated/system-settings/site/index'
 import { Route as AuthenticatedSystemSettingsSecurityIndexRouteImport } from './routes/_authenticated/system-settings/security/index'
 import { Route as AuthenticatedSystemSettingsRefundsIndexRouteImport } from './routes/_authenticated/system-settings/refunds/index'
@@ -323,6 +324,12 @@ const authUserResetRoute = authUserResetRouteImport.update({
   path: '/user/reset',
   getParentRoute: () => authRouteRoute,
 } as any)
+const AuthenticatedSystemSettingsTopupsIndexRoute =
+  AuthenticatedSystemSettingsTopupsIndexRouteImport.update({
+    id: '/topups/',
+    path: '/topups/',
+    getParentRoute: () => AuthenticatedSystemSettingsRouteRoute,
+  } as any)
 const AuthenticatedSystemSettingsSiteIndexRoute =
   AuthenticatedSystemSettingsSiteIndexRouteImport.update({
     id: '/site/',
@@ -489,6 +496,7 @@ export interface FileRoutesByFullPath {
   '/system-settings/refunds/': typeof AuthenticatedSystemSettingsRefundsIndexRoute
   '/system-settings/security/': typeof AuthenticatedSystemSettingsSecurityIndexRoute
   '/system-settings/site/': typeof AuthenticatedSystemSettingsSiteIndexRoute
+  '/system-settings/topups/': typeof AuthenticatedSystemSettingsTopupsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -552,6 +560,7 @@ export interface FileRoutesByTo {
   '/system-settings/refunds': typeof AuthenticatedSystemSettingsRefundsIndexRoute
   '/system-settings/security': typeof AuthenticatedSystemSettingsSecurityIndexRoute
   '/system-settings/site': typeof AuthenticatedSystemSettingsSiteIndexRoute
+  '/system-settings/topups': typeof AuthenticatedSystemSettingsTopupsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -619,6 +628,7 @@ export interface FileRoutesById {
   '/_authenticated/system-settings/refunds/': typeof AuthenticatedSystemSettingsRefundsIndexRoute
   '/_authenticated/system-settings/security/': typeof AuthenticatedSystemSettingsSecurityIndexRoute
   '/_authenticated/system-settings/site/': typeof AuthenticatedSystemSettingsSiteIndexRoute
+  '/_authenticated/system-settings/topups/': typeof AuthenticatedSystemSettingsTopupsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -685,6 +695,7 @@ export interface FileRouteTypes {
     | '/system-settings/refunds/'
     | '/system-settings/security/'
     | '/system-settings/site/'
+    | '/system-settings/topups/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -748,6 +759,7 @@ export interface FileRouteTypes {
     | '/system-settings/refunds'
     | '/system-settings/security'
     | '/system-settings/site'
+    | '/system-settings/topups'
   id:
     | '__root__'
     | '/'
@@ -814,6 +826,7 @@ export interface FileRouteTypes {
     | '/_authenticated/system-settings/refunds/'
     | '/_authenticated/system-settings/security/'
     | '/_authenticated/system-settings/site/'
+    | '/_authenticated/system-settings/topups/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1169,6 +1182,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authUserResetRouteImport
       parentRoute: typeof authRouteRoute
     }
+    '/_authenticated/system-settings/topups/': {
+      id: '/_authenticated/system-settings/topups/'
+      path: '/topups'
+      fullPath: '/system-settings/topups/'
+      preLoaderRoute: typeof AuthenticatedSystemSettingsTopupsIndexRouteImport
+      parentRoute: typeof AuthenticatedSystemSettingsRouteRoute
+    }
     '/_authenticated/system-settings/site/': {
       id: '/_authenticated/system-settings/site/'
       path: '/site'
@@ -1336,6 +1356,7 @@ interface AuthenticatedSystemSettingsRouteRouteChildren {
   AuthenticatedSystemSettingsRefundsIndexRoute: typeof AuthenticatedSystemSettingsRefundsIndexRoute
   AuthenticatedSystemSettingsSecurityIndexRoute: typeof AuthenticatedSystemSettingsSecurityIndexRoute
   AuthenticatedSystemSettingsSiteIndexRoute: typeof AuthenticatedSystemSettingsSiteIndexRoute
+  AuthenticatedSystemSettingsTopupsIndexRoute: typeof AuthenticatedSystemSettingsTopupsIndexRoute
 }
 
 const AuthenticatedSystemSettingsRouteRouteChildren: AuthenticatedSystemSettingsRouteRouteChildren =
@@ -1376,6 +1397,8 @@ const AuthenticatedSystemSettingsRouteRouteChildren: AuthenticatedSystemSettings
       AuthenticatedSystemSettingsSecurityIndexRoute,
     AuthenticatedSystemSettingsSiteIndexRoute:
       AuthenticatedSystemSettingsSiteIndexRoute,
+    AuthenticatedSystemSettingsTopupsIndexRoute:
+      AuthenticatedSystemSettingsTopupsIndexRoute,
   }
 
 const AuthenticatedSystemSettingsRouteRouteWithChildren =

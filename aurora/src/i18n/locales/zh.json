@@ -4699,6 +4699,13 @@
     "Refund history": "退款记录",
     "Your refund requests and their current status.": "您的退款申请及当前状态。",
     "No refund requests yet.": "暂无退款申请。",
-    "For account security, a refund request must be confirmed with 2FA or a Passkey. Please enable one in your security settings first.": "为了账户安全，提交退款申请需通过 2FA 或通行密钥确认。请先在安全设置中开启其中一种。"
+    "For account security, a refund request must be confirmed with 2FA or a Passkey. Please enable one in your security settings first.": "为了账户安全，提交退款申请需通过 2FA 或通行密钥确认。请先在安全设置中开启其中一种。",
+    "Recharge Orders": "充值订单",
+    "All orders": "全部订单",
+    "Order reconciled": "补单成功",
+    "Reconcile failed": "补单失败",
+    "Search by username / trade no.": "按用户名 / 订单号搜索",
+    "No recharge orders found.": "未找到充值订单。",
+    "Reconcile": "补单"
   }
 }
