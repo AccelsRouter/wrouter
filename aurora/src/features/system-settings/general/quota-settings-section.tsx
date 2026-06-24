@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import type { ChangeEvent } from 'react'
+import { useMemo, type ChangeEvent } from 'react'
 import * as z from 'zod'
 import type { Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -46,6 +46,17 @@ import { SettingsPageFormActions } from '../components/settings-page-context'
 import { SettingsSection } from '../components/settings-section'
 import { useSettingsForm } from '../hooks/use-settings-form'
 import { useUpdateOption } from '../hooks/use-update-option'
+import { parseQuotaFromDollars, quotaUnitsToDollars } from '@/lib/format'
+
+// These options are stored as raw quota units (e.g. 500000 = $1) but are
+// money grants, so we let admins enter/see them in the display currency and
+// convert at the form boundary. PreConsumedQuota is intentionally excluded —
+// it is a token-count floor, not a monetary amount.
+const MONEY_QUOTA_FIELDS = [
+  'QuotaForNewUser',
+  'QuotaForInviter',
+  'QuotaForInvitee',
+] as const
 
 const quotaSchema = z.object({
   QuotaForNewUser: z.coerce.number().min(0),
@@ -82,6 +93,17 @@ export function QuotaSettingsSection({
       )
     }
 
+  // Show the three money grants in the display currency instead of raw quota.
+  const displayDefaults = useMemo<QuotaFormValues>(
+    () => ({
+      ...defaultValues,
+      QuotaForNewUser: quotaUnitsToDollars(defaultValues.QuotaForNewUser),
+      QuotaForInviter: quotaUnitsToDollars(defaultValues.QuotaForInviter),
+      QuotaForInvitee: quotaUnitsToDollars(defaultValues.QuotaForInvitee),
+    }),
+    [defaultValues]
+  )
+
   const { form, handleSubmit, isDirty, isSubmitting } =
     useSettingsForm<QuotaFormValues>({
       resolver: zodResolver(quotaSchema) as Resolver<
@@ -89,13 +111,14 @@ export function QuotaSettingsSection({
         unknown,
         QuotaFormValues
       >,
-      defaultValues,
+      defaultValues: displayDefaults,
       onSubmit: async (_data, changedFields) => {
+        const moneyFields = new Set<string>(MONEY_QUOTA_FIELDS)
         for (const [key, value] of Object.entries(changedFields)) {
-          await updateOption.mutateAsync({
-            key,
-            value: value as string | number | boolean,
-          })
+          const outValue = moneyFields.has(key)
+            ? parseQuotaFromDollars(Number(value))
+            : (value as string | number | boolean)
+          await updateOption.mutateAsync({ key, value: outValue })
         }
       },
     })
@@ -139,7 +162,9 @@ export function QuotaSettingsSection({
                     />
                   </FormControl>
                   <FormDescription>
-                    {t('Initial quota given to new users')}
+                    {t(
+                      'Initial credit granted to new users, in your display currency (e.g. 5 = $5)'
+                    )}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -163,7 +188,9 @@ export function QuotaSettingsSection({
                     />
                   </FormControl>
                   <FormDescription>
-                    {t('Quota consumed before charging users')}
+                    {t(
+                      'Minimum tokens pre-held before each request, settled on completion (token count, not a currency amount)'
+                    )}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -187,7 +214,9 @@ export function QuotaSettingsSection({
                     />
                   </FormControl>
                   <FormDescription>
-                    {t('Quota given to users who invite others')}
+                    {t(
+                      'Credit granted to the inviter, in your display currency (e.g. 5 = $5)'
+                    )}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -211,7 +240,9 @@ export function QuotaSettingsSection({
                     />
                   </FormControl>
                   <FormDescription>
-                    {t('Quota given to invited users')}
+                    {t(
+                      'Credit granted to invited users, in your display currency (e.g. 10 = $10)'
+                    )}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
