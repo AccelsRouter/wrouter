@@ -143,6 +143,32 @@ For commercial licensing, please contact support@quantumnous.com
   --skeleton-base: oklch(0.97 0 0);
   --skeleton-highlight: oklch(0.985 0 0);
   --brand-gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+  --table-row: var(--background);
+  --table-header: color-mix(
+    in oklch,
+    var(--foreground) 1.5%,
+    var(--background)
+  );
+  --table-header-hover: color-mix(
+    in oklch,
+    var(--foreground) 3%,
+    var(--background)
+  );
+  --table-disabled: color-mix(
+    in oklch,
+    var(--foreground) 5.5%,
+    var(--background)
+  );
+  --table-disabled-hover: color-mix(
+    in oklch,
+    var(--foreground) 7%,
+    var(--background)
+  );
+  --table-disabled-border: color-mix(
+    in oklch,
+    var(--foreground) 24%,
+    var(--background)
+  );
 }
 
 .dark {
@@ -185,8 +211,34 @@ For commercial licensing, please contact support@quantumnous.com
   --sidebar-primary-foreground: oklch(0.145 0 0);
   --sidebar-accent: oklch(0.26 0.04 280);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-border: oklch(1 0 0 / 11%);
   --sidebar-ring: oklch(0.68 0 0);
-  --skeleton-base: oklch(0.285 0 0);
-  --skeleton-highlight: oklch(0.39 0 0);
+  --skeleton-base: oklch(0.335 0 0);
+  --skeleton-highlight: oklch(0.44 0 0);
+  --table-row: var(--background);
+  --table-header: color-mix(
+    in oklch,
+    var(--foreground) 6%,
+    var(--background)
+  );
+  --table-header-hover: color-mix(
+    in oklch,
+    var(--foreground) 9%,
+    var(--background)
+  );
+  --table-disabled: color-mix(
+    in oklch,
+    var(--foreground) 10%,
+    var(--background)
+  );
+  --table-disabled-hover: color-mix(
+    in oklch,
+    var(--foreground) 13%,
+    var(--background)
+  );
+  --table-disabled-border: color-mix(
+    in oklch,
+    var(--foreground) 34%,
+    var(--background)
+  );
 }
