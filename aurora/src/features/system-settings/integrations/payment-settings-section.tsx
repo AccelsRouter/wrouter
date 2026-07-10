@@ -16,15 +16,16 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import * as React from 'react'
-import * as z from 'zod'
-import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Code2, Eye, ShieldAlert } from 'lucide-react'
+import * as React from 'react'
+import { useForm, type Resolver } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
+import * as z from 'zod'
+
+import { RiskAcknowledgementDialog } from '@/components/risk-acknowledgement-dialog'
 import {
   Alert,
   AlertAction,
@@ -42,11 +43,11 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { RiskAcknowledgementDialog } from '@/components/risk-acknowledgement-dialog'
+import { cn } from '@/lib/utils'
+
 import { confirmPaymentCompliance } from '../api'
 import {
   SettingsForm,
@@ -866,31 +867,33 @@ export function PaymentSettingsSection({
         onConfirm={() => confirmComplianceMutation.mutate()}
       />
 
-      <Form {...form}>
-        <SettingsForm
-          onSubmit={form.handleSubmit(onSubmit)}
-          className={cn(
-            'gap-y-8',
-            !complianceConfirmed && 'pointer-events-none opacity-40'
-          )}
-          data-no-autosubmit='true'
-        >
-          <SettingsPageFormActions
-            onSave={form.handleSubmit(onSubmit)}
-            isSaving={updateOption.isPending || isSubmitting}
-            saveLabel='Save all settings'
-          />
-          <Tabs defaultValue='general' className='min-w-0'>
-            <div className='overflow-x-auto pb-1'>
-              <TabsList className='grid min-w-[44rem] grid-cols-6'>
-                <TabsTrigger value='general'>{t('General')}</TabsTrigger>
-                <TabsTrigger value='epay'>Epay</TabsTrigger>
-                <TabsTrigger value='stripe'>{t('Stripe')}</TabsTrigger>
-                <TabsTrigger value='creem'>Creem</TabsTrigger>
-                <TabsTrigger value='waffo-pancake'>Waffo Pancake</TabsTrigger>
-                <TabsTrigger value='waffo'>Waffo</TabsTrigger>
-              </TabsList>
-            </div>
+      <Tabs defaultValue='general' className='min-w-0'>
+        <div className='overflow-x-auto pb-1'>
+          <TabsList className='grid min-w-[52rem] grid-cols-7'>
+            <TabsTrigger value='general'>{t('General')}</TabsTrigger>
+            <TabsTrigger value='epay'>Epay</TabsTrigger>
+            <TabsTrigger value='stripe'>{t('Stripe')}</TabsTrigger>
+            <TabsTrigger value='creem'>Creem</TabsTrigger>
+            <TabsTrigger value='waffo-pancake'>Waffo Pancake</TabsTrigger>
+            <TabsTrigger value='waffo'>Waffo</TabsTrigger>
+            <TabsTrigger value='wcheckout'>WCheckout</TabsTrigger>
+          </TabsList>
+        </div>
+
+        <Form {...form}>
+          <SettingsForm
+            onSubmit={form.handleSubmit(onSubmit)}
+            className={cn(
+              'gap-y-8',
+              !complianceConfirmed && 'pointer-events-none opacity-40'
+            )}
+            data-no-autosubmit='true'
+          >
+            <SettingsPageFormActions
+              onSave={form.handleSubmit(onSubmit)}
+              isSaving={updateOption.isPending || isSubmitting}
+              saveLabel='Save all settings'
+            />
 
             <TabsContent value='general' className={paymentTabContentClassName}>
               <div className='space-y-4'>
@@ -1615,13 +1618,13 @@ export function PaymentSettingsSection({
                 onPayMethodsChange={setWaffoPayMethods}
               />
             </TabsContent>
-          </Tabs>
         </SettingsForm>
       </Form>
 
-      <Separator />
-
-      <WCheckoutSettingsSection defaultValues={wcheckoutDefaultValues} />
+        <TabsContent value='wcheckout' className={paymentTabContentClassName}>
+          <WCheckoutSettingsSection defaultValues={wcheckoutDefaultValues} />
+        </TabsContent>
+      </Tabs>
     </SettingsSection>
   )
 }

@@ -39,3 +39,20 @@ export function normalizeInterfaceLanguage(value?: string | null): string {
     ? normalized
     : 'en'
 }
+
+/**
+ * Convert an interface language code into a valid BCP-47 locale tag the `Intl.*`
+ * APIs accept. This fork uses `zh` (not upstream's `zhCN`) as its Chinese code;
+ * `new Intl.NumberFormat('zh')` is valid, but map it explicitly to `zh-CN` for
+ * consistent formatting. Unknown values fall back to `undefined` so `Intl` uses
+ * the runtime default locale.
+ */
+export function toIntlLocale(value?: string | null): string | undefined {
+  if (!value) return undefined
+  if (value === 'zh') return 'zh-CN'
+  try {
+    return Intl.getCanonicalLocales(value)[0]
+  } catch {
+    return undefined
+  }
+}
