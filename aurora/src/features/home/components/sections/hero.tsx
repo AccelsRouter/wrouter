@@ -88,10 +88,8 @@ export function Hero(props: HeroProps) {
               'linear-gradient(135deg, #0C2E26 0%, #1A5A48 45%, #5EF1A0 100%)',
           }}
         >
-          <span className='block text-balance'>
-            {t('Route to Any Model.')}
-          </span>
-          <span className='block whitespace-nowrap'>{t('Build Anything')}</span>
+          {t('Route to Any Model.')}{' '}
+          <span className='whitespace-nowrap'>{t('Build Anything')}</span>
         </h1>
         <p
           className='landing-animate-fade-up text-muted-foreground/80 mt-6 max-w-2xl text-base leading-relaxed opacity-0 md:text-[15px]'
