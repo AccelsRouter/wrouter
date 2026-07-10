@@ -52,4 +52,24 @@ jobs:
           docker build -t $ECR_REGISTRY/wspn-ai/w-newapi:$IMAGE_TAG .
           docker push $ECR_REGISTRY/wspn-ai/w-newapi:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/wspn-ai/w-newapi:$IMAGE_TAG" >> $GITHUB_OUTPUT
-#test
+
+      # ---------- 新账号(930388172671) EKS 集群的 ECR：复用已构建镜像双推 ----------
+      - name: Configure AWS credentials (new account - wrouter)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_WROUTER }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to new ECR (wrouter)
+        id: login-ecr-new
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Tag & push to new ECR (wrouter)
+        env:
+          NEW_ECR: ${{ steps.login-ecr-new.outputs.registry }}
+          IMAGE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || format('{0}-{1}', github.ref_name, steps.sha_short.outputs.sha_short) }}
+          BUILT_IMAGE: ${{ steps.build-image.outputs.image }}
+        run: |
+          docker tag "$BUILT_IMAGE" "$NEW_ECR/wrouter:$IMAGE_TAG"
+          docker push "$NEW_ECR/wrouter:$IMAGE_TAG"
+          echo "pushed $NEW_ECR/wrouter:$IMAGE_TAG"
