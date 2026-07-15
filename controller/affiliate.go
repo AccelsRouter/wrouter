@@ -7,7 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetInvitedUsers — GET /api/user/self/invitees?p=&page_size=
+// GetInvitedUsers — GET /api/user/invitees?p=&page_size=
+// (registered on the authenticated self-route group, which is prefixed
+// /api/user — not /api/user/self.)
 // Returns the current user's invitees (username + registration/invite time),
 // newest first, paginated.
 func GetInvitedUsers(c *gin.Context) {

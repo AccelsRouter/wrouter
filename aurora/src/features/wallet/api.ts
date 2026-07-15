@@ -66,7 +66,7 @@ export async function getInvitedUsers(
 ): Promise<{ items: InvitedUser[]; total: number }> {
   const res = await api.get<
     ApiResponse<{ items: InvitedUser[]; total: number }>
-  >(`/api/user/self/invitees?page=1&page_size=${limit}`)
+  >(`/api/user/invitees?page=1&page_size=${limit}`)
   if (!res.data?.success)
     throw new Error(res.data?.message || 'Failed to load invited users')
   return {
