@@ -94,11 +94,6 @@ function InviteeRow({ user }: { user: InvitedUser }) {
               {user.has_topped_up ? t('Topped up') : t('Not topped up')}
             </span>
           </div>
-          {user.display_name?.trim() && (
-            <p className='text-muted-foreground truncate text-xs'>
-              @{user.username}
-            </p>
-          )}
         </div>
       </div>
       <div className='text-muted-foreground shrink-0 text-right text-xs'>
