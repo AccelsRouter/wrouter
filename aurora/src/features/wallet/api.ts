@@ -23,6 +23,7 @@ import type {
   PaymentRequest,
   AmountRequest,
   AffiliateTransferRequest,
+  InvitedUser,
   ApiResponse,
   TopupInfoResponse,
   RedemptionResponse,
@@ -57,6 +58,23 @@ export function isApiSuccess(response: ApiResponse): boolean {
 /**
  * Get topup configuration info
  */
+/**
+ * List users the current user has invited (referral panel), newest first.
+ */
+export async function getInvitedUsers(
+  limit = 50
+): Promise<{ items: InvitedUser[]; total: number }> {
+  const res = await api.get<
+    ApiResponse<{ items: InvitedUser[]; total: number }>
+  >(`/api/user/self/invitees?page=1&page_size=${limit}`)
+  if (!res.data?.success)
+    throw new Error(res.data?.message || 'Failed to load invited users')
+  return {
+    items: res.data.data?.items ?? [],
+    total: res.data.data?.total ?? 0,
+  }
+}
+
 export async function getTopupInfo(): Promise<TopupInfoResponse> {
   const res = await api.get('/api/user/topup/info')
   return res.data

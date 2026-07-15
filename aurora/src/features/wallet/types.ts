@@ -327,3 +327,14 @@ export interface BillingHistoryResponse {
 export interface CompleteOrderRequest {
   trade_no: string
 }
+
+/**
+ * A user invited by the current user (referral panel). created_at is the
+ * invitee's registration time == the invitation time.
+ */
+export interface InvitedUser {
+  id: number
+  username: string
+  display_name: string
+  created_at: number
+}

@@ -1,5 +1,8 @@
 {
   "translation": {
+    "Invited users": "Invited users",
+    "People who signed up with your referral link.": "People who signed up with your referral link.",
+    "No invited users yet.": "No invited users yet.",
     "(billed as vip itself, so base ratio of vip)": "(billed as vip itself, so base ratio of vip)",
     "(falls back to billing as vip, so base ratio of vip)": "(falls back to billing as vip, so base ratio of vip)",
     "(hits the override rule above)": "(hits the override rule above)",
