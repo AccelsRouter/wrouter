@@ -1,5 +1,10 @@
 {
   "translation": {
+    "Topped up": "已充值",
+    "Not topped up": "未充值",
+    "Invited users": "邀请的用户",
+    "People who signed up with your referral link.": "通过你的邀请链接注册的用户。",
+    "No invited users yet.": "还没有邀请任何用户。",
     "(billed as vip itself, so base ratio of vip)": "（按 vip 自身计费，取 vip 的基础倍率）",
     "(falls back to billing as vip, so base ratio of vip)": "（回退按 vip 计费，用 vip 的基础倍率）",
     "(hits the override rule above)": "（命中上面的覆盖规则）",

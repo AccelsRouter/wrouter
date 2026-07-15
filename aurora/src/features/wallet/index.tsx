@@ -35,6 +35,7 @@ import { useTopupGuard } from './hooks/use-topup-guard'
 import { AffiliateRewardsCard } from './components/affiliate-rewards-card'
 import { BillingHistoryDialog } from './components/dialogs/billing-history-dialog'
 import { CreemConfirmDialog } from './components/dialogs/creem-confirm-dialog'
+import { InviteesDialog } from './components/dialogs/invitees-dialog'
 import { PaymentConfirmDialog } from './components/dialogs/payment-confirm-dialog'
 import { TransferDialog } from './components/dialogs/transfer-dialog'
 import { RechargeFormCard } from './components/recharge-form-card'
@@ -79,6 +80,7 @@ export function Wallet(props: WalletProps) {
   const [transferDialogOpen, setTransferDialogOpen] = useState(false)
   const [refundDialogOpen, setRefundDialogOpen] = useState(false)
   const [refundHistoryOpen, setRefundHistoryOpen] = useState(false)
+  const [inviteesOpen, setInviteesOpen] = useState(false)
   const authEmail = useAuthStore((s) => s.auth.user?.email)
   const { ensureSecondFactor, guardDialog } = useTopupGuard()
   const [billingDialogOpen, setBillingDialogOpen] = useState(false)
@@ -342,6 +344,7 @@ export function Wallet(props: WalletProps) {
               user={user}
               affiliateLink={affiliateLink}
               onTransfer={() => setTransferDialogOpen(true)}
+              onViewInvitees={() => setInviteesOpen(true)}
               complianceConfirmed={
                 topupInfo?.payment_compliance_confirmed !== false
               }
@@ -419,6 +422,8 @@ export function Wallet(props: WalletProps) {
         open={refundHistoryOpen}
         onOpenChange={setRefundHistoryOpen}
       />
+
+      <InviteesDialog open={inviteesOpen} onOpenChange={setInviteesOpen} />
 
       {guardDialog}
 
