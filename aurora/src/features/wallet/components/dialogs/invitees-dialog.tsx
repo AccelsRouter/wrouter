@@ -82,7 +82,18 @@ function InviteeRow({ user }: { user: InvitedUser }) {
           <UserRound className='text-muted-foreground size-4' />
         </div>
         <div className='min-w-0'>
-          <p className='truncate text-sm font-medium'>{name}</p>
+          <div className='flex items-center gap-1.5'>
+            <p className='truncate text-sm font-medium'>{name}</p>
+            <span
+              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                user.has_topped_up
+                  ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
+                  : 'bg-muted text-muted-foreground'
+              }`}
+            >
+              {user.has_topped_up ? t('Topped up') : t('Not topped up')}
+            </span>
+          </div>
           {user.display_name?.trim() && (
             <p className='text-muted-foreground truncate text-xs'>
               @{user.username}

@@ -337,4 +337,6 @@ export interface InvitedUser {
   username: string
   display_name: string
   created_at: number
+  /** Whether the invitee has any successful top-up (boolean only, no amount). */
+  has_topped_up: boolean
 }
