@@ -883,7 +883,12 @@ function GroupPricingSection(props: {
   const showRechargePrice = props.showRechargePrice ?? false
 
   const availableGroups = useMemo(
-    () => getAvailableGroups(props.model, props.usableGroup || {}),
+    () =>
+      // Only expose the default group's pricing on the public pricing page.
+      // Other groups (vip/genesis/…) are internal tiers and must not be shown.
+      getAvailableGroups(props.model, props.usableGroup || {}).filter(
+        (group) => group === 'default'
+      ),
     [props.model, props.usableGroup]
   )
 
