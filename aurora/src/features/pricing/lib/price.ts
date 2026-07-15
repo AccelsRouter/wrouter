@@ -54,13 +54,24 @@ export function stripTrailingZeros(formatted: string): string {
 }
 
 /**
- * Find minimum group ratio from enabled groups
+ * Pick the group ratio used for the pricing page's standard/base price.
+ *
+ * We show the `default` group's ratio — the price a normal (default-group)
+ * user actually pays — rather than the cheapest group, which was misleading
+ * (a model with a discounted group looked cheaper than default users get).
+ * If a model is not available in the default group, fall back to the lowest
+ * enabled group ratio so a price still renders.
  */
-function getMinGroupRatio(
+function getDisplayGroupRatio(
   enableGroups: string[],
   groupRatio: Record<string, number>
 ): number {
   if (enableGroups.length === 0) return 1
+
+  if (enableGroups.includes('default')) {
+    const defaultRatio = groupRatio['default']
+    return defaultRatio !== undefined ? defaultRatio : 1
+  }
 
   let minRatio = Number.POSITIVE_INFINITY
 
@@ -177,9 +188,9 @@ export function formatPrice(
     ? model.enable_groups
     : []
   const groupRatio = model.group_ratio || {}
-  const minRatio = getMinGroupRatio(enableGroups, groupRatio)
+  const displayRatio = getDisplayGroupRatio(enableGroups, groupRatio)
 
-  let priceInUSD = calculateTokenPrice(model, type, minRatio)
+  let priceInUSD = calculateTokenPrice(model, type, displayRatio)
   priceInUSD = applyRechargeRate(
     priceInUSD,
     showWithRecharge,
@@ -279,9 +290,9 @@ export function formatRequestPrice(
     ? model.enable_groups
     : []
   const groupRatio = model.group_ratio || {}
-  const minRatio = getMinGroupRatio(enableGroups, groupRatio)
+  const displayRatio = getDisplayGroupRatio(enableGroups, groupRatio)
 
-  let priceInUSD = (model.model_price || 0) * minRatio
+  let priceInUSD = (model.model_price || 0) * displayRatio
 
   priceInUSD = applyRechargeRate(
     priceInUSD,
