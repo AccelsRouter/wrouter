@@ -4,7 +4,27 @@
 // HasToppedUp is a boolean only; top-up amounts are never returned.
 package model
 
-import "github.com/QuantumNous/new-api/common"
+import (
+	"strings"
+
+	"github.com/QuantumNous/new-api/common"
+)
+
+// maskIdentifier hides the middle of a name for privacy, keeping only the
+// first and last character with '*' in between (rune-aware for CJK names).
+//   - "" -> ""      "a" -> "a"      "ab" -> "a*"
+//   - "johndoe" -> "j*****e"
+func maskIdentifier(s string) string {
+	r := []rune(s)
+	switch n := len(r); {
+	case n <= 1:
+		return s
+	case n == 2:
+		return string(r[0]) + "*"
+	default:
+		return string(r[0]) + strings.Repeat("*", n-2) + string(r[n-1])
+	}
+}
 
 // InvitedUser is a lightweight, privacy-safe view of an invited user.
 type InvitedUser struct {
@@ -66,6 +86,10 @@ func ListInvitedUsers(
 		if _, ok := toppedUp[r.Id]; ok {
 			r.HasToppedUp = true
 		}
+		// Mask identities before they leave the server — the inviter should
+		// not see other users' full usernames / display names.
+		r.Username = maskIdentifier(r.Username)
+		r.DisplayName = maskIdentifier(r.DisplayName)
 	}
 
 	return rows, total, nil
