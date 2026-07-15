@@ -70,6 +70,14 @@ export function getDynamicDisplayGroupRatio(model: PricingModel): number {
   const ratios = model.group_ratio || {}
   if (groups.length === 0) return 1
 
+  // Show the `default` group's ratio (what a normal default-group user pays)
+  // rather than the cheapest group. Fall back to the lowest enabled group only
+  // when the model is not available in the default group.
+  if (groups.includes('default')) {
+    const defaultRatio = ratios['default']
+    return defaultRatio !== undefined ? defaultRatio : 1
+  }
+
   let minRatio = Number.POSITIVE_INFINITY
   for (const group of groups) {
     const ratio = ratios[group]
