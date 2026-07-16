@@ -20,13 +20,14 @@ import i18n from 'i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import { initReactI18next } from 'react-i18next'
 import en from './locales/en.json'
-import zh from './locales/zh.json'
+import zhTW from './locales/zh-TW.json'
 
-// Only zh + en are kept current for this fork; fr/ru/ja/vi were dropped
-// to avoid untranslated keys on fork-added pages.
+// This fork ships English + Traditional Chinese only. zh-TW.json is generated
+// from the Simplified source via opencc (s2twp), so fork-added pages stay fully
+// translated. fr/ru/ja/vi and Simplified were dropped from the picker.
 export const resources = {
   en,
-  zh,
+  zhTW,
 } as const
 
 i18n
@@ -35,8 +36,8 @@ i18n
   .init({
     resources,
     fallbackLng: 'en',
-    supportedLngs: ['en', 'zh'],
-    load: 'languageOnly', // Convert zh-CN -> zh
+    supportedLngs: ['en', 'zhTW'],
+    load: 'currentOnly',
     nsSeparator: false, // Allow literal colons in keys (e.g., URLs, labels)
     debug: import.meta.env.DEV,
     interpolation: {
@@ -45,6 +46,11 @@ i18n
     detection: {
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
+      // Only English + Traditional Chinese are offered: map any Chinese
+      // browser/stored locale (zh, zh-CN, zh-TW, zh-HK, …) to zhTW, and
+      // everything else to en.
+      convertDetectedLanguage: (lng: string) =>
+        lng.toLowerCase().startsWith('zh') ? 'zhTW' : 'en',
     },
   })
 

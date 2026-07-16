@@ -17,12 +17,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-// Only Simplified Chinese and English are offered. The other locales
-// (fr/ru/ja/vi) shipped by upstream are not maintained for this fork's
-// added pages, so they would surface untranslated keys — we restrict
-// the picker (and supportedLngs in config.ts) to the two we keep current.
+// Only English and Traditional Chinese are offered. Simplified and the other
+// upstream locales (fr/ru/ja/vi) are not exposed — the picker (and
+// supportedLngs in config.ts) is restricted to the two we keep current.
+// zh-TW.json is generated from the Simplified source via opencc, so fork-added
+// pages are fully translated in Traditional too.
 export const INTERFACE_LANGUAGE_OPTIONS = [
-  { code: 'zh', label: '简体中文' },
+  { code: 'zhTW', label: '繁體中文' },
   { code: 'en', label: 'English' },
 ] as const
 
@@ -32,8 +33,10 @@ export type InterfaceLanguageCode =
 export function normalizeInterfaceLanguage(value?: string | null): string {
   if (!value) return 'en'
 
+  // Any Chinese variant (zh, zh-CN, zh-TW, zh-HK, zhTW, …) maps to zhTW,
+  // the only Chinese option this fork offers.
   const normalized = value.trim().replace(/_/g, '-').toLowerCase()
-  if (normalized.startsWith('zh')) return 'zh'
+  if (normalized.startsWith('zh')) return 'zhTW'
 
   return INTERFACE_LANGUAGE_OPTIONS.some((lang) => lang.code === normalized)
     ? normalized
@@ -42,14 +45,13 @@ export function normalizeInterfaceLanguage(value?: string | null): string {
 
 /**
  * Convert an interface language code into a valid BCP-47 locale tag the `Intl.*`
- * APIs accept. This fork uses `zh` (not upstream's `zhCN`) as its Chinese code;
- * `new Intl.NumberFormat('zh')` is valid, but map it explicitly to `zh-CN` for
- * consistent formatting. Unknown values fall back to `undefined` so `Intl` uses
- * the runtime default locale.
+ * APIs accept. This fork uses `zhTW` as its Chinese code; `new Intl.*('zhTW')`
+ * throws, so map it to `zh-TW`. Unknown values fall back to `undefined` so
+ * `Intl` uses the runtime default locale.
  */
 export function toIntlLocale(value?: string | null): string | undefined {
   if (!value) return undefined
-  if (value === 'zh') return 'zh-CN'
+  if (value === 'zhTW') return 'zh-TW'
   try {
     return Intl.getCanonicalLocales(value)[0]
   } catch {
