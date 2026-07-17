@@ -37,7 +37,6 @@ import {
   getEndpointTypeLabels,
   getQuotaTypeLabels,
 } from '../constants'
-import { parseTags } from '../lib/filters'
 import type { PricingModel, PricingVendor } from '../types'
 
 type FilterOption = {
@@ -191,22 +190,6 @@ export function PricingSidebar(props: PricingSidebarProps) {
     },
   ]
 
-  const tagOptions: FilterOption[] = [
-    {
-      value: FILTER_ALL,
-      label: t('All Tags'),
-      count: props.models.length,
-    },
-    ...props.tags.map((tag) => ({
-      value: tag,
-      label: tag,
-      count: countBy(props.models, (model) =>
-        parseTags(model.tags)
-          .map((item) => item.toLowerCase())
-          .includes(tag.toLowerCase())
-      ),
-    })),
-  ]
 
   const endpointOptions: FilterOption[] = [
     {
@@ -263,12 +246,6 @@ export function PricingSidebar(props: PricingSidebarProps) {
           value={props.vendorFilter}
           options={vendorOptions}
           onChange={props.onVendorChange}
-        />
-        <FilterSection
-          title={t('Model Tags')}
-          value={props.tagFilter}
-          options={tagOptions}
-          onChange={props.onTagChange}
         />
         <FilterSection
           title={t('Pricing Type')}
