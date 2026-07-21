@@ -1,0 +1,220 @@
+package service
+
+import (
+	"bytes"
+	"context"
+	"crypto/sha256"
+	"crypto/subtle"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
+	"sort"
+	"strings"
+	"time"
+
+	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/setting"
+)
+
+// WonderGate acquiring gateway client.
+// Docs: https://document.wondergate.io/zh/reference/introduction.html
+//
+// Auth: HTTP Basic Auth (merchantId:secretKey). Create-checkout returns a
+// hosted redirectUrl (code 301). Async notifications are signed with SHA256
+// over the sorted non-empty parameter values + secretKey.
+
+const (
+	wonderGateCheckoutPath = "/checkout/payment"
+
+	// Notification result codes (see appendix).
+	WonderGateCodeTransactionSuccess = 100
+	WonderGateCodeRefundSuccess      = 111
+
+	wonderGateHTTPTimeout = 20 * time.Second
+)
+
+// WonderGateCheckoutRequest is the subset of /checkout/payment fields we send.
+// billingAddress.country is mandatory; we supply a configured default because
+// a balance top-up has no real billing address.
+type WonderGateCheckoutRequest struct {
+	TransactionID   string                   `json:"transactionId"`
+	Currency        string                   `json:"currency"`
+	Amount          string                   `json:"amount"`
+	AppID           string                   `json:"appId"`
+	TransactionIP   string                   `json:"transactionIp"`
+	CallbackURL     string                   `json:"callbackUrl"`
+	NotificationURL string                   `json:"notificationUrl"`
+	ProductInfos    []map[string]interface{} `json:"productInfos"`
+	BillingAddress  map[string]interface{}   `json:"billingAddress"`
+}
+
+// WonderGateCheckoutResult is the parsed create-checkout response.
+type WonderGateCheckoutResult struct {
+	Code               int    `json:"code"`
+	Message            string `json:"message"`
+	TransactionMessage string `json:"transactionMessage"`
+	RedirectURL        string `json:"redirectUrl"`
+	UniqueID           string `json:"uniqueId"`
+	TransactionID      string `json:"transactionId"`
+}
+
+// CreateWonderGateCheckout posts a checkout order and returns the hosted
+// redirect URL. Uses the active environment's base URL + credentials.
+func CreateWonderGateCheckout(
+	ctx context.Context,
+	req *WonderGateCheckoutRequest,
+) (*WonderGateCheckoutResult, error) {
+	merchantId, secretKey, _ := setting.WonderGateActiveCredentials()
+	if merchantId == "" || secretKey == "" {
+		return nil, errors.New("WonderGate 凭证未配置")
+	}
+
+	body, err := common.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	url := strings.TrimRight(setting.WonderGateGatewayBaseURL(), "/") + wonderGateCheckoutPath
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.SetBasicAuth(merchantId, secretKey)
+
+	client := &http.Client{Timeout: wonderGateHTTPTimeout}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	respBody := new(bytes.Buffer)
+	if _, err := respBody.ReadFrom(resp.Body); err != nil {
+		return nil, err
+	}
+
+	var result WonderGateCheckoutResult
+	if err := common.Unmarshal(respBody.Bytes(), &result); err != nil {
+		return nil, fmt.Errorf("解析响应失败: %w (body=%s)", err, respBody.String())
+	}
+
+	// 301 = redirect required (create success). Anything else is a failure.
+	if result.Code != 301 || result.RedirectURL == "" {
+		msg := result.TransactionMessage
+		if msg == "" {
+			msg = result.Message
+		}
+		return &result, fmt.Errorf("WonderGate 建单失败 code=%d message=%q", result.Code, msg)
+	}
+	return &result, nil
+}
+
+// VerifyWonderGateNotification verifies the async-notification signature and
+// returns the parsed top-level fields.
+//
+// Signature (per docs): take every non-empty scalar parameter except `sign`,
+// sort keys by ASCII, concatenate their raw values, append the SecretKey, then
+// SHA256. Values are read from the raw JSON (json.RawMessage) so numeric forms
+// such as "100.000" are compared exactly as the gateway signed them; nested
+// objects/arrays are excluded.
+func VerifyWonderGateNotification(rawBody []byte) (map[string]json.RawMessage, error) {
+	_, secretKey, _ := setting.WonderGateActiveCredentials()
+	if secretKey == "" {
+		return nil, errors.New("WonderGate 凭证未配置")
+	}
+
+	var fields map[string]json.RawMessage
+	if err := common.Unmarshal(rawBody, &fields); err != nil {
+		return nil, err
+	}
+
+	signRaw, ok := fields["sign"]
+	if !ok {
+		return nil, errors.New("回调缺少 sign")
+	}
+	var sign string
+	if err := common.Unmarshal(signRaw, &sign); err != nil || sign == "" {
+		return nil, errors.New("回调 sign 无效")
+	}
+
+	keys := make([]string, 0, len(fields))
+	for k := range fields {
+		if k == "sign" {
+			continue
+		}
+		if wonderGateSignableValue(fields[k]) == "" {
+			continue // skip empty / nested / null
+		}
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var sb strings.Builder
+	for _, k := range keys {
+		sb.WriteString(wonderGateSignableValue(fields[k]))
+	}
+	sb.WriteString(secretKey)
+
+	sum := sha256.Sum256([]byte(sb.String()))
+	expected := hex.EncodeToString(sum[:])
+
+	if subtle.ConstantTimeCompare(
+		[]byte(strings.ToLower(expected)),
+		[]byte(strings.ToLower(sign)),
+	) != 1 {
+		return nil, fmt.Errorf("验签失败 expected=%s got=%s", expected, sign)
+	}
+	return fields, nil
+}
+
+// wonderGateSignableValue converts a raw JSON value to the string used in the
+// signature. Strings are unquoted; numbers/bools use their raw text; empty,
+// null, and nested objects/arrays return "" (excluded from the signature).
+func wonderGateSignableValue(raw json.RawMessage) string {
+	s := strings.TrimSpace(string(raw))
+	if s == "" || s == "null" || s == `""` {
+		return ""
+	}
+	if s[0] == '{' || s[0] == '[' {
+		return "" // nested — excluded
+	}
+	if s[0] == '"' {
+		var str string
+		if err := common.Unmarshal(raw, &str); err != nil {
+			return ""
+		}
+		return str
+	}
+	return s // number / boolean, raw form preserved
+}
+
+// WonderGateNotificationInt reads an integer field (e.g. code) from parsed
+// notification fields.
+func WonderGateNotificationInt(fields map[string]json.RawMessage, key string) (int, bool) {
+	raw, ok := fields[key]
+	if !ok {
+		return 0, false
+	}
+	var n int
+	if err := common.Unmarshal(raw, &n); err != nil {
+		return 0, false
+	}
+	return n, true
+}
+
+// WonderGateNotificationString reads a string field from parsed notification
+// fields.
+func WonderGateNotificationString(fields map[string]json.RawMessage, key string) string {
+	raw, ok := fields[key]
+	if !ok {
+		return ""
+	}
+	var s string
+	if err := common.Unmarshal(raw, &s); err != nil {
+		return ""
+	}
+	return s
+}

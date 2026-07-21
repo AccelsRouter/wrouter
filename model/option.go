@@ -132,6 +132,18 @@ func InitOptionMap() {
 	common.OptionMap["WCheckoutMinTopUp"] = strconv.Itoa(setting.WCheckoutMinTopUp)
 	common.OptionMap["WCheckoutExpiredIn"] = strconv.Itoa(setting.WCheckoutExpiredIn)
 	common.OptionMap["WCheckoutEnabledTokens"] = setting.WCheckoutTokens2JsonString()
+	// WonderGate (card / local payment) options. See setting/payment_wondergate.go.
+	common.OptionMap["WonderGateEnabled"] = strconv.FormatBool(setting.WonderGateEnabled)
+	common.OptionMap["WonderGateSandbox"] = strconv.FormatBool(setting.WonderGateSandbox)
+	common.OptionMap["WonderGateMerchantId"] = setting.WonderGateMerchantId
+	common.OptionMap["WonderGateSecretKey"] = setting.WonderGateSecretKey
+	common.OptionMap["WonderGateAppId"] = setting.WonderGateAppId
+	common.OptionMap["WonderGateSandboxMerchantId"] = setting.WonderGateSandboxMerchantId
+	common.OptionMap["WonderGateSandboxSecretKey"] = setting.WonderGateSandboxSecretKey
+	common.OptionMap["WonderGateSandboxAppId"] = setting.WonderGateSandboxAppId
+	common.OptionMap["WonderGateUnitPrice"] = strconv.FormatFloat(setting.WonderGateUnitPrice, 'f', -1, 64)
+	common.OptionMap["WonderGateMinTopUp"] = strconv.Itoa(setting.WonderGateMinTopUp)
+	common.OptionMap["WonderGateBillingCountry"] = setting.WonderGateBillingCountry
 	common.OptionMap["TopupGroupRatio"] = common.TopupGroupRatio2JSONString()
 	common.OptionMap["Chats"] = setting.Chats2JsonString()
 	common.OptionMap["AutoGroups"] = setting.AutoGroups2JsonString()
@@ -515,6 +527,28 @@ func updateOptionMap(key string, value string) (err error) {
 	case "WCheckoutEnabledTokens":
 		// Read directly from OptionMap via setting.GetWCheckoutTokens(); no
 		// in-memory mirror needed.
+	case "WonderGateEnabled":
+		setting.WonderGateEnabled = value == "true"
+	case "WonderGateSandbox":
+		setting.WonderGateSandbox = value == "true"
+	case "WonderGateMerchantId":
+		setting.WonderGateMerchantId = value
+	case "WonderGateSecretKey":
+		setting.WonderGateSecretKey = value
+	case "WonderGateAppId":
+		setting.WonderGateAppId = value
+	case "WonderGateSandboxMerchantId":
+		setting.WonderGateSandboxMerchantId = value
+	case "WonderGateSandboxSecretKey":
+		setting.WonderGateSandboxSecretKey = value
+	case "WonderGateSandboxAppId":
+		setting.WonderGateSandboxAppId = value
+	case "WonderGateUnitPrice":
+		setting.WonderGateUnitPrice, _ = strconv.ParseFloat(value, 64)
+	case "WonderGateMinTopUp":
+		setting.WonderGateMinTopUp, _ = strconv.Atoi(value)
+	case "WonderGateBillingCountry":
+		setting.WonderGateBillingCountry = value
 	case "TopupGroupRatio":
 		err = common.UpdateTopupGroupRatioByJSONString(value)
 	case "GitHubClientId":

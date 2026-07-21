@@ -120,6 +120,29 @@ func isWCheckoutWebhookEnabled() bool {
 	return isWCheckoutTopUpEnabled()
 }
 
+// isWonderGateTopUpEnabled reports whether the WonderGate (card / local
+// payment) gateway is enabled and configured for the active environment.
+func isWonderGateTopUpEnabled() bool {
+	if !isPaymentComplianceConfirmed() {
+		return false
+	}
+	if !setting.WonderGateEnabled {
+		return false
+	}
+	return isWonderGateConfigured()
+}
+
+func isWonderGateConfigured() bool {
+	merchantId, secretKey, appId := setting.WonderGateActiveCredentials()
+	return strings.TrimSpace(merchantId) != "" &&
+		strings.TrimSpace(secretKey) != "" &&
+		strings.TrimSpace(appId) != ""
+}
+
+func isWonderGateWebhookEnabled() bool {
+	return isWonderGateTopUpEnabled()
+}
+
 func isEpayTopUpEnabled() bool {
 	if !isPaymentComplianceConfirmed() {
 		return false

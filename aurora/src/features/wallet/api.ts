@@ -202,6 +202,22 @@ export async function requestWCheckoutPayment(
 }
 
 /**
+ * Request WonderGate (card / local payment) checkout. Returns the hosted
+ * payment page URL in data.payment_url on success.
+ */
+export async function requestWonderGatePayment(request: {
+  amount: number
+}): Promise<{
+  message: string
+  data?: { payment_url?: string; order_id?: string } | string
+}> {
+  const res = await api.post('/api/user/wondergate/pay', request, {
+    skipBusinessError: true,
+  } as Record<string, unknown>)
+  return res.data
+}
+
+/**
  * Get affiliate code
  */
 export async function getAffiliateCode(): Promise<AffiliateCodeResponse> {
