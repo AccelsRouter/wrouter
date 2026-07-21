@@ -61,6 +61,7 @@ func SetApiRouter(router *gin.Engine) {
 		// in Pancake's matching webhook slot; handler enforces env match.
 		apiRouter.POST("/waffo-pancake/webhook/:env", anonymousRequestBodyLimit, controller.WaffoPancakeWebhook)
 		apiRouter.POST("/wcheckout/webhook", anonymousRequestBodyLimit, controller.WCheckoutWebhook)
+		apiRouter.POST("/wondergate/webhook", anonymousRequestBodyLimit, controller.WonderGateWebhook)
 
 		// Enterprise inquiry form proxies to Lark webhook.
 		apiRouter.POST("/enterprise-inquiry", middleware.CriticalRateLimit(), controller.PostEnterpriseInquiry)
@@ -114,6 +115,8 @@ func SetApiRouter(router *gin.Engine) {
 				selfRoute.POST("/waffo-pancake/pay", middleware.CriticalRateLimit(), middleware.Require2FAEnabled(), controller.RequestWaffoPancakePay)
 				selfRoute.POST("/wcheckout/amount", controller.RequestWCheckoutAmount)
 				selfRoute.POST("/wcheckout/pay", middleware.CriticalRateLimit(), middleware.Require2FAEnabled(), controller.RequestWCheckoutPay)
+				selfRoute.POST("/wondergate/amount", controller.RequestWonderGateAmount)
+				selfRoute.POST("/wondergate/pay", middleware.CriticalRateLimit(), middleware.Require2FAEnabled(), controller.RequestWonderGatePay)
 				selfRoute.POST("/aff_transfer", controller.TransferAffQuota)
 				selfRoute.PUT("/setting", controller.UpdateUserSetting)
 

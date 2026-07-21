@@ -194,6 +194,20 @@ const BILLING_SECTIONS = [
           WCheckoutExpiredIn: settings.WCheckoutExpiredIn ?? 1800,
           WCheckoutEnabledTokens: settings.WCheckoutEnabledTokens ?? '[]',
         }}
+        wondergateDefaultValues={{
+          WonderGateEnabled: settings.WonderGateEnabled ?? false,
+          WonderGateSandbox: settings.WonderGateSandbox ?? true,
+          WonderGateMerchantId: settings.WonderGateMerchantId ?? '',
+          WonderGateSecretKey: settings.WonderGateSecretKey ?? '',
+          WonderGateAppId: settings.WonderGateAppId ?? '',
+          WonderGateSandboxMerchantId:
+            settings.WonderGateSandboxMerchantId ?? '',
+          WonderGateSandboxSecretKey: settings.WonderGateSandboxSecretKey ?? '',
+          WonderGateSandboxAppId: settings.WonderGateSandboxAppId ?? '',
+          WonderGateUnitPrice: settings.WonderGateUnitPrice ?? 1,
+          WonderGateMinTopUp: settings.WonderGateMinTopUp ?? 1,
+          WonderGateBillingCountry: settings.WonderGateBillingCountry ?? 'US',
+        }}
         complianceDefaults={{
           confirmed: settings['payment_setting.compliance_confirmed'] ?? false,
           termsVersion:

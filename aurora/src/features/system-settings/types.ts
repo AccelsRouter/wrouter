@@ -339,6 +339,17 @@ export type BillingSettings = {
   WCheckoutMinTopUp: number
   WCheckoutExpiredIn: number
   WCheckoutEnabledTokens: string
+  WonderGateEnabled: boolean
+  WonderGateSandbox: boolean
+  WonderGateMerchantId: string
+  WonderGateSecretKey: string
+  WonderGateAppId: string
+  WonderGateSandboxMerchantId: string
+  WonderGateSandboxSecretKey: string
+  WonderGateSandboxAppId: string
+  WonderGateUnitPrice: number
+  WonderGateMinTopUp: number
+  WonderGateBillingCountry: string
   'checkin_setting.enabled': boolean
   'checkin_setting.min_quota': number
   'checkin_setting.max_quota': number

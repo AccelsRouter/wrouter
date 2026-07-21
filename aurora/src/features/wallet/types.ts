@@ -180,6 +180,10 @@ export interface TopupInfo {
   wcheckout_tokens?: WCheckoutToken[]
   /** Minimum topup amount for WCheckout */
   wcheckout_min_topup?: number
+  /** Whether WonderGate (card / local payment) topup is enabled */
+  enable_wondergate_topup?: boolean
+  /** Minimum topup amount for WonderGate */
+  wondergate_min_topup?: number
   /** Whether redemption code usage is enabled */
   enable_redemption?: boolean
   /** Whether compliance confirmation has been completed */

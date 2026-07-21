@@ -1,5 +1,17 @@
 {
   "translation": {
+    "Card Pay": "Card Pay",
+    "Failed to start payment": "Failed to start payment",
+    "WonderGate Payment Gateway": "WonderGate Payment Gateway",
+    "Obtain Merchant ID / Secret Key / App ID from the WonderGate portal. Set the async notification URL to https://<your-host>/api/wondergate/webhook. Gateway hosts are preset per environment.": "Obtain Merchant ID / Secret Key / App ID from the WonderGate portal. Set the async notification URL to https://<your-host>/api/wondergate/webhook. Gateway hosts are preset per environment.",
+    "Enable WonderGate": "Enable WonderGate",
+    "Merchant ID (Sandbox)": "Merchant ID (Sandbox)",
+    "Secret Key (Sandbox)": "Secret Key (Sandbox)",
+    "App ID (Sandbox)": "App ID (Sandbox)",
+    "Merchant ID (Production)": "Merchant ID (Production)",
+    "Secret Key (Production)": "Secret Key (Production)",
+    "App ID (Production)": "App ID (Production)",
+    "Default billing country": "Default billing country",
     "Topped up": "Topped up",
     "Not topped up": "Not topped up",
     "Invited users": "Invited users",

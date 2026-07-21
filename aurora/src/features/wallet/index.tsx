@@ -24,7 +24,9 @@ import { SectionPageLayout } from '@/components/layout'
 import { useStatus } from '@/hooks/use-status'
 import { useSystemConfig } from '@/hooks/use-system-config'
 import { useAuthStore } from '@/stores/auth-store'
+import { toast } from 'sonner'
 import { getSelf } from '@/lib/api'
+import { requestWonderGatePayment } from './api'
 import { Button } from '@/components/ui/button'
 import {
   RefundDialog,
@@ -215,6 +217,28 @@ export function Wallet(props: WalletProps) {
     }
   }
 
+  // WonderGate (card / local payment): create checkout then redirect to the
+  // hosted payment page.
+  const handleWonderGatePay = async () => {
+    if (!(await ensureSecondFactor())) return
+    setPaymentLoading('wondergate')
+    try {
+      const res = await requestWonderGatePayment({ amount: topupAmount })
+      const data = typeof res.data === 'string' ? undefined : res.data
+      if (res.message === 'success' && data?.payment_url) {
+        window.location.href = data.payment_url
+        return
+      }
+      toast.error(
+        typeof res.data === 'string' ? res.data : t('Failed to start payment')
+      )
+    } catch {
+      toast.error(t('Failed to start payment'))
+    } finally {
+      setPaymentLoading(null)
+    }
+  }
+
   // Handle redemption
   const handleRedeem = async () => {
     if (!redemptionCode) return
@@ -329,6 +353,9 @@ export function Wallet(props: WalletProps) {
                   enableWCheckoutTopup={topupInfo?.enable_wcheckout_topup}
                   wcheckoutMinTopup={topupInfo?.wcheckout_min_topup}
                   onBeforeStablecoin={ensureSecondFactor}
+                  enableWonderGateTopup={topupInfo?.enable_wondergate_topup}
+                  wondergateMinTopup={topupInfo?.wondergate_min_topup}
+                  onWonderGatePay={handleWonderGatePay}
                 />
               </div>
 

@@ -101,6 +101,7 @@ func GetTopUpInfo(c *gin.Context) {
 	// enable_wcheckout_topup / wcheckout_min_topup below and renders its own
 	// section that navigates to /wallet/wcheckout.
 	enableWCheckout := isWCheckoutTopUpEnabled()
+	enableWonderGate := isWonderGateTopUpEnabled()
 
 	data := gin.H{
 		"enable_online_topup":              isEpayTopUpEnabled(),
@@ -109,6 +110,7 @@ func GetTopUpInfo(c *gin.Context) {
 		"enable_waffo_topup":               enableWaffo,
 		"enable_waffo_pancake_topup":       enableWaffoPancake,
 		"enable_wcheckout_topup":           enableWCheckout,
+		"enable_wondergate_topup":          enableWonderGate,
 		"enable_redemption":                complianceConfirmed,
 		"payment_compliance_confirmed":     complianceConfirmed,
 		"payment_compliance_terms_version": operation_setting.CurrentComplianceTermsVersion,
@@ -131,6 +133,7 @@ func GetTopUpInfo(c *gin.Context) {
 		"waffo_min_topup":         setting.WaffoMinTopUp,
 		"waffo_pancake_min_topup": setting.WaffoPancakeMinTopUp,
 		"wcheckout_min_topup":     setting.WCheckoutMinTopUp,
+		"wondergate_min_topup":    setting.WonderGateMinTopUp,
 		"amount_options":          operation_setting.GetPaymentSetting().AmountOptions,
 		"discount":                operation_setting.GetPaymentSetting().AmountDiscount,
 		"topup_link":              common.TopUpLink,

@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { useState, useEffect } from 'react'
 import {
   AlertTriangle,
+  CreditCard,
   Gift,
   ExternalLink,
   Loader2,
@@ -119,6 +120,10 @@ interface RechargeFormCardProps {
   // false to abort (e.g. the 2FA guard opened). Mirrors the immediate
   // check the other payment methods do on click.
   onBeforeStablecoin?: () => Promise<boolean> | boolean
+  enableWonderGateTopup?: boolean
+  wondergateMinTopup?: number
+  // Creates a WonderGate checkout and redirects to the hosted payment page.
+  onWonderGatePay?: () => Promise<void> | void
 }
 
 export function RechargeFormCard({
@@ -152,6 +157,9 @@ export function RechargeFormCard({
   enableWCheckoutTopup,
   wcheckoutMinTopup,
   onBeforeStablecoin,
+  enableWonderGateTopup,
+  wondergateMinTopup,
+  onWonderGatePay,
 }: RechargeFormCardProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -174,7 +182,8 @@ export function RechargeFormCard({
     topupInfo?.enable_stripe_topup ||
     enableWaffoTopup ||
     enableWaffoPancakeTopup ||
-    enableWCheckoutTopup
+    enableWCheckoutTopup ||
+    enableWonderGateTopup
   const hasAnyTopup = hasConfigurableTopup || enableCreemTopup
   const hasStandardPaymentMethods =
     Array.isArray(topupInfo?.pay_methods) && topupInfo.pay_methods.length > 0
@@ -356,7 +365,7 @@ export function RechargeFormCard({
                 <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
                   {t('Payment Method')}
                 </Label>
-                {hasStandardPaymentMethods || enableWCheckoutTopup ? (
+                {hasStandardPaymentMethods || enableWCheckoutTopup || enableWonderGateTopup ? (
                   <div className='grid grid-cols-2 gap-1.5 sm:gap-3 lg:grid-cols-3'>
                     {enableWCheckoutTopup &&
                       (() => {
@@ -392,6 +401,41 @@ export function RechargeFormCard({
                               <TooltipContent>
                                 {t('Minimum topup amount: {{amount}}', {
                                   amount: wcMin,
+                                })}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          button
+                        )
+                      })()}
+                    {enableWonderGateTopup &&
+                      (() => {
+                        const wgMin = wondergateMinTopup || 0
+                        const belowMin = wgMin > topupAmount
+                        const button = (
+                          <Button
+                            key='__wondergate'
+                            variant='outline'
+                            onClick={() => void onWonderGatePay?.()}
+                            disabled={belowMin || !!paymentLoading}
+                            className='border-primary/60 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary h-9 min-w-0 justify-start gap-2 rounded-lg px-3'
+                          >
+                            {paymentLoading === 'wondergate' ? (
+                              <Loader2 className='h-4 w-4 animate-spin' />
+                            ) : (
+                              <CreditCard className='h-4 w-4' />
+                            )}
+                            <span className='truncate'>{t('Card Pay')}</span>
+                          </Button>
+                        )
+                        return belowMin ? (
+                          <TooltipProvider key='__wondergate'>
+                            <Tooltip>
+                              <TooltipTrigger render={button}></TooltipTrigger>
+                              <TooltipContent>
+                                {t('Minimum topup amount: {{amount}}', {
+                                  amount: wgMin,
                                 })}
                               </TooltipContent>
                             </Tooltip>
