@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { Link } from '@tanstack/react-router'
 import { Fragment, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { FaLinkedin, FaMedium, FaXTwitter } from 'react-icons/fa6'
 
 import { useStatus } from '@/hooks/use-status'
 import { useSystemConfig } from '@/hooks/use-system-config'
@@ -145,6 +146,47 @@ function ProjectAttribution(props: { currentYear: number; inline?: boolean }) {
   return (
     <div className='text-muted-foreground/45 text-center text-xs sm:text-right'>
       {content}
+    </div>
+  )
+}
+
+// Official social channels, shown in the footer's right column.
+const SOCIAL_LINKS = [
+  {
+    label: 'X (Twitter)',
+    href: 'https://x.com/WRouter_Offical',
+    Icon: FaXTwitter,
+  },
+  {
+    label: 'LinkedIn',
+    href: 'https://www.linkedin.com/company/wrouter/',
+    Icon: FaLinkedin,
+  },
+  { label: 'Medium', href: 'https://medium.com/@WRouter', Icon: FaMedium },
+]
+
+function SocialLinks() {
+  const { t } = useTranslation()
+  return (
+    <div className='flex flex-col items-start gap-3 md:items-end'>
+      <p className='text-muted-foreground/50 text-xs font-medium tracking-wider uppercase'>
+        {t('Follow us')}
+      </p>
+      <div className='flex items-center gap-2'>
+        {SOCIAL_LINKS.map(({ label, href, Icon }) => (
+          <a
+            key={label}
+            href={href}
+            target='_blank'
+            rel='noopener noreferrer'
+            aria-label={label}
+            title={label}
+            className='border-border/60 text-muted-foreground hover:text-foreground hover:border-foreground/40 bg-background/60 flex size-9 items-center justify-center rounded-lg border transition-colors'
+          >
+            <Icon className='size-4' />
+          </a>
+        ))}
+      </div>
     </div>
   )
 }
@@ -288,6 +330,9 @@ export function Footer(props: FooterProps) {
               ))}
             </div>
           )}
+
+          {/* Social channels — right side of the top row */}
+          <SocialLinks />
         </div>
 
         {/* Copyright + optional legal links inline on the left, project
