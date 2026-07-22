@@ -53,12 +53,27 @@ const OBFUSCATED_KEYS = [
 
 const convert = OpenCC.Converter({ from: 'cn', to: 'twp' })
 
+// Post-conversion vocabulary overrides. OpenCC twp produces Taiwan-standard
+// terms; where our (HK/mainland-leaning) Traditional readers expect a
+// different word, fix it up here. Applied to converted values only.
+const VOCAB_OVERRIDES = [
+  ['金鑰', '密鑰'], // cryptographic key: TW says 金鑰, our audience reads 密鑰
+]
+
+function applyOverrides(value) {
+  let out = value
+  for (const [from, to] of VOCAB_OVERRIDES) {
+    out = out.replaceAll(from, to)
+  }
+  return out
+}
+
 const source = JSON.parse(await fs.readFile(SOURCE, 'utf8'))
 const translation = source.translation ?? {}
 
 const out = {}
 for (const [key, value] of Object.entries(translation)) {
-  out[key] = typeof value === 'string' ? convert(value) : value
+  out[key] = typeof value === 'string' ? applyOverrides(convert(value)) : value
 }
 
 let text = JSON.stringify({ translation: out }, null, 2)
