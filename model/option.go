@@ -222,6 +222,9 @@ func loadOptionsFromDatabase() {
 			common.SysLog("failed to update option map: " + err.Error())
 		}
 	}
+	// Apply the persisted frontend theme to the runtime after the DB load so
+	// the correct embedded assets (aurora vs default) are served.
+	system_setting.UpdateAndSyncTheme()
 }
 
 func SyncOptions(frequency int) {
