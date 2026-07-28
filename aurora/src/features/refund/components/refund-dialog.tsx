@@ -226,7 +226,7 @@ export function RefundDialog(props: RefundDialogProps) {
           <DialogTitle>{t('Request a refund')}</DialogTitle>
           <DialogDescription>
             {t(
-              'Submit a refund request for your wallet balance. Manual review takes about 30 days.'
+              'Submit a refund request for your wallet balance. Manual review takes about 30 business days.'
             )}
           </DialogDescription>
         </DialogHeader>
@@ -491,7 +491,7 @@ function SuccessView(props: { onClose: () => void }) {
       <h3 className='text-lg font-semibold'>{t('Refund request submitted')}</h3>
       <p className='text-muted-foreground max-w-sm text-sm leading-6'>
         {t(
-          'Our team will review your request within 30 days and reach out via your registered email.'
+          'Our team will review your request within 30 business days and reach out via your registered email.'
         )}
       </p>
       <Button onClick={props.onClose}>{t('Got it')}</Button>
