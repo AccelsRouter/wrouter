@@ -166,7 +166,11 @@ export function RechargeFormCard({
   const [localAmount, setLocalAmount] = useState(topupAmount.toString())
 
   useEffect(() => {
-    setLocalAmount(topupAmount.toString())
+    // Empty string must survive, otherwise the field can never be cleared
+    // (clearing sets topupAmount to 0, which would otherwise reset to "0").
+    setLocalAmount((prev) =>
+      prev === '' && topupAmount === 0 ? prev : topupAmount.toString()
+    )
   }, [topupAmount])
 
   const handleAmountChange = (value: string) => {

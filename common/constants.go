@@ -22,7 +22,7 @@ var TopUpLink = ""
 var themeValue atomic.Value // stores string; safe for concurrent read/write
 
 func init() {
-	themeValue.Store("classic")
+	themeValue.Store("default")
 }
 
 func GetTheme() string {
@@ -30,9 +30,10 @@ func GetTheme() string {
 }
 
 // SetTheme updates the frontend theme atomically.
-// Only "default", "classic", and "aurora" are accepted; other values are silently ignored.
+// Only "default" (upstream web/) and "aurora" are accepted; other values are
+// silently ignored. Classic was removed upstream in v1.0.0-rc.22.
 func SetTheme(t string) {
-	if t == "default" || t == "classic" || t == "aurora" {
+	if t == "default" || t == "aurora" {
 		themeValue.Store(t)
 	}
 }
@@ -76,6 +77,22 @@ var SessionSecret = uuid.New().String()
 var CryptoSecret = uuid.New().String()
 var SessionCookieSecure = false
 var SessionCookieTrustedURLs []string
+
+const (
+	DefaultUserSessionActiveLimit           = 50
+	DefaultUserSessionIssuanceLimit         = 100
+	DefaultUserSessionIssuanceWindowSeconds = 24 * 60 * 60
+	DefaultUserSessionRevokedRetentionDays  = 7
+	DefaultUserSessionHourlyAlertThreshold  = 5000
+)
+
+var (
+	UserSessionActiveLimit           = DefaultUserSessionActiveLimit
+	UserSessionIssuanceLimit         = DefaultUserSessionIssuanceLimit
+	UserSessionIssuanceWindowSeconds = int64(DefaultUserSessionIssuanceWindowSeconds)
+	UserSessionRevokedRetentionDays  = DefaultUserSessionRevokedRetentionDays
+	UserSessionHourlyAlertThreshold  = DefaultUserSessionHourlyAlertThreshold
+)
 
 var OptionMap map[string]string
 var OptionMapRWMutex sync.RWMutex
