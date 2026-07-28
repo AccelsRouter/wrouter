@@ -49,7 +49,7 @@ func Require2FAEnabled() gin.HandlerFunc {
 // hasSecondFactor reports whether the user has TOTP 2FA enabled or a
 // registered Passkey credential.
 func hasSecondFactor(userId int) bool {
-	if model.IsTwoFAEnabled(userId) {
+	if enabled, err := model.IsTwoFAEnabled(userId); err == nil && enabled {
 		return true
 	}
 	if passkey, err := model.GetPasskeyByUserID(userId); err == nil && passkey != nil {

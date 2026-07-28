@@ -44,35 +44,27 @@ func EmbedFolder(fsEmbed embed.FS, targetPath string) static.ServeFileSystem {
 
 // themeAwareFileSystem delegates to the appropriate embedded FS based on
 // the current theme (via GetTheme). This enables runtime theme switching
-// without restarting the server.
+// without restarting the server. Classic was removed upstream in rc.22;
+// only the default (upstream web/) and aurora themes remain.
 type themeAwareFileSystem struct {
 	defaultFS static.ServeFileSystem
-	classicFS static.ServeFileSystem
 	auroraFS  static.ServeFileSystem
 }
 
 func (t *themeAwareFileSystem) Exists(prefix string, path string) bool {
-	switch GetTheme() {
-	case "classic":
-		return t.classicFS.Exists(prefix, path)
-	case "aurora":
+	if GetTheme() == "aurora" {
 		return t.auroraFS.Exists(prefix, path)
-	default:
-		return t.defaultFS.Exists(prefix, path)
 	}
+	return t.defaultFS.Exists(prefix, path)
 }
 
 func (t *themeAwareFileSystem) Open(name string) (http.File, error) {
-	switch GetTheme() {
-	case "classic":
-		return t.classicFS.Open(name)
-	case "aurora":
+	if GetTheme() == "aurora" {
 		return t.auroraFS.Open(name)
-	default:
-		return t.defaultFS.Open(name)
 	}
+	return t.defaultFS.Open(name)
 }
 
-func NewThemeAwareFS(defaultFS, classicFS, auroraFS static.ServeFileSystem) static.ServeFileSystem {
-	return &themeAwareFileSystem{defaultFS: defaultFS, classicFS: classicFS, auroraFS: auroraFS}
+func NewThemeAwareFS(defaultFS, auroraFS static.ServeFileSystem) static.ServeFileSystem {
+	return &themeAwareFileSystem{defaultFS: defaultFS, auroraFS: auroraFS}
 }

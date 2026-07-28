@@ -55,7 +55,7 @@ import { useUpdateOption } from '../hooks/use-update-option'
 
 const _systemInfoSchema = z.object({
   theme: z.object({
-    frontend: z.enum(['default', 'classic', 'aurora']),
+    frontend: z.enum(['default', 'aurora']),
   }),
   SystemName: z.string().min(1),
   ServerAddress: z.string().optional(),
@@ -87,11 +87,7 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
   const normalizedDefaults: SystemInfoFormValues = {
     theme: {
       frontend:
-        defaultValues.theme?.frontend === 'classic'
-          ? 'classic'
-          : defaultValues.theme?.frontend === 'aurora'
-            ? 'aurora'
-            : 'default',
+        defaultValues.theme?.frontend === 'aurora' ? 'aurora' : 'default',
     },
     SystemName: normalizeValue(defaultValues.SystemName),
     ServerAddress: normalizeValue(defaultValues.ServerAddress),
@@ -107,7 +103,7 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
 
   const systemInfoSchemaWithI18n = z.object({
     theme: z.object({
-      frontend: z.enum(['default', 'classic', 'aurora']),
+      frontend: z.enum(['default', 'aurora']),
     }),
     SystemName: z.string().min(1, {
       error: () => t('System name is required'),
@@ -206,10 +202,6 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
                           label: t('Default (New Frontend)'),
                         },
                         {
-                          value: 'classic',
-                          label: t('Classic (Legacy Frontend)'),
-                        },
-                        {
                           value: 'aurora',
                           label: t('Aurora'),
                         },
@@ -227,9 +219,6 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
                           <SelectItem value='default'>
                             {t('Default (New Frontend)')}
                           </SelectItem>
-                          <SelectItem value='classic'>
-                            {t('Classic (Legacy Frontend)')}
-                          </SelectItem>
                           <SelectItem value='aurora'>
                             {t('Aurora')}
                           </SelectItem>
@@ -238,7 +227,7 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
                     </Select>
                     <FormDescription>
                       {t(
-                        'Switch between the new frontend and the classic frontend. Changes take effect after page reload.'
+                        'Switch between the default and aurora frontend. Changes take effect after page reload.'
                       )}
                     </FormDescription>
                     <FormMessage />
