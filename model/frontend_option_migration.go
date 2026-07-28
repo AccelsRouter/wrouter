@@ -47,20 +47,26 @@ func MigrateRetiredFrontendOptions() error {
 	return errors.Join(migrationErrors...)
 }
 
+// normalizeRetiredThemeOption pins the frontend theme to "aurora" for this
+// fork. Upstream retired the multi-theme option in v1.0.0-rc.22 and forces it
+// to "default"; the wrouter fork keeps aurora as its product frontend, so we
+// normalize any other value (including upstream's "default" and the removed
+// "classic") to "aurora". This also self-heals installs whose value was
+// overwritten to "default" by the upstream migration on a prior boot.
 func normalizeRetiredThemeOption() error {
 	return DB.Transaction(func(tx *gorm.DB) error {
 		var option Option
 		err := tx.Where(&Option{Key: retiredThemeOptionKey}).First(&option).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return tx.Create(&Option{Key: retiredThemeOptionKey, Value: "default"}).Error
+			return tx.Create(&Option{Key: retiredThemeOptionKey, Value: "aurora"}).Error
 		}
 		if err != nil {
 			return err
 		}
-		if option.Value == "default" {
+		if option.Value == "aurora" {
 			return nil
 		}
-		return tx.Model(&option).Update("value", "default").Error
+		return tx.Model(&option).Update("value", "aurora").Error
 	})
 }
 
