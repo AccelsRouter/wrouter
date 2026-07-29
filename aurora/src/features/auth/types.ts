@@ -30,6 +30,9 @@ export interface LoginPayload {
 
 export interface TwoFAPayload {
   code: string
+  // Short-lived login flow token issued by the password step (rc.22 replaced
+  // the server-side 2FA login session with a stateless AuthFlow token).
+  flow_token?: string
 }
 
 export interface RegisterPayload {
@@ -66,6 +69,9 @@ export interface LoginResponse {
   data?: {
     require_2fa?: boolean
     id?: number
+    // Present when require_2fa is true: pass back to /api/user/login/2fa.
+    flow_token?: string
+    expires_at?: number
   }
 }
 

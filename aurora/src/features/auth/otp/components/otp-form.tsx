@@ -94,12 +94,16 @@ export function OtpForm({ className, ...props }: OtpFormProps) {
     try {
       // Remove all hyphens from backup code before sending to backend
       const code = useBackupCode ? cleanBackupCode(data.otp) : data.otp
-      const res = await login2fa({ code })
+      const flowToken = sessionStorage.getItem('twofa_flow_token') ?? undefined
+      const res = await login2fa({ code, flow_token: flowToken })
 
       if (!res.success) {
         toast.error(res.message || t('Invalid code'))
         return
       }
+
+      // Login flow token is single-use; drop it once verification succeeds.
+      sessionStorage.removeItem('twofa_flow_token')
 
       // Handle user data from 2FA login response
       const userData = res.data
