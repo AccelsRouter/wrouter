@@ -161,6 +161,11 @@ export function UserAuthForm({
 
       if (res.success) {
         if (res.data?.require_2fa) {
+          // Carry the login flow token to the OTP step (rc.22 login/2fa now
+          // requires it instead of a server-side session).
+          if (res.data.flow_token) {
+            sessionStorage.setItem('twofa_flow_token', res.data.flow_token)
+          }
           redirectTo2FA()
           return
         }
