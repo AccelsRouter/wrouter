@@ -51,6 +51,7 @@ import {
 } from '@/features/auth/lib/storage'
 import { useStatus } from '@/hooks/use-status'
 import { cn } from '@/lib/utils'
+import type { AuthBundle } from '@/stores/auth-store'
 
 export function SignUpForm({
   className,
@@ -210,7 +211,7 @@ export function SignUpForm({
     try {
       const res = await wechatLoginByCode(wechatCode)
       if (res?.success) {
-        await handleLoginSuccess(res.data as { id?: number } | null)
+        await handleLoginSuccess(res.data as AuthBundle)
         toast.success(t('Signed in via WeChat'))
         handleWeChatDialogChange(false)
       } else {

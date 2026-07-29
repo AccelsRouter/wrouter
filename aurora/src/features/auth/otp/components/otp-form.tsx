@@ -56,6 +56,7 @@ import {
   cleanBackupCode,
 } from '@/features/auth/lib/validation'
 import type { User } from '@/features/users/types'
+import { applyAuthBundle, getSelf, parseAuthBundle } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 
@@ -105,18 +106,27 @@ export function OtpForm({ className, ...props }: OtpFormProps) {
       // Login flow token is single-use; drop it once verification succeeds.
       sessionStorage.removeItem('twofa_flow_token')
 
-      // Handle user data from 2FA login response
-      const userData = res.data
-      if (!userData) {
-        throw new Error('No user data received from login')
+      // rc.22 returns an auth bundle (access token + session), not a bare user.
+      const bundle = parseAuthBundle(res.data)
+      if (!bundle) {
+        throw new Error('No auth bundle received from login')
       }
 
-      // Update auth store
-      auth.setUser(userData as User)
+      // Store the access token + session before fetching the full profile.
+      applyAuthBundle(bundle)
 
-      // Store user ID in localStorage for compatibility
-      if (userData.id) {
-        saveUserId(userData.id)
+      // Fetch the complete user profile so the route guard has full data.
+      try {
+        const self = await getSelf()
+        if (self?.success && self.data) {
+          auth.setUser(self.data as User)
+          if (self.data.id) {
+            saveUserId(self.data.id)
+          }
+        }
+      } catch (fetchError) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch user data after 2FA:', fetchError)
       }
 
       toast.success(t('Signed in'))

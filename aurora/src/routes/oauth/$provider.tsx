@@ -29,7 +29,7 @@ import { toast } from 'sonner'
 
 import { OAuthCallbackScreen } from '@/features/auth/components/oauth-callback-screen'
 import { OAUTH_BIND_STORAGE_KEY } from '@/features/auth/constants'
-import { api, getSelf } from '@/lib/api'
+import { api, applyAuthBundle, getSelf, parseAuthBundle } from '@/lib/api'
 import { useAuthStore, type AuthUser } from '@/stores/auth-store'
 
 type OAuthRequestConfig = AxiosRequestConfig & {
@@ -171,7 +171,8 @@ function OAuthCallback() {
         const res = await api.get(`/api/oauth/${provider}`, config)
         if (res?.data?.success) {
           const { message } = res.data
-          const loginUser = (res.data?.data ?? null) as AuthUser | null
+          // rc.22 returns an auth bundle (access token + session) on login.
+          const bundle = parseAuthBundle(res.data?.data)
           // Check if this is a bind operation
           if (message === 'bind') {
             toast.success(i18next.t('Binding successful!'))
@@ -184,16 +185,10 @@ function OAuthCallback() {
             }
             return
           }
-          // Otherwise it's a login, use payload user if available
-          if (loginUser) {
-            useAuthStore.getState().auth.setUser(loginUser)
-            try {
-              if (typeof window !== 'undefined' && loginUser.id != null) {
-                window.localStorage.setItem('uid', String(loginUser.id))
-              }
-            } catch (_error) {
-              void _error
-            }
+          // Otherwise it's a login: capture the token, then load the profile.
+          if (bundle) {
+            applyAuthBundle(bundle)
+            await finalizeLogin()
             redirectAfterLogin()
             return
           }

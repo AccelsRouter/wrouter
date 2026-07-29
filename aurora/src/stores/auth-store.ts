@@ -53,10 +53,48 @@ export interface AuthUser {
   permissions?: UserPermissions
 }
 
+/**
+ * A dashboard login session as reported by the backend. rc.22 replaced the
+ * server-side session cookie with a stateless access token + refresh cookie;
+ * this describes the session the token belongs to.
+ */
+export interface LoginSession {
+  sid: string
+  current: boolean
+  login_method: string
+  ip: string
+  user_agent: string
+  created_at: number
+  last_active_at: number
+  expires_at: number
+}
+
+/**
+ * The authentication bundle returned by every login path (password, 2FA,
+ * passkey, OAuth) and by the refresh endpoint. `user` is optional because some
+ * login responses omit it and the full profile is fetched via `getSelf`.
+ */
+export interface AuthBundle {
+  access_token: string
+  token_type: string
+  access_expires_at: number
+  user?: AuthUser | null
+  session: LoginSession
+}
+
+// Tracks whether the app-boot refresh (restore-session-from-cookie) has run.
+export type AuthBootstrapState = 'idle' | 'checking' | 'complete'
+
 interface AuthState {
   auth: {
     user: AuthUser | null
+    accessToken: string | null
+    accessExpiresAt: number | null
+    session: LoginSession | null
+    bootstrapState: AuthBootstrapState
     setUser: (user: AuthUser | null) => void
+    setBundle: (bundle: AuthBundle) => void
+    setBootstrapState: (bootstrapState: AuthBootstrapState) => void
     reset: () => void
   }
 }
@@ -81,6 +119,13 @@ export const useAuthStore = create<AuthState>()((set) => {
   return {
     auth: {
       user: initUser,
+      // Access tokens are kept in memory only. On reload they are restored from
+      // the httpOnly refresh cookie via bootstrapAuthentication(); never persist
+      // the token to localStorage.
+      accessToken: null,
+      accessExpiresAt: null,
+      session: null,
+      bootstrapState: 'idle',
       setUser: (user) =>
         set((state) => {
           // Persist user to localStorage
@@ -93,6 +138,34 @@ export const useAuthStore = create<AuthState>()((set) => {
           }
           return { ...state, auth: { ...state.auth, user } }
         }),
+      setBundle: (bundle) =>
+        set((state) => {
+          // Only overwrite the user when the bundle carries one; some login
+          // paths omit it and rely on a follow-up getSelf() call.
+          const nextUser =
+            bundle.user !== undefined && bundle.user !== null
+              ? bundle.user
+              : state.auth.user
+          if (typeof window !== 'undefined' && nextUser) {
+            window.localStorage.setItem('user', JSON.stringify(nextUser))
+          }
+          return {
+            ...state,
+            auth: {
+              ...state.auth,
+              user: nextUser,
+              accessToken: bundle.access_token,
+              accessExpiresAt: bundle.access_expires_at,
+              session: bundle.session,
+              bootstrapState: 'complete',
+            },
+          }
+        }),
+      setBootstrapState: (bootstrapState) =>
+        set((state) => ({
+          ...state,
+          auth: { ...state.auth, bootstrapState },
+        })),
       reset: () =>
         set((state) => {
           if (typeof window !== 'undefined') {
@@ -100,7 +173,14 @@ export const useAuthStore = create<AuthState>()((set) => {
           }
           return {
             ...state,
-            auth: { ...state.auth, user: null },
+            auth: {
+              ...state.auth,
+              user: null,
+              accessToken: null,
+              accessExpiresAt: null,
+              session: null,
+              bootstrapState: 'complete',
+            },
           }
         }),
     },
