@@ -20,8 +20,8 @@ import { useNavigate } from '@tanstack/react-router'
 import i18n from 'i18next'
 
 import type { User } from '@/features/users/types'
-import { getSelf } from '@/lib/api'
-import { useAuthStore } from '@/stores/auth-store'
+import { applyAuthBundle, getSelf } from '@/lib/api'
+import { useAuthStore, type AuthBundle } from '@/stores/auth-store'
 
 import { saveUserId } from '../lib/storage'
 
@@ -52,19 +52,22 @@ export function useAuthRedirect() {
 
   /**
    * Handle successful login
-   * @param userData - Optional user data from login response
+   * @param bundle - Auth bundle (access token + session) from login response
    * @param redirectTo - Redirect path after login
    */
   const handleLoginSuccess = async (
-    userData?: { id?: number } | null,
+    bundle: AuthBundle,
     redirectTo?: string
   ) => {
-    // Save user ID if available
-    if (userData?.id) {
-      saveUserId(userData.id)
+    // Store the access token + session so subsequent calls are authenticated.
+    applyAuthBundle(bundle)
+
+    // Save user ID if the bundle already carries one.
+    if (bundle.user?.id) {
+      saveUserId(bundle.user.id)
     }
 
-    // Fetch and set user data
+    // Fetch and set the full user profile (needs the token set above).
     try {
       const self = await getSelf()
       if (self?.success && self.data) {

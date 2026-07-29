@@ -22,7 +22,7 @@ import { useEffect } from 'react'
 import { toast } from 'sonner'
 
 import { wechatLoginByCode } from '@/features/auth/api'
-import { getSelf } from '@/lib/api'
+import { applyAuthBundle, getSelf, parseAuthBundle } from '@/lib/api'
 import { useAuthStore, type AuthUser } from '@/stores/auth-store'
 
 function OAuthComponent() {
@@ -38,7 +38,12 @@ function OAuthComponent() {
     ;(async () => {
       try {
         if (search?.provider === 'wechat' && search.code) {
-          await wechatLoginByCode(search.code)
+          const wechatRes = await wechatLoginByCode(search.code)
+          // rc.22 returns an auth bundle; capture the token before getSelf().
+          const bundle = parseAuthBundle(wechatRes?.data)
+          if (bundle) {
+            applyAuthBundle(bundle)
+          }
         }
         const res = await getSelf()
         if (res?.success) {

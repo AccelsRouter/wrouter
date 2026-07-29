@@ -20,13 +20,32 @@ import axios, { type AxiosRequestConfig } from 'axios'
 import { t } from 'i18next'
 import { toast } from 'sonner'
 
+import {
+  clearAuthentication,
+  refreshAuthentication,
+} from '@/lib/auth-session'
 import { useAuthStore } from '@/stores/auth-store'
+
+export {
+  applyAuthBundle,
+  bootstrapAuthentication,
+  clearAuthentication,
+  parseAuthBundle,
+  refreshAuthentication,
+} from '@/lib/auth-session'
+export type { RefreshOutcome } from '@/lib/auth-session'
 
 declare module 'axios' {
   export interface AxiosRequestConfig {
     skipBusinessError?: boolean
     skipErrorHandler?: boolean
     disableDuplicate?: boolean
+    // When set, a 401 will not trigger a token refresh (used by callers that
+    // carry their own credentials, e.g. relay/API-key requests).
+    skipAuthRefresh?: boolean
+    // Internal marker: set once a request has been retried after a refresh so
+    // we never loop on a second 401.
+    authRetry?: boolean
   }
 }
 
@@ -97,19 +116,44 @@ api.interceptors.response.use(
     }
     return response
   },
-  (error) => {
-    const skip = error?.config?.skipErrorHandler
+  async (error) => {
+    const config = error?.config as ApiRequestConfig | undefined
+    const skip = config?.skipErrorHandler
     const status = error?.response?.status
 
     if (status === 401) {
-      try {
-        useAuthStore.getState().auth.reset()
-      } catch {
-        /* empty */
-      }
-
-      if (!skip) {
-        toast.error(t('Session expired!'))
+      // Only attempt a refresh for dashboard requests that relied on our stored
+      // access token. Requests carrying their own Authorization (relay/API-key)
+      // set skipAuthRefresh and are left untouched.
+      const hasDashboardToken = Boolean(
+        useAuthStore.getState().auth.accessToken
+      )
+      if (
+        config &&
+        !config.skipAuthRefresh &&
+        !config.authRetry &&
+        hasDashboardToken
+      ) {
+        config.authRetry = true
+        const outcome = await refreshAuthentication()
+        if (outcome.kind === 'authenticated') {
+          const token = useAuthStore.getState().auth.accessToken
+          if (token) {
+            config.headers = {
+              ...config.headers,
+              Authorization: `Bearer ${token}`,
+            }
+          }
+          return api.request(config)
+        }
+        // Refresh failed: drop local state and send the user back to sign-in.
+        clearAuthentication()
+        if (!skip) toast.error(t('Session expired!'))
+        redirectToSignIn()
+      } else {
+        clearAuthentication()
+        if (!skip) toast.error(t('Session expired!'))
+        if (config?.authRetry) redirectToSignIn()
       }
     } else if (!skip) {
       // Other errors: show error message from response or default
@@ -120,6 +164,16 @@ api.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+// Send the user to the sign-in page without stacking redirects.
+function redirectToSignIn(): void {
+  if (
+    typeof window !== 'undefined' &&
+    window.location.pathname !== '/sign-in'
+  ) {
+    window.location.replace('/sign-in')
+  }
+}
 
 // ============================================================================
 // Common Headers Utility
@@ -152,6 +206,13 @@ export function getCommonHeaders(): Record<string, string> {
     headers['New-Api-User'] = uid
   }
 
+  // Dashboard-authenticated fetch/SSE calls (e.g. the playground) need the
+  // Bearer access token too, since the cookie session was removed in rc.22.
+  const accessToken = useAuthStore.getState().auth.accessToken
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`
+  }
+
   return headers
 }
 
@@ -159,12 +220,22 @@ export function getCommonHeaders(): Record<string, string> {
 // Request Interceptor
 // ============================================================================
 
-// Attach user ID header for all requests
+// Attach user ID header and dashboard Bearer token for all requests
 api.interceptors.request.use((config) => {
   const uid = getUserId()
   if (uid) {
     // Custom header for user identification
     ;(config.headers as Record<string, string>)['New-Api-User'] = uid
+  }
+
+  // Inject the dashboard access token, but never clobber a request that
+  // already carries an explicit Authorization (e.g. relay/API-key calls).
+  const headers = config.headers as Record<string, string>
+  if (!headers.Authorization) {
+    const accessToken = useAuthStore.getState().auth.accessToken
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`
+    }
   }
   return config
 })
