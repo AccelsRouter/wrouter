@@ -16,15 +16,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import type { AxiosRequestConfig } from 'axios'
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
-import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth-store'
 
-import { getOAuthState } from '../api'
+import { getOAuthState, logout } from '../api'
 import {
   buildGitHubOAuthUrl,
   buildDiscordOAuthUrl,
@@ -32,10 +30,6 @@ import {
   buildLinuxDOOAuthUrl,
 } from '../lib/oauth'
 import type { SystemStatus, CustomOAuthProviderInfo } from '../types'
-
-type LogoutRequestConfig = AxiosRequestConfig & {
-  skipErrorHandler?: boolean
-}
 
 /**
  * Hook for managing OAuth login
@@ -65,9 +59,7 @@ export function useOAuthLogin(status: SystemStatus | null) {
       // ignore store reset errors
     }
     try {
-      await api.get('/api/user/logout', {
-        skipErrorHandler: true,
-      } as LogoutRequestConfig)
+      await logout()
     } catch (_error) {
       // ignore logout errors
     }

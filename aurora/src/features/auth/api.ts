@@ -16,7 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { api } from '@/lib/api'
+import { api, refreshAuthentication } from '@/lib/api'
+import { useAuthStore } from '@/stores/auth-store'
 
 import type {
   LoginPayload,
@@ -54,10 +55,41 @@ export async function login2fa(payload: TwoFAPayload) {
   return res.data
 }
 
-// User logout
+// User logout. rc.22 replaced GET /api/user/logout with POST
+// /api/user/auth/logout, which revokes the server-side session and clears the
+// httpOnly refresh cookie (Bearer identifies the session; X-Auth-Session pins
+// it). Without this the refresh cookie stays valid and the app silently
+// re-authenticates on the next load — i.e. logout appears not to work.
 export async function logout(): Promise<ApiResponse> {
-  const res = await api.get('/api/user/logout')
-  return res.data
+  const postLogout = async () => {
+    const sid = useAuthStore.getState().auth.session?.sid
+    const res = await api.post('/api/user/auth/logout', undefined, {
+      headers: sid ? { 'X-Auth-Session': sid } : undefined,
+      skipAuthRefresh: true,
+      skipErrorHandler: true,
+    })
+    return res.data as ApiResponse
+  }
+  try {
+    return await postLogout()
+  } catch (error: unknown) {
+    // The access token may have expired; refresh once so the revocation
+    // actually reaches the server, then retry.
+    const status = (error as { response?: { status?: number } })?.response
+      ?.status
+    if (status === 401) {
+      const outcome = await refreshAuthentication()
+      if (outcome.kind === 'authenticated') {
+        try {
+          return await postLogout()
+        } catch {
+          /* fall through */
+        }
+      }
+    }
+    // Server-side revoke failed; the caller still clears local auth state.
+    return { success: false, message: 'logout failed' }
+  }
 }
 
 // ----------------------------------------------------------------------------
