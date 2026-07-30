@@ -110,6 +110,42 @@ type User struct {
 	LastLoginAt      int64                      `json:"last_login_at" gorm:"default:0;column:last_login_at"`
 	AuthVersion      int64                      `json:"-" gorm:"type:bigint;not null;default:1;column:auth_version"`
 	AdminPermissions map[string]map[string]bool `json:"admin_permissions,omitempty" gorm:"-:all"`
+	// TokenCount is the number of API keys (tokens) the user has created. It is
+	// not a stored column; it is populated for admin user listings via
+	// attachTokenCounts.
+	TokenCount int `json:"token_count" gorm:"-"`
+}
+
+// attachTokenCounts fills each user's TokenCount with the number of tokens they
+// own, using a single grouped query over the page's user ids.
+func attachTokenCounts(users []*User) {
+	if len(users) == 0 {
+		return
+	}
+	ids := make([]int, 0, len(users))
+	for _, u := range users {
+		ids = append(ids, u.Id)
+	}
+	type tokenCountRow struct {
+		UserId int
+		Count  int
+	}
+	var rows []tokenCountRow
+	if err := DB.Model(&Token{}).
+		Select("user_id, count(*) as count").
+		Where("user_id IN ?", ids).
+		Group("user_id").
+		Scan(&rows).Error; err != nil {
+		common.SysError("failed to count user tokens: " + err.Error())
+		return
+	}
+	counts := make(map[int]int, len(rows))
+	for _, r := range rows {
+		counts[r.UserId] = r.Count
+	}
+	for _, u := range users {
+		u.TokenCount = counts[u.Id]
+	}
 }
 
 func (user *User) ToBaseUser() *UserBase {
@@ -378,6 +414,7 @@ func GetAllUsers(pageInfo *common.PageInfo, sortOptions ...UserSortOptions) (use
 		return nil, 0, err
 	}
 
+	attachTokenCounts(users)
 	return users, total, nil
 }
 
@@ -447,6 +484,7 @@ func SearchUsers(keyword string, group string, role *int, status *int, startIdx 
 		return nil, 0, err
 	}
 
+	attachTokenCounts(users)
 	return users, total, nil
 }
 
