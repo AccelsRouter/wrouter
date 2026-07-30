@@ -1360,6 +1360,9 @@ export function ChannelMutateDrawer({
       type: form.getValues('type'),
       key: form.getValues('key'),
       base_url: form.getValues('base_url') || '',
+      // Advanced-custom channels carry their routing config so the backend can
+      // resolve the configured /v1/models route before the channel is saved.
+      advanced_custom: form.getValues('advanced_custom') || undefined,
     })
     if (response.success && response.data) {
       return response.data

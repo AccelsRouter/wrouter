@@ -81,6 +81,10 @@ export const ADVANCED_CUSTOM_INCOMING_PATH_OPTIONS: AdvancedCustomIncomingPathOp
       label: 'OpenAI Chat',
     },
     {
+      value: '/v1/models',
+      label: 'OpenAI Models',
+    },
+    {
       value: '/v1/responses',
       label: 'OpenAI Responses',
     },
