@@ -1,5 +1,10 @@
 {
   "translation": {
+    "Last Login IP": "Last Login IP",
+    "Export Users": "Export Users",
+    "Exporting...": "Exporting...",
+    "Export started": "Export started",
+    "Export failed": "Export failed",
     "Keys": "Keys",
     "Bring your own agent": "Bring your own agent",
     "Works with your favorite agent tools": "Works with your favorite agent tools",

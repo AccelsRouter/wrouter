@@ -207,3 +207,23 @@ export async function adminUnbindCustomOAuth(
   )
   return res.data
 }
+
+// Export all users as a CSV file (admin only). Downloads via the
+// Bearer-authenticated api client, then triggers a browser download.
+export async function exportUsers(): Promise<void> {
+  const res = await api.get('/api/user/export', {
+    responseType: 'blob',
+    skipErrorHandler: true,
+  })
+  const blob = new Blob([res.data as BlobPart], {
+    type: 'text/csv;charset=utf-8',
+  })
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `users_export_${Date.now()}.csv`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  window.URL.revokeObjectURL(url)
+}
