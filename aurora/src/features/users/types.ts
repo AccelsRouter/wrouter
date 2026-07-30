@@ -46,6 +46,7 @@ export const userSchema = z.object({
   used_quota: z.number(),
   request_count: z.number(),
   token_count: z.number().optional(),
+  last_login_ip: z.string().optional(),
   group: z.string(),
   aff_code: z.string().optional(),
   aff_count: z.number().optional(),

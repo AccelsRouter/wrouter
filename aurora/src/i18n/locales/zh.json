@@ -1,5 +1,10 @@
 {
   "translation": {
+    "Last Login IP": "最近登录 IP",
+    "Export Users": "导出用户",
+    "Exporting...": "导出中…",
+    "Export started": "已开始导出",
+    "Export failed": "导出失败",
     "Keys": "密钥数",
     "Bring your own agent": "接入你的 Agent",
     "Works with your favorite agent tools": "支持你常用的 Agent 工具",

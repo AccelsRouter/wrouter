@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/csv"
 	"errors"
 	"fmt"
 	"net/http"
@@ -186,7 +187,7 @@ func setupLoginAtAuthVersion(user *model.User, expectedAuthVersion int64, c *gin
 		writeAuthSessionError(c, err)
 		return
 	}
-	model.UpdateUserLastLoginAt(user.Id)
+	model.UpdateUserLastLoginAt(user.Id, c.ClientIP())
 	service.WriteRefreshCookie(c, bundle.RefreshToken)
 	setAuthNoStore(c)
 	recordLoginAudit(user, c)
@@ -336,6 +337,47 @@ func recordRegisterAudit(user *model.User, c *gin.Context) {
 	model.RecordLoginLog(user.Id, user.Username, "Registered successfully", ip, "register", map[string]interface{}{
 		"method": "password",
 	}, extra)
+}
+
+// ExportUsers streams all users as a CSV attachment (admin only). Sensitive
+// fields (password / system access token) are never included.
+func ExportUsers(c *gin.Context) {
+	users, err := model.GetUsersForExport()
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+
+	c.Header("Content-Type", "text/csv; charset=utf-8")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"users_export_%d.csv\"", common.GetTimestamp()))
+	// UTF-8 BOM so Excel opens non-ASCII usernames/emails correctly.
+	c.Writer.WriteString("\xEF\xBB\xBF")
+
+	w := csv.NewWriter(c.Writer)
+	_ = w.Write([]string{
+		"id", "username", "display_name", "email", "group", "role", "status",
+		"quota", "used_quota", "request_count", "token_count",
+		"last_login_ip", "created_at", "last_login_at",
+	})
+	for _, u := range users {
+		_ = w.Write([]string{
+			strconv.Itoa(u.Id),
+			u.Username,
+			u.DisplayName,
+			u.Email,
+			u.Group,
+			strconv.Itoa(u.Role),
+			strconv.Itoa(u.Status),
+			strconv.Itoa(u.Quota),
+			strconv.Itoa(u.UsedQuota),
+			strconv.Itoa(u.RequestCount),
+			strconv.Itoa(u.TokenCount),
+			u.LastLoginIp,
+			strconv.FormatInt(u.CreatedAt, 10),
+			strconv.FormatInt(u.LastLoginAt, 10),
+		})
+	}
+	w.Flush()
 }
 
 func GetAllUsers(c *gin.Context) {
