@@ -316,11 +316,26 @@ func Register(c *gin.Context) {
 		}
 	}
 
+	// 记录注册审计日志（含 IP），与登录审计同构，写入登录日志表。
+	recordRegisterAudit(&insertedUser, c)
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "",
 	})
 	return
+}
+
+// recordRegisterAudit 记录注册成功审计日志（含客户端 IP / UA），复用登录日志表，
+// action 为 "register"。
+func recordRegisterAudit(user *model.User, c *gin.Context) {
+	ip := c.ClientIP()
+	extra := map[string]interface{}{
+		"user_agent": c.Request.UserAgent(),
+	}
+	model.RecordLoginLog(user.Id, user.Username, "Registered successfully", ip, "register", map[string]interface{}{
+		"method": "password",
+	}, extra)
 }
 
 func GetAllUsers(c *gin.Context) {

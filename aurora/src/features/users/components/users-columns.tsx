@@ -249,6 +249,18 @@ export function useUsersColumns(): ColumnDef<User>[] {
       meta: { mobileOrder: 30 },
     },
     {
+      id: 'token_count',
+      accessorKey: 'token_count',
+      header: t('Keys'),
+      cell: ({ row }) => {
+        const count = (row.original.token_count ?? 0) as number
+        return <div className='tabular-nums'>{count}</div>
+      },
+      enableSorting: false,
+      size: 80,
+      meta: { mobileOrder: 35 },
+    },
+    {
       accessorKey: 'role',
       header: t('Role'),
       cell: ({ row }) => {
