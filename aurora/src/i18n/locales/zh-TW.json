@@ -2425,6 +2425,7 @@
     "Format: APIKey|SecretKey": "格式：APIKey|SecretKey",
     "Format: APPID|APISecret|APIKey": "格式：APPID|APISecret|APIKey",
     "Format: AppId|SecretId|SecretKey": "格式：AppId|SecretId|SecretKey",
+    "Format: TokenHub API Key, or legacy AppId|SecretId|SecretKey": "格式：TokenHub API Key，或舊版 AppId|SecretId|SecretKey",
     "Forward requests directly to upstream providers without any post-processing.": "將請求直接轉發給上游提供商，不進行任何後處理。",
     "Frames per second": "幀率",
     "Free: {{free}} / Total: {{total}}": "可用空間: {{free}} / 總空間: {{total}}",
