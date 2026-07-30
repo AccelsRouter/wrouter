@@ -529,6 +529,9 @@ export async function fetchModels(data: {
   base_url: string
   type: number
   key: string
+  // Advanced-custom channels (type 58) need their config so the backend can
+  // resolve the configured /v1/models route in create (pre-save) mode.
+  advanced_custom?: string
 }): Promise<FetchModelsResponse> {
   const res = await api.post(
     '/api/channel/fetch_models',
