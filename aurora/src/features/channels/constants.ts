@@ -377,14 +377,14 @@ export const FIELD_DESCRIPTIONS = {
 // ============================================================================
 
 export const MODEL_FETCHABLE_TYPES = new Set([
-  1, 4, 14, 17, 20, 23, 24, 25, 26, 27, 31, 34, 35, 40, 42, 43, 47, 48,
+  1, 4, 14, 17, 20, 23, 24, 25, 26, 27, 31, 34, 35, 40, 42, 43, 47, 48, 57,
 ])
 
 export const TYPE_TO_KEY_PROMPT: Record<number, string> = {
   15: 'Format: APIKey|SecretKey',
   18: 'Format: APPID|APISecret|APIKey',
   22: 'Format: APIKey-AppId, e.g., fastgpt-0sp2gtvfdgyi4k30jwlgwf1i-64f335d84283f05518e9e041',
-  23: 'Format: AppId|SecretId|SecretKey',
+  23: 'Format: TokenHub API Key, or legacy AppId|SecretId|SecretKey',
   33: 'Format: Ak|Sk|Region',
   50: 'Format: AccessKey|SecretKey (or just ApiKey if upstream is New API)',
   51: 'Format: Access Key ID|Secret Access Key',

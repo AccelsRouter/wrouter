@@ -19,7 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronDown, Loader2 } from 'lucide-react'
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -225,6 +225,19 @@ export function ModelMutateDrawer({
     return getOptionValue(systemOptionsData.data, defaultModelSettings)
   }, [systemOptionsData])
 
+  // Keep a ref so the load effect can read the latest modelSettings without
+  // depending on it: modelSettings is a fresh object on every system-options
+  // refetch, and including it in the deps would reset the form under the user.
+  const modelSettingsRef = useRef<ModelSettings | null>(null)
+  useEffect(() => {
+    modelSettingsRef.current = modelSettings
+  })
+  // The load effect keys off this boolean, not the object: it re-runs once
+  // when the settings first arrive (so a drawer opened before that still gets
+  // its pricing prefilled), while later refetches only produce a new object
+  // reference and must not reset a form the user may be editing.
+  const hasModelSettings = modelSettings !== null
+
   const form = useForm<ExtendedModelFormValues>({
     resolver: zodResolver(extendedModelFormSchema),
     defaultValues: {
@@ -306,34 +319,37 @@ export function ModelMutateDrawer({
         audioCompletionRatio: '',
       }
 
-      // Parse ratio configurations from system settings if available
-      if (modelSettings) {
+      // Parse ratio configurations from system settings if available.
+      // Read via the ref so a later system-options refetch does not re-run this
+      // effect and reset the form while the user is editing.
+      const settings = modelSettingsRef.current
+      if (settings) {
         const priceMap = safeJsonParse<Record<string, number>>(
-          modelSettings.ModelPrice,
+          settings.ModelPrice,
           { fallback: {}, silent: true }
         )
         const ratioMap = safeJsonParse<Record<string, number>>(
-          modelSettings.ModelRatio,
+          settings.ModelRatio,
           { fallback: {}, silent: true }
         )
         const cacheMap = safeJsonParse<Record<string, number>>(
-          modelSettings.CacheRatio,
+          settings.CacheRatio,
           { fallback: {}, silent: true }
         )
         const completionMap = safeJsonParse<Record<string, number>>(
-          modelSettings.CompletionRatio,
+          settings.CompletionRatio,
           { fallback: {}, silent: true }
         )
         const imageMap = safeJsonParse<Record<string, number>>(
-          modelSettings.ImageRatio,
+          settings.ImageRatio,
           { fallback: {}, silent: true }
         )
         const audioMap = safeJsonParse<Record<string, number>>(
-          modelSettings.AudioRatio,
+          settings.AudioRatio,
           { fallback: {}, silent: true }
         )
         const audioCompletionMap = safeJsonParse<Record<string, number>>(
-          modelSettings.AudioCompletionRatio,
+          settings.AudioCompletionRatio,
           { fallback: {}, silent: true }
         )
 
@@ -410,7 +426,7 @@ export function ModelMutateDrawer({
         audioCompletionRatio: '',
       })
     }
-  }, [open, isEditing, modelData, currentRow, form, modelSettings])
+  }, [open, isEditing, modelData, currentRow, form, hasModelSettings])
 
   const onSubmit = useCallback(
     async (values: ExtendedModelFormValues): Promise<void> => {
