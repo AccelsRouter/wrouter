@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -9,7 +10,8 @@ import (
 )
 
 type turnstileCheckResponse struct {
-	Success bool `json:"success"`
+	Success    bool     `json:"success"`
+	ErrorCodes []string `json:"error-codes"`
 }
 
 func TurnstileCheck() gin.HandlerFunc {
@@ -51,6 +53,7 @@ func TurnstileCheck() gin.HandlerFunc {
 				return
 			}
 			if !res.Success {
+				common.SysError(fmt.Sprintf("turnstile verification failed: error-codes=%v, remoteip=%s", res.ErrorCodes, c.ClientIP()))
 				c.JSON(http.StatusOK, gin.H{
 					"success": false,
 					"message": "Turnstile 校验失败，请刷新重试！",
