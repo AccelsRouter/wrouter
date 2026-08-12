@@ -21,7 +21,9 @@ import { useEffect, useRef } from 'react'
 declare global {
   interface Window {
     turnstile?: {
-      render: (element: HTMLElement, options: Record<string, unknown>) => void
+      render: (element: HTMLElement, options: Record<string, unknown>) => string
+      reset: (widgetId?: string) => void
+      remove: (widgetId?: string) => void
     }
   }
 }
@@ -30,6 +32,13 @@ interface TurnstileProps {
   siteKey: string
   onVerify: (token: string) => void
   onExpire?: () => void
+  /**
+   * Increment this to force the widget to issue a fresh single-use token.
+   * Turnstile tokens are one-time; after each protected request the caller
+   * must reset the widget or Cloudflare rejects the reused token with
+   * `timeout-or-duplicate`.
+   */
+  resetSignal?: number
   className?: string
 }
 
@@ -37,19 +46,30 @@ export function Turnstile({
   siteKey,
   onVerify,
   onExpire,
+  resetSignal,
   className,
 }: TurnstileProps) {
   const ref = useRef<HTMLDivElement | null>(null)
+  const widgetIdRef = useRef<string | null>(null)
+  // Keep callbacks in refs so the render effect stays stable (only depends on
+  // siteKey) and never re-renders the widget on every parent re-render.
+  const onVerifyRef = useRef(onVerify)
+  const onExpireRef = useRef(onExpire)
+  onVerifyRef.current = onVerify
+  onExpireRef.current = onExpire
 
   useEffect(() => {
+    let cancelled = false
+
     const render = () => {
-      if (!ref.current || !window.turnstile) return
+      if (cancelled || !ref.current || !window.turnstile) return
+      if (widgetIdRef.current) return
       try {
-        window.turnstile.render(ref.current, {
+        widgetIdRef.current = window.turnstile.render(ref.current, {
           sitekey: siteKey,
-          callback: (token: string) => onVerify(token),
-          'error-callback': () => onExpire?.(),
-          'expired-callback': () => onExpire?.(),
+          callback: (token: string) => onVerifyRef.current(token),
+          'error-callback': () => onExpireRef.current?.(),
+          'expired-callback': () => onExpireRef.current?.(),
         })
       } catch {
         /* empty */
@@ -58,19 +78,54 @@ export function Turnstile({
 
     if (window.turnstile) {
       render()
+    } else {
+      const scriptId = 'cf-turnstile'
+      let script = document.getElementById(
+        scriptId
+      ) as HTMLScriptElement | null
+      if (!script) {
+        script = document.createElement('script')
+        script.id = scriptId
+        script.src =
+          'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+        script.async = true
+        script.defer = true
+        document.head.appendChild(script)
+      }
+      // Attach to load even if the script element already exists (a second
+      // widget mounting while the shared script is still loading).
+      script.addEventListener('load', render)
+    }
+
+    return () => {
+      cancelled = true
+      if (widgetIdRef.current && window.turnstile?.remove) {
+        try {
+          window.turnstile.remove(widgetIdRef.current)
+        } catch {
+          /* empty */
+        }
+        widgetIdRef.current = null
+      }
+    }
+  }, [siteKey])
+
+  // Reset the widget on demand to obtain a fresh single-use token. Skip the
+  // initial mount (nothing consumed yet).
+  const isFirstReset = useRef(true)
+  useEffect(() => {
+    if (isFirstReset.current) {
+      isFirstReset.current = false
       return
     }
-    const scriptId = 'cf-turnstile'
-    if (document.getElementById(scriptId)) return
-    const s = document.createElement('script')
-    s.id = scriptId
-    s.src =
-      'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
-    s.async = true
-    s.defer = true
-    s.onload = () => render()
-    document.head.appendChild(s)
-  }, [siteKey, onVerify, onExpire])
+    if (widgetIdRef.current && window.turnstile?.reset) {
+      try {
+        window.turnstile.reset(widgetIdRef.current)
+      } catch {
+        /* empty */
+      }
+    }
+  }, [resetSignal])
 
   return <div ref={ref} className={className} />
 }

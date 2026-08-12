@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import i18next from 'i18next'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
 
 import { useStatus } from '@/hooks/use-status'
@@ -28,11 +28,24 @@ import { useStatus } from '@/hooks/use-status'
 export function useTurnstile() {
   const { status } = useStatus()
   const [turnstileToken, setTurnstileToken] = useState('')
+  // Bump to force the widget to issue a fresh single-use token. Turnstile
+  // tokens are one-time, so we must reset after every protected request
+  // (send-code, register, login, ...) or Cloudflare rejects the reused token
+  // with `timeout-or-duplicate`.
+  const [turnstileResetSignal, setTurnstileResetSignal] = useState(0)
 
   const isTurnstileEnabled = !!(
     status?.turnstile_check && status?.turnstile_site_key
   )
   const turnstileSiteKey = status?.turnstile_site_key || ''
+
+  /**
+   * Clear the current token and ask the widget for a fresh one.
+   */
+  const resetTurnstile = useCallback(() => {
+    setTurnstileToken('')
+    setTurnstileResetSignal((current) => current + 1)
+  }, [])
 
   /**
    * Validate if turnstile is ready when required
@@ -51,7 +64,9 @@ export function useTurnstile() {
     isTurnstileEnabled,
     turnstileSiteKey,
     turnstileToken,
+    turnstileResetSignal,
     setTurnstileToken,
+    resetTurnstile,
     validateTurnstile,
   }
 }

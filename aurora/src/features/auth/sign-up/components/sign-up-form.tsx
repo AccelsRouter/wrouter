@@ -71,7 +71,9 @@ export function SignUpForm({
     isTurnstileEnabled,
     turnstileSiteKey,
     turnstileToken,
+    turnstileResetSignal,
     setTurnstileToken,
+    resetTurnstile,
     validateTurnstile,
   } = useTurnstile()
   const { redirectToLogin, handleLoginSuccess } = useAuthRedirect()
@@ -177,11 +179,16 @@ export function SignUpForm({
       // Errors are handled by global interceptor
     } finally {
       setIsLoading(false)
+      // Turnstile tokens are single-use; refresh after every register attempt
+      // so a retry (or the earlier send-code) never reuses a spent token.
+      if (isTurnstileEnabled) resetTurnstile()
     }
   }
 
   async function handleSendVerificationCode() {
-    await sendCode(emailValue || '')
+    if (await sendCode(emailValue || '')) {
+      resetTurnstile()
+    }
   }
 
   const handleOpenWeChatDialog = () => {
@@ -342,6 +349,7 @@ export function SignUpForm({
             <Turnstile
               siteKey={turnstileSiteKey}
               onVerify={setTurnstileToken}
+              resetSignal={turnstileResetSignal}
             />
           </div>
         )}
