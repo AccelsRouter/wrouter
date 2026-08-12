@@ -43,7 +43,6 @@ interface WCheckoutSelectProps {
 
 // Token-type order requested by product: WUSD first, then USDC, then USDT.
 const TOKEN_TYPE_ORDER = ['WUSD', 'USDC', 'USDT'] as const
-type TokenType = (typeof TOKEN_TYPE_ORDER)[number]
 
 // Chain identifier prefixes per WCheckout docs.
 const CHAIN_LABELS: Record<string, string> = {
@@ -245,7 +244,7 @@ export function WCheckoutSelect({ amount }: WCheckoutSelectProps) {
                     </Label>
                     <Select
                       value={selectedChain}
-                      onValueChange={setSelectedChain}
+                      onValueChange={(value) => setSelectedChain(value ?? '')}
                       disabled={processing || availableChains.length === 0}
                     >
                       <SelectTrigger className='w-full'>
