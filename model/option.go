@@ -144,6 +144,7 @@ func InitOptionMap() {
 	common.OptionMap["WonderGateUnitPrice"] = strconv.FormatFloat(setting.WonderGateUnitPrice, 'f', -1, 64)
 	common.OptionMap["WonderGateMinTopUp"] = strconv.Itoa(setting.WonderGateMinTopUp)
 	common.OptionMap["WonderGateBillingCountry"] = setting.WonderGateBillingCountry
+	common.OptionMap["WonderGateCurrency"] = setting.WonderGateCurrency
 	common.OptionMap["TopupGroupRatio"] = common.TopupGroupRatio2JSONString()
 	common.OptionMap["Chats"] = setting.Chats2JsonString()
 	common.OptionMap["AutoGroups"] = setting.AutoGroups2JsonString()
@@ -573,6 +574,8 @@ func updateOptionMap(key string, value string) (err error) {
 		setting.WonderGateMinTopUp, _ = strconv.Atoi(value)
 	case "WonderGateBillingCountry":
 		setting.WonderGateBillingCountry = value
+	case "WonderGateCurrency":
+		setting.WonderGateCurrency = value
 	case "TopupGroupRatio":
 		err = common.UpdateTopupGroupRatioByJSONString(value)
 	case "GitHubClientId":

@@ -207,6 +207,7 @@ const BILLING_SECTIONS = [
           WonderGateUnitPrice: settings.WonderGateUnitPrice ?? 1,
           WonderGateMinTopUp: settings.WonderGateMinTopUp ?? 1,
           WonderGateBillingCountry: settings.WonderGateBillingCountry ?? 'US',
+          WonderGateCurrency: settings.WonderGateCurrency ?? 'USD',
         }}
         complianceDefaults={{
           confirmed: settings['payment_setting.compliance_confirmed'] ?? false,

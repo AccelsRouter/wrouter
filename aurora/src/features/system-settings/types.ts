@@ -350,6 +350,7 @@ export type BillingSettings = {
   WonderGateUnitPrice: number
   WonderGateMinTopUp: number
   WonderGateBillingCountry: string
+  WonderGateCurrency: string
   'checkin_setting.enabled': boolean
   'checkin_setting.min_quota': number
   'checkin_setting.max_quota': number

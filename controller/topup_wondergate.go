@@ -146,7 +146,7 @@ func RequestWonderGatePay(c *gin.Context) {
 
 	createReq := &service.WonderGateCheckoutRequest{
 		TransactionID:   tradeNo,
-		Currency:        "USD",
+		Currency:        setting.WonderGateCurrency,
 		Amount:          amountStr,
 		AppID:           appId,
 		TransactionIP:   c.ClientIP(),
@@ -155,7 +155,7 @@ func RequestWonderGatePay(c *gin.Context) {
 		ProductInfos: []map[string]interface{}{
 			{
 				"productName": "Account Top-up",
-				"currency":    "USD",
+				"currency":    setting.WonderGateCurrency,
 				"price":       amountStr,
 				"sku":         "TOPUP",
 				"quantity":    1,

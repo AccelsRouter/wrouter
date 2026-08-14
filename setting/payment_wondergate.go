@@ -20,9 +20,15 @@ var (
 	WonderGateSandboxSecretKey  string
 	WonderGateSandboxAppId      string
 
-	WonderGateUnitPrice     float64 = 1.0  // USD per quota unit
-	WonderGateMinTopUp      int     = 1    // minimum top-up amount (quota units)
-	WonderGateBillingCountry string = "US" // default billingAddress.country (checkout requires it)
+	WonderGateUnitPrice     float64 = 1.0    // price per quota unit, in WonderGateCurrency
+	WonderGateMinTopUp      int     = 1      // minimum top-up amount (quota units)
+	WonderGateBillingCountry string = "US"   // default billingAddress.country (checkout requires it)
+	// WonderGateCurrency is the ISO currency the WonderGate merchant is configured
+	// to accept. It must match the merchant's supported currency, otherwise
+	// checkout creation fails (e.g. code=101 "USD is invalid"). Set it together
+	// with WonderGateUnitPrice so the charged amount is denominated correctly
+	// (e.g. currency=CNY with a CNY-based unit price).
+	WonderGateCurrency string = "USD"
 )
 
 const (

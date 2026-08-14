@@ -42,6 +42,7 @@ export interface WonderGateSettingsValues {
   WonderGateUnitPrice: number
   WonderGateMinTopUp: number
   WonderGateBillingCountry: string
+  WonderGateCurrency: string
 }
 
 interface Props {
@@ -78,6 +79,10 @@ export function WonderGateSettingsSection(props: Props) {
         {
           key: 'WonderGateBillingCountry',
           value: values.WonderGateBillingCountry || 'US',
+        },
+        {
+          key: 'WonderGateCurrency',
+          value: (values.WonderGateCurrency || 'USD').toUpperCase().trim(),
         },
       ]
       // Credentials: only push non-empty values so an untouched password field
@@ -216,6 +221,19 @@ export function WonderGateSettingsSection(props: Props) {
             maxLength={2}
             {...form.register('WonderGateBillingCountry')}
           />
+        </div>
+        <div className='grid gap-1.5'>
+          <Label>{t('Currency')}</Label>
+          <Input
+            placeholder='USD'
+            maxLength={3}
+            {...form.register('WonderGateCurrency')}
+          />
+          <p className='text-muted-foreground text-xs'>
+            {t(
+              'ISO currency your WonderGate merchant accepts (e.g. CNY). Must match the merchant config, and pair with a matching unit price.'
+            )}
+          </p>
         </div>
       </div>
 
