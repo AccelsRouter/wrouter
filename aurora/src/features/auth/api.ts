@@ -117,11 +117,18 @@ export async function githubOAuthStart(clientId: string, state: string) {
   window.open(url)
 }
 
-// Get OAuth state for CSRF protection
-export async function getOAuthState(): Promise<string> {
+// Get OAuth state (flow token) for CSRF protection. The rc.22 backend requires
+// POST /api/oauth/state with the provider and intent so the callback can verify
+// the provider bound at state creation. (A GET here previously matched the
+// GET /oauth/:provider callback route with provider="state" → "Unknown OAuth
+// provider".)
+export async function getOAuthState(
+  provider: string,
+  intent: 'login' | 'bind' = 'login'
+): Promise<string> {
   const aff =
     typeof window !== 'undefined' ? (localStorage.getItem('aff') ?? '') : ''
-  const res = await api.get('/api/oauth/state', { params: { aff } })
+  const res = await api.post('/api/oauth/state', { provider, intent, aff })
   if (res.data?.success) return res.data.data
   return ''
 }
