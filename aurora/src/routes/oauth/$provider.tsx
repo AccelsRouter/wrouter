@@ -24,7 +24,7 @@ import {
 } from '@tanstack/react-router'
 import type { AxiosRequestConfig } from 'axios'
 import i18next from 'i18next'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 
 import { OAuthCallbackScreen } from '@/features/auth/components/oauth-callback-screen'
@@ -46,18 +46,21 @@ function OAuthCallback() {
     state?: string
     redirect?: string
   }
-  const [mode, setMode] = useState<'login' | 'bind'>(() => {
-    if (typeof window === 'undefined') return 'login'
-    return window.opener ? 'bind' : 'login'
-  })
+  // Derive the mode from window.opener (bind = opened in a child window from the
+  // profile page; login = top-level navigation). A plain const — not state — so
+  // the processing effect below never re-triggers itself via setMode, which
+  // previously re-ran the single-use code/state exchange and surfaced
+  // "State parameter is empty or mismatched" on the second run.
+  const mode: 'login' | 'bind' =
+    typeof window !== 'undefined' && window.opener ? 'bind' : 'login'
+
+  // The OAuth code + state are single-use; guarantee the exchange runs exactly
+  // once per mount regardless of any re-render.
+  const hasProcessedRef = useRef(false)
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMode(window.opener ? 'bind' : 'login')
-  }, [])
-
-  useEffect(() => {
+    if (hasProcessedRef.current) return
+    hasProcessedRef.current = true
     ;(async () => {
       const safeNavigate = (target: string) => {
         navigate({ to: target as never, replace: true })
@@ -83,13 +86,7 @@ function OAuthCallback() {
         safeNavigate('/sign-in')
         return
       }
-      const isBindingFlow =
-        typeof window !== 'undefined' ? Boolean(window.opener) : mode === 'bind'
-      if (isBindingFlow && mode !== 'bind') {
-        setMode('bind')
-      } else if (!isBindingFlow && mode !== 'login') {
-        setMode('login')
-      }
+      const isBindingFlow = mode === 'bind'
       const notifyBindingResult = (status: 'success' | 'error') => {
         if (typeof window === 'undefined') return
         try {
