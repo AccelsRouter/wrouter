@@ -129,7 +129,15 @@ export async function getOAuthState(
   const aff =
     typeof window !== 'undefined' ? (localStorage.getItem('aff') ?? '') : ''
   const res = await api.post('/api/oauth/state', { provider, intent, aff })
-  if (res.data?.success) return res.data.data
+  if (res.data?.success) {
+    // rc.22 nests the token under data.flow_token (older builds returned the
+    // token as data directly). Returning the whole object would serialize to
+    // "[object Object]" in the OAuth state param → callback "State parameter is
+    // empty or mismatched".
+    const data = res.data.data
+    if (typeof data === 'string') return data
+    if (typeof data?.flow_token === 'string') return data.flow_token
+  }
   return ''
 }
 
