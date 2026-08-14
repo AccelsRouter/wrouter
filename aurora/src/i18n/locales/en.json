@@ -11,7 +11,7 @@
     "Works with your favorite agent tools": "Works with your favorite agent tools",
     "Follow us": "Follow us",
     "Card Pay": "Card Pay",
-    "Online Payment": "Online Payment",
+    "Fiat Payment": "Fiat Payment",
     "Failed to start payment": "Failed to start payment",
     "WonderGate Payment Gateway": "WonderGate Payment Gateway",
     "Obtain Merchant ID / Secret Key / App ID from the WonderGate portal. Set the async notification URL to https://<your-host>/api/wondergate/webhook. Gateway hosts are preset per environment.": "Obtain Merchant ID / Secret Key / App ID from the WonderGate portal. Set the async notification URL to https://<your-host>/api/wondergate/webhook. Gateway hosts are preset per environment.",

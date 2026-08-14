@@ -11,7 +11,7 @@
     "Works with your favorite agent tools": "支持你常用的 Agent 工具",
     "Follow us": "关注我们",
     "Card Pay": "银行卡支付",
-    "Online Payment": "在线支付",
+    "Fiat Payment": "法币支付",
     "Failed to start payment": "拉起支付失败",
     "WonderGate Payment Gateway": "WonderGate 支付网关",
     "Obtain Merchant ID / Secret Key / App ID from the WonderGate portal. Set the async notification URL to https://<your-host>/api/wondergate/webhook. Gateway hosts are preset per environment.": "请在 WonderGate 商户后台获取 Merchant ID / Secret Key / App ID，并把异步通知地址设置为 https://<您的域名>/api/wondergate/webhook。网关地址已按环境内置。",

@@ -430,7 +430,7 @@ export function RechargeFormCard({
                             ) : (
                               <CreditCard className='h-4 w-4' />
                             )}
-                            <span className='truncate'>{t('Online Payment')}</span>
+                            <span className='truncate'>{t('Fiat Payment')}</span>
                           </Button>
                         )
                         return belowMin ? (
