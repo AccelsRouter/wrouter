@@ -17,22 +17,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Undo2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { SectionPageLayout } from '@/components/layout'
 import { useStatus } from '@/hooks/use-status'
 import { useSystemConfig } from '@/hooks/use-system-config'
-import { useAuthStore } from '@/stores/auth-store'
 import { toast } from 'sonner'
 import { getSelf } from '@/lib/api'
 import { requestWonderGatePayment } from './api'
-import { Button } from '@/components/ui/button'
-import {
-  RefundDialog,
-  RefundHistoryDialog,
-  RefundStatusBanner,
-} from '@/features/refund'
 import { useTopupGuard } from './hooks/use-topup-guard'
 import { AffiliateRewardsCard } from './components/affiliate-rewards-card'
 import { BillingHistoryDialog } from './components/dialogs/billing-history-dialog'
@@ -81,10 +73,7 @@ export function Wallet(props: WalletProps) {
   const [paymentLoading, setPaymentLoading] = useState<string | null>(null)
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [transferDialogOpen, setTransferDialogOpen] = useState(false)
-  const [refundDialogOpen, setRefundDialogOpen] = useState(false)
-  const [refundHistoryOpen, setRefundHistoryOpen] = useState(false)
   const [inviteesOpen, setInviteesOpen] = useState(false)
-  const authEmail = useAuthStore((s) => s.auth.user?.email)
   const { ensureSecondFactor, guardDialog } = useTopupGuard()
   const [billingDialogOpen, setBillingDialogOpen] = useState(false)
   const [redemptionCode, setRedemptionCode] = useState('')
@@ -313,7 +302,6 @@ export function Wallet(props: WalletProps) {
         <SectionPageLayout.Title>{t('Wallet')}</SectionPageLayout.Title>
         <SectionPageLayout.Content>
           <div className='mx-auto flex w-full max-w-7xl flex-col gap-4 sm:gap-5'>
-            <RefundStatusBanner />
             <WalletStatsCard user={user} loading={userLoading} />
 
             <div
@@ -381,37 +369,6 @@ export function Wallet(props: WalletProps) {
               }
               loading={affiliateLoading}
             />
-
-            <div className='border-border/40 bg-muted/20 flex flex-col items-start justify-between gap-2 rounded-lg border p-4 sm:flex-row sm:items-center'>
-              <div className='flex flex-col gap-0.5'>
-                <p className='text-sm font-medium'>
-                  {t('Need a refund?')}
-                </p>
-                <p className='text-muted-foreground text-xs leading-5'>
-                  {t(
-                    'You can request a refund for any unused wallet balance. Manual review takes about 30 business days.'
-                  )}
-                </p>
-              </div>
-              <div className='flex shrink-0 items-center gap-2'>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={() => setRefundHistoryOpen(true)}
-                >
-                  {t('View history')}
-                </Button>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  className='gap-1.5'
-                  onClick={() => setRefundDialogOpen(true)}
-                >
-                  <Undo2 className='h-3.5 w-3.5' />
-                  {t('Request refund')}
-                </Button>
-              </div>
-            </div>
           </div>
         </SectionPageLayout.Content>
       </SectionPageLayout>
@@ -440,18 +397,6 @@ export function Wallet(props: WalletProps) {
       <BillingHistoryDialog
         open={billingDialogOpen}
         onOpenChange={setBillingDialogOpen}
-      />
-
-      <RefundDialog
-        open={refundDialogOpen}
-        onOpenChange={setRefundDialogOpen}
-        username={user?.username}
-        email={authEmail}
-      />
-
-      <RefundHistoryDialog
-        open={refundHistoryOpen}
-        onOpenChange={setRefundHistoryOpen}
       />
 
       <InviteesDialog open={inviteesOpen} onOpenChange={setInviteesOpen} />
