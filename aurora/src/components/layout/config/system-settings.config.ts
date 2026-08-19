@@ -26,7 +26,6 @@ import {
   Settings,
   Shield,
   ShieldAlert,
-  Undo2,
   Wrench,
 } from 'lucide-react'
 
@@ -93,16 +92,6 @@ function getSystemSettingsNavGroups(t: TFunction): NavGroup[] {
           title: t('Operations'),
           icon: Wrench,
           items: getOperationsSectionNavItems(t),
-        },
-        {
-          title: t('Refund Requests'),
-          icon: Undo2,
-          items: [
-            {
-              title: t('All requests'),
-              url: '/system-settings/refunds',
-            },
-          ],
         },
         {
           title: t('Recharge Orders'),
