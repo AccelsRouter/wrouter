@@ -48,11 +48,11 @@ import {
 } from '@/components/ui/sidebar'
 
 import { checkIsActive } from '../lib/url-utils'
-import {
-  type NavCollapsible,
-  type NavChatPresets,
-  type NavLink,
-  type NavGroup as NavGroupProps,
+import type {
+  NavCollapsible,
+  NavChatPresets,
+  NavLink,
+  NavGroup as NavGroupProps,
 } from '../types'
 import { ChatPresetsItem } from './chat-presets-item'
 
@@ -137,7 +137,7 @@ function ActiveIndicator() {
  * Sidebar menu link item
  */
 function SidebarMenuLink({ item, href }: { item: NavLink; href: string }) {
-  const { setOpenMobile } = useSidebar()
+  const { isMobile, setOpenMobile } = useSidebar()
   const isActive = checkIsActive(href, item)
   return (
     <SidebarMenuItem>
@@ -145,7 +145,13 @@ function SidebarMenuLink({ item, href }: { item: NavLink; href: string }) {
       <SidebarMenuButton
         isActive={isActive}
         tooltip={item.title}
-        render={<Link to={item.url} onClick={() => setOpenMobile(false)} />}
+        render={
+          <Link
+            to={item.url}
+            preload={isMobile ? false : undefined}
+            onClick={() => setOpenMobile(false)}
+          />
+        }
       >
         {item.icon && <item.icon className='shrink-0' />}
         <span className='min-w-0 flex-1 truncate'>{item.title}</span>
@@ -165,7 +171,7 @@ function SidebarMenuCollapsible({
   item: NavCollapsible
   href: string
 }) {
-  const { setOpenMobile } = useSidebar()
+  const { isMobile, setOpenMobile } = useSidebar()
   // 检查当前路径是否匹配子菜单项
   const isSubItemActive = checkIsActive(href, item)
   // 使用受控状态，初始值基于当前路径是否匹配
@@ -207,6 +213,7 @@ function SidebarMenuCollapsible({
                   render={
                     <Link
                       to={subItem.url}
+                      preload={isMobile ? false : undefined}
                       onClick={() => setOpenMobile(false)}
                     />
                   }

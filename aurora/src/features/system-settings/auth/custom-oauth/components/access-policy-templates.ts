@@ -16,13 +16,25 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-// Re-export all library functions
-export * from './channel-actions'
-export * from './advanced-custom'
-export * from './channel-form-errors'
-export * from './channel-form'
-export * from './channel-type-config'
-export * from './channel-utils'
-export * from './multi-key-utils'
-export * from './model-mapping-validation'
-export * from './model-categories'
+export const ACCESS_POLICY_TEMPLATES = {
+  levelAndActive: `{
+  "logic": "and",
+  "conditions": [
+    { "field": "trust_level", "op": "gte", "value": 2 },
+    { "field": "active", "op": "eq", "value": true }
+  ]
+}`,
+  orgOrRole: `{
+  "logic": "or",
+  "conditions": [
+    { "field": "org", "op": "eq", "value": "core" },
+    { "field": "roles", "op": "contains", "value": "admin" }
+  ]
+}`,
+} as const
+
+export const ACCESS_DENIED_MESSAGE_TEMPLATES = {
+  level:
+    'Requires level {{required}}; your current level is {{current}} (field: {{field}}).',
+  org: 'Access is limited to approved organizations or roles. Organization: {{current.org}}; roles: {{current.roles}}.',
+} as const

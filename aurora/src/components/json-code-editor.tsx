@@ -35,6 +35,8 @@ export type JsonCodeEditorProps = Omit<ComponentProps<'div'>, 'onChange'> & {
   onChange: (value: string) => void
   disabled?: boolean
   heightClassName?: string
+  ariaLabel?: string
+  placeholder?: string
 }
 
 export function JsonCodeEditor({
@@ -42,6 +44,8 @@ export function JsonCodeEditor({
   onChange,
   disabled,
   heightClassName = 'h-56 min-h-56 max-h-56',
+  ariaLabel,
+  placeholder,
   className,
   id,
   'aria-describedby': ariaDescribedBy,
@@ -266,8 +270,10 @@ export function JsonCodeEditor({
         <Textarea
           ref={textareaRef}
           id={id}
+          aria-label={ariaLabel}
           aria-describedby={ariaDescribedBy}
           aria-invalid={ariaInvalid}
+          placeholder={placeholder}
           value={value}
           disabled={disabled}
           onChange={(event) => onChange(event.target.value)}
