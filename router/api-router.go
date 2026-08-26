@@ -289,6 +289,7 @@ func SetApiRouter(router *gin.Engine) {
 		topupAdminRoute.Use(middleware.AdminAuth())
 		{
 			topupAdminRoute.GET("/", controller.AdminListTopUpOrders)
+			topupAdminRoute.GET("/wondergate-status", controller.AdminQueryWonderGateOrderStatus)
 		}
 
 		logRoute := apiRouter.Group("/log")
