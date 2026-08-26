@@ -58,10 +58,17 @@ export function useOAuthLogin(status: SystemStatus | null) {
     } catch (_error) {
       // ignore store reset errors
     }
-    try {
-      await logout()
-    } catch (_error) {
-      // ignore logout errors
+    // Only call the (CriticalRateLimit-gated: 20 req / 20 min per IP) logout
+    // endpoint when a session actually exists. On the sign-in page the user is
+    // usually signed out, so an unconditional logout doubles the rate-limit
+    // cost of every OAuth click and hastens 429s — especially while all users
+    // share one client IP behind CloudFront.
+    if (useAuthStore.getState().auth.session?.sid) {
+      try {
+        await logout()
+      } catch (_error) {
+        // ignore logout errors
+      }
     }
   }
 
