@@ -1,8 +1,11 @@
 package service
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"testing"
 
+	"github.com/QuantumNous/new-api/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -12,6 +15,56 @@ type wonderGateSearchEntry = struct {
 	Message       string `json:"message"`
 	TransactionID string `json:"transactionId"`
 	UniqueID      string `json:"uniqueId"`
+}
+
+// Contract test against the documented notification signing scheme: sort all
+// parameters except sign by key ASCII order, concatenate the non-empty values,
+// append the SecretKey, SHA256-hex. A drift here would silently 401 every
+// genuine gateway notification.
+func TestVerifyWonderGateNotification(t *testing.T) {
+	origSandbox := setting.WonderGateSandbox
+	origSecret := setting.WonderGateSandboxSecretKey
+	setting.WonderGateSandbox = true
+	setting.WonderGateSandboxSecretKey = "test-secret"
+	t.Cleanup(func() {
+		setting.WonderGateSandbox = origSandbox
+		setting.WonderGateSandboxSecretKey = origSecret
+	})
+
+	// Keys in ASCII order: appId, code, timestamp, transactionAmount,
+	// transactionCurrency, transactionId, transactionType, uniqueId.
+	// emptyField ("") and the nested object are excluded per spec; numbers
+	// keep their raw JSON form.
+	concat := "77" + "100" + "1756180000" + "20.00" + "USD" + "WG-SIGN-TEST" + "Sale" + "987654321" + "test-secret"
+	sum := sha256.Sum256([]byte(concat))
+	sign := hex.EncodeToString(sum[:])
+
+	body := `{
+		"appId": 77,
+		"code": 100,
+		"timestamp": 1756180000,
+		"transactionAmount": "20.00",
+		"transactionCurrency": "USD",
+		"transactionId": "WG-SIGN-TEST",
+		"transactionType": "Sale",
+		"uniqueId": "987654321",
+		"emptyField": "",
+		"billingAddress": {"country": "US"},
+		"sign": "` + sign + `"
+	}`
+
+	fields, err := VerifyWonderGateNotification([]byte(body))
+	require.NoError(t, err, "a correctly signed notification must verify")
+	code, ok := WonderGateNotificationInt(fields, "code")
+	require.True(t, ok)
+	assert.Equal(t, WonderGateCodeTransactionSuccess, code)
+
+	tampered := []byte(`{"appId":77,"code":100,"timestamp":1756180000,"transactionAmount":"99.00","transactionCurrency":"USD","transactionId":"WG-SIGN-TEST","transactionType":"Sale","uniqueId":"987654321","sign":"` + sign + `"}`)
+	_, err = VerifyWonderGateNotification(tampered)
+	require.Error(t, err, "a tampered amount must fail verification")
+
+	_, err = VerifyWonderGateNotification([]byte(`{"code":100}`))
+	require.Error(t, err, "a notification without sign must be rejected")
 }
 
 // Regression: the /search/list/order endpoint returned OTHER orders alongside
