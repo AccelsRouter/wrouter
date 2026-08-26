@@ -183,3 +183,12 @@ func (r *RefundRequest) Reject(adminId int, note string) error {
 		"processed_at": &now,
 	}).Error
 }
+
+// InvalidateUserCache deletes the cached user snapshot so the next read
+// repopulates from the database. Fork wrapper over the (rc.25 unexported)
+// invalidateUserCache: refund settlement performs a raw in-transaction quota
+// deduction that bypasses the atomic cache-delta path, so the cached balance
+// must be busted explicitly afterwards.
+func InvalidateUserCache(userId int) error {
+	return invalidateUserCache(userId)
+}
