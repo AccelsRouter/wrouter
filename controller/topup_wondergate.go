@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -260,4 +262,80 @@ func WonderGateWebhook(c *gin.Context) {
 
 	// Acknowledge receipt (HTTP 200) so the gateway stops retrying.
 	c.Status(http.StatusOK)
+}
+
+// wonderGateReconcileInterval is how often pending orders are polled.
+const wonderGateReconcileInterval = 30 * time.Second
+
+// wonderGateReconcileWindow bounds which pending orders are polled — anything
+// older than this is assumed abandoned/expired and left alone.
+const wonderGateReconcileWindow = 2 * time.Hour
+
+// StartWonderGateReconcileTask launches a background poller that recovers
+// WonderGate top-ups whose webhook never arrived (observed in production: the
+// gateway's async notification can fail to reach us entirely, and it only
+// retries 4 times within 30 minutes). Mirrors StartWCheckoutReconcileTask.
+// Idempotent: RechargeWonderGate no-ops on already-credited orders, so this
+// is safe alongside live webhooks.
+func StartWonderGateReconcileTask() {
+	go func() {
+		ticker := time.NewTicker(wonderGateReconcileInterval)
+		defer ticker.Stop()
+		for range ticker.C {
+			reconcileWonderGateOrders()
+		}
+	}()
+}
+
+func reconcileWonderGateOrders() {
+	// Only the master node polls — replicas would just duplicate the work.
+	if !common.IsMasterNode {
+		return
+	}
+	if !isWonderGateTopUpEnabled() {
+		return
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			common.SysError(fmt.Sprintf("wondergate reconcile panic: %v", r))
+		}
+	}()
+
+	since := time.Now().Add(-wonderGateReconcileWindow).Unix()
+	pending, err := model.GetPendingTopUpsByProvider(model.PaymentProviderWonderGate, since)
+	if err != nil {
+		common.SysError("wondergate reconcile: query pending failed: " + err.Error())
+		return
+	}
+	if len(pending) == 0 {
+		return
+	}
+
+	ctx := context.Background()
+	for _, topUp := range pending {
+		code, qErr := service.QueryWonderGateOrderCode(ctx, topUp.TradeNo, topUp.CreateTime)
+		if qErr != nil {
+			// Not yet queryable (user may never have reached the payment
+			// page) or a transient gateway error; try again next tick.
+			continue
+		}
+		switch code {
+		case service.WonderGateCodeTransactionSuccess:
+			LockOrder(topUp.TradeNo)
+			if rErr := model.RechargeWonderGate(topUp.TradeNo, "reconcile"); rErr != nil {
+				logger.LogError(ctx, fmt.Sprintf("WonderGate 对账补单失败 trade_no=%s error=%q", topUp.TradeNo, rErr.Error()))
+			} else {
+				logger.LogInfo(ctx, fmt.Sprintf("WonderGate 对账补单成功 trade_no=%s", topUp.TradeNo))
+			}
+			UnlockOrder(topUp.TradeNo)
+		case service.WonderGateCodeTransactionDeclined, service.WonderGateCodeOrderClosed:
+			if uErr := model.UpdatePendingTopUpStatus(topUp.TradeNo, model.PaymentProviderWonderGate, common.TopUpStatusFailed); uErr != nil &&
+				!errors.Is(uErr, model.ErrTopUpNotFound) &&
+				!errors.Is(uErr, model.ErrTopUpStatusInvalid) {
+				logger.LogError(ctx, fmt.Sprintf("WonderGate 对账标记失败 trade_no=%s error=%q", topUp.TradeNo, uErr.Error()))
+			}
+		}
+		// 102 (pending) and anything else: leave for the next tick / webhook.
+	}
 }

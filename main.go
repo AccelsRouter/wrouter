@@ -160,6 +160,10 @@ func main() {
 	// WCheckout order reconciliation poller (safety net for lost webhooks)
 	controller.StartWCheckoutReconcileTask()
 
+	// WonderGate order reconciliation poller (its async notification has been
+	// observed to never reach us; it only retries 4 times in 30 minutes)
+	controller.StartWonderGateReconcileTask()
+
 	if os.Getenv("BATCH_UPDATE_ENABLED") == "true" {
 		common.BatchUpdateEnabled = true
 		common.SysLog("batch update enabled with interval " + strconv.Itoa(common.BatchUpdateInterval) + "s")

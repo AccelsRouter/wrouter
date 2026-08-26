@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -26,13 +27,24 @@ import (
 // over the sorted non-empty parameter values + secretKey.
 
 const (
-	wonderGateCheckoutPath = "/checkout/payment"
+	wonderGateCheckoutPath    = "/checkout/payment"
+	wonderGateSearchOrderPath = "/search/list/order"
 
-	// Notification result codes (see appendix).
-	WonderGateCodeTransactionSuccess = 100
-	WonderGateCodeRefundSuccess      = 111
+	// Notification / transaction result codes (see appendix).
+	WonderGateCodeTransactionSuccess  = 100
+	WonderGateCodeTransactionDeclined = 101
+	WonderGateCodeTransactionPending  = 102
+	WonderGateCodeOrderClosed         = 103
+	WonderGateCodeRefundSuccess       = 111
+	wonderGateCodeSearchSuccess       = 121
 
 	wonderGateHTTPTimeout = 20 * time.Second
+
+	// Order-query date params ("2006-01-02 15:04:05"); the gateway caps the
+	// range at one month. A ±24h pad absorbs any timezone skew between our
+	// clock and the gateway's.
+	wonderGateSearchTimeLayout = "2006-01-02 15:04:05"
+	wonderGateSearchTimePad    = 24 * time.Hour
 )
 
 // WonderGateCheckoutRequest is the subset of /checkout/payment fields we send.
@@ -217,4 +229,77 @@ func WonderGateNotificationString(fields map[string]json.RawMessage, key string)
 		return ""
 	}
 	return s
+}
+
+// wonderGateOrderSearchResult is the parsed GET /search/list/order response.
+// Each data entry's code carries the transaction status (100 approved, 101
+// declined, 102 pending, 103 closed).
+type wonderGateOrderSearchResult struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    []struct {
+		Code    int    `json:"code"`
+		Message string `json:"message"`
+	} `json:"data"`
+}
+
+// ErrWonderGateOrderNotFound is returned when the gateway has no record of
+// the queried transactionId (e.g. the user never reached the payment page).
+var ErrWonderGateOrderNotFound = errors.New("wondergate order not found")
+
+// QueryWonderGateOrderCode looks up a transaction by our transactionId via
+// GET /search/list/order and returns its status code (100 approved, 101
+// declined, 102 pending, 103 closed). transactionId is unique per merchant,
+// so at most one entry matches; when several appear (paranoia), an approved
+// entry wins. createdAtUnix bounds the mandatory startDate/endingDate params.
+func QueryWonderGateOrderCode(ctx context.Context, transactionId string, createdAtUnix int64) (int, error) {
+	merchantId, secretKey, _ := setting.WonderGateActiveCredentials()
+	if merchantId == "" || secretKey == "" {
+		return 0, errors.New("WonderGate 凭证未配置")
+	}
+	if transactionId == "" {
+		return 0, errors.New("未提供交易单号")
+	}
+
+	createdAt := time.Unix(createdAtUnix, 0)
+	params := url.Values{}
+	params.Set("transactionId", transactionId)
+	params.Set("startDate", createdAt.Add(-wonderGateSearchTimePad).Format(wonderGateSearchTimeLayout))
+	params.Set("endingDate", time.Now().Add(wonderGateSearchTimePad).Format(wonderGateSearchTimeLayout))
+
+	reqURL := strings.TrimRight(setting.WonderGateGatewayBaseURL(), "/") + wonderGateSearchOrderPath + "?" + params.Encode()
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return 0, err
+	}
+	httpReq.SetBasicAuth(merchantId, secretKey)
+
+	client := &http.Client{Timeout: wonderGateHTTPTimeout}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return 0, fmt.Errorf("WonderGate 订单查询失败: HTTP %d", resp.StatusCode)
+	}
+
+	var result wonderGateOrderSearchResult
+	if err := common.DecodeJson(resp.Body, &result); err != nil {
+		return 0, err
+	}
+	if result.Code != wonderGateCodeSearchSuccess {
+		return 0, fmt.Errorf("WonderGate 订单查询失败: code=%d message=%q", result.Code, result.Message)
+	}
+	if len(result.Data) == 0 {
+		return 0, ErrWonderGateOrderNotFound
+	}
+	code := result.Data[0].Code
+	for _, item := range result.Data {
+		if item.Code == WonderGateCodeTransactionSuccess {
+			return item.Code, nil
+		}
+		code = item.Code
+	}
+	return code, nil
 }
