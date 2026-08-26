@@ -3,7 +3,10 @@
 package controller
 
 import (
+	"fmt"
+
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/gin-gonic/gin"
@@ -82,5 +85,91 @@ func AdminQueryWonderGateOrderStatus(c *gin.Context) {
 			"code":    code,
 			"meaning": meaning,
 		},
+	})
+}
+
+// AdminResyncWonderGateOrder — POST /api/admin/topup-orders/wondergate-resync
+// {trade_no}. Queries the gateway for the transaction's real status and makes
+// the local order agree with it:
+//   - gateway approved  + local pending  -> credit (idempotent RechargeWonderGate)
+//   - gateway declined/closed + local pending -> mark failed
+//   - gateway declined/closed + local success -> reverse the credit (deduct)
+//   - anything else -> no change
+// The gateway is the source of truth; nothing is mutated when its status
+// cannot be determined.
+func AdminResyncWonderGateOrder(c *gin.Context) {
+	var req struct {
+		TradeNo string `json:"trade_no"`
+	}
+	if err := common.DecodeJson(c.Request.Body, &req); err != nil || req.TradeNo == "" {
+		common.ApiErrorMsg(c, "trade_no is required")
+		return
+	}
+	topUp := model.GetTopUpByTradeNo(req.TradeNo)
+	if topUp == nil {
+		common.ApiErrorMsg(c, "order not found")
+		return
+	}
+	if topUp.PaymentProvider != model.PaymentProviderWonderGate {
+		common.ApiErrorMsg(c, "not a WonderGate order")
+		return
+	}
+
+	code, err := service.QueryWonderGateOrderCode(c.Request.Context(), topUp.TradeNo, topUp.CreateTime)
+	if err != nil {
+		common.ApiErrorMsg(c, "gateway query failed: "+err.Error())
+		return
+	}
+	meaning := wonderGateCodeMeanings[code]
+	if meaning == "" {
+		meaning = "unknown"
+	}
+
+	LockOrder(topUp.TradeNo)
+	defer UnlockOrder(topUp.TradeNo)
+
+	statusBefore := topUp.Status
+	action := "none"
+	var actErr error
+	switch code {
+	case service.WonderGateCodeTransactionSuccess:
+		if statusBefore == common.TopUpStatusPending {
+			if actErr = model.RechargeWonderGate(topUp.TradeNo, c.ClientIP()); actErr == nil {
+				action = "credited"
+			}
+		} else {
+			action = "consistent"
+		}
+	case service.WonderGateCodeTransactionDeclined, service.WonderGateCodeOrderClosed:
+		switch statusBefore {
+		case common.TopUpStatusSuccess:
+			if actErr = model.ReverseWonderGateTopUp(topUp.TradeNo, c.ClientIP()); actErr == nil {
+				action = "reversed"
+				logger.LogWarn(c.Request.Context(), fmt.Sprintf(
+					"WonderGate 对账冲正 trade_no=%s gateway_code=%d operator_ip=%s", topUp.TradeNo, code, c.ClientIP()))
+			}
+		case common.TopUpStatusPending:
+			if actErr = model.UpdatePendingTopUpStatus(topUp.TradeNo, model.PaymentProviderWonderGate, common.TopUpStatusFailed); actErr == nil {
+				action = "marked_failed"
+			}
+		default:
+			action = "consistent"
+		}
+	}
+	if actErr != nil {
+		common.ApiErrorMsg(c, "resync failed: "+actErr.Error())
+		return
+	}
+
+	after := topUp.Status
+	if fresh := model.GetTopUpByTradeNo(topUp.TradeNo); fresh != nil {
+		after = fresh.Status
+	}
+	common.ApiSuccess(c, gin.H{
+		"trade_no":            topUp.TradeNo,
+		"gateway":             gin.H{"code": code, "meaning": meaning},
+		"local_status_before": statusBefore,
+		"local_status_after":  after,
+		"action":              action,
 	})
 }

@@ -1,5 +1,12 @@
 {
   "translation": {
+    "Sync Status": "同步狀態",
+    "Gateway approved — order credited": "網關確認已支付，訂單已入賬",
+    "Gateway shows unpaid — credit reversed": "網關確認未支付，已沖正扣回",
+    "Gateway shows unpaid — order marked failed": "網關確認未支付，訂單已標記失敗",
+    "Already consistent with gateway": "與網關狀態一致，無需處理",
+    "Gateway still pending, no change": "網關側仍在處理中，未做變更",
+    "Sync failed": "同步失敗",
     "{{count}} / {{max}} groups selected": "已選擇 {{count}} / {{max}} 個分組",
     "{{protocol}} auth name": "{{protocol}} 驗證名稱",
     "{{protocol}} auth value": "{{protocol}} 驗證值",

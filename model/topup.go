@@ -858,3 +858,62 @@ func RechargeWonderGate(tradeNo string, callerIp string) (err error) {
 
 	return nil
 }
+
+// ReverseWonderGateTopUp undoes a credited WonderGate top-up after the gateway
+// confirmed the transaction did NOT succeed (declined/closed): flips the order
+// from success back to failed and deducts the previously credited quota. The
+// caller (admin resync) must have verified the gateway status first; this is
+// never invoked automatically from a background task.
+func ReverseWonderGateTopUp(tradeNo string, callerIp string) (err error) {
+	if tradeNo == "" {
+		return errors.New("未提供支付单号")
+	}
+
+	var quotaToDeduct int
+	topUp := &TopUp{}
+
+	refCol := "`trade_no`"
+	if common.UsingMainDatabase(common.DatabaseTypePostgreSQL) {
+		refCol = `"trade_no"`
+	}
+
+	err = DB.Transaction(func(tx *gorm.DB) error {
+		if err := lockForUpdate(tx).Where(refCol+" = ?", tradeNo).First(topUp).Error; err != nil {
+			return errors.New("充值订单不存在")
+		}
+		if topUp.PaymentProvider != PaymentProviderWonderGate {
+			return ErrPaymentMethodMismatch
+		}
+		if topUp.Status != common.TopUpStatusSuccess {
+			return errors.New("仅已入账订单可冲正")
+		}
+
+		// Mirror the credit formula so the deduction matches what was added.
+		quotaToDeduct = common.QuotaFromDecimal(
+			decimal.NewFromInt(topUp.Amount).Mul(decimal.NewFromFloat(common.QuotaPerUnit)))
+		if quotaToDeduct <= 0 {
+			return errors.New("无效的冲正额度")
+		}
+
+		topUp.Status = common.TopUpStatusFailed
+		if err := tx.Save(topUp).Error; err != nil {
+			return err
+		}
+		return tx.Model(&User{}).Where("id = ?", topUp.UserId).
+			Update("quota", gorm.Expr("quota - ?", quotaToDeduct)).Error
+	})
+	if err != nil {
+		common.SysError("wondergate reverse failed: " + err.Error())
+		return err
+	}
+
+	// The raw in-tx deduction bypasses the atomic cache-delta path; bust the
+	// cached snapshot so the corrected balance is visible immediately.
+	_ = invalidateUserCache(topUp.UserId)
+	RecordTopupLog(topUp.UserId,
+		fmt.Sprintf("WonderGate 对账冲正：网关确认交易未成功，扣回额度: %v，订单金额: %.2f",
+			logger.FormatQuota(quotaToDeduct), topUp.Money),
+		callerIp, topUp.PaymentMethod, PaymentMethodWonderGate)
+	return nil
+}
+

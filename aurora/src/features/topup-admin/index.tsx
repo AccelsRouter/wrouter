@@ -29,7 +29,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { SectionPageLayout } from '@/components/layout'
-import { completeTopUp, listTopUps } from './api'
+import { completeTopUp, listTopUps, resyncWonderGateOrder } from './api'
 import type { TopUpOrder } from './types'
 
 const PAGE_SIZE = 20
@@ -58,6 +58,24 @@ export function TopUpAdmin() {
     },
     onError: (e) => {
       toast.error(e instanceof Error ? e.message : t('Reconcile failed'))
+    },
+  })
+
+  const resyncMutation = useMutation({
+    mutationFn: (tradeNo: string) => resyncWonderGateOrder(tradeNo),
+    onSuccess: (result) => {
+      const messages: Record<string, string> = {
+        credited: t('Gateway approved — order credited'),
+        reversed: t('Gateway shows unpaid — credit reversed'),
+        marked_failed: t('Gateway shows unpaid — order marked failed'),
+        consistent: t('Already consistent with gateway'),
+        none: t('Gateway still pending, no change'),
+      }
+      toast.success(messages[result.action] ?? result.action)
+      queryClient.invalidateQueries({ queryKey: ['admin-topup-list'] })
+    },
+    onError: (e) => {
+      toast.error(e instanceof Error ? e.message : t('Sync failed'))
     },
   })
 
@@ -159,15 +177,27 @@ export function TopUpAdmin() {
                         {fmtTime(o.complete_time)}
                       </Td>
                       <Td className='text-right'>
-                        {o.status !== 'success' && (
-                          <Button
-                            size='sm'
-                            variant='outline'
-                            onClick={() => setConfirmOrder(o)}
-                          >
-                            {t('Reconcile')}
-                          </Button>
-                        )}
+                        <div className='flex justify-end gap-2'>
+                          {o.payment_provider === 'wondergate' && (
+                            <Button
+                              size='sm'
+                              variant='outline'
+                              disabled={resyncMutation.isPending}
+                              onClick={() => resyncMutation.mutate(o.trade_no)}
+                            >
+                              {t('Sync Status')}
+                            </Button>
+                          )}
+                          {o.status !== 'success' && (
+                            <Button
+                              size='sm'
+                              variant='outline'
+                              onClick={() => setConfirmOrder(o)}
+                            >
+                              {t('Reconcile')}
+                            </Button>
+                          )}
+                        </div>
                       </Td>
                     </tr>
                   ))}

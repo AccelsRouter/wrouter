@@ -290,6 +290,7 @@ func SetApiRouter(router *gin.Engine) {
 		{
 			topupAdminRoute.GET("/", controller.AdminListTopUpOrders)
 			topupAdminRoute.GET("/wondergate-status", controller.AdminQueryWonderGateOrderStatus)
+			topupAdminRoute.POST("/wondergate-resync", controller.AdminResyncWonderGateOrder)
 		}
 
 		logRoute := apiRouter.Group("/log")

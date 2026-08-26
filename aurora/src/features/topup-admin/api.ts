@@ -36,3 +36,30 @@ export async function completeTopUp(tradeNo: string): Promise<void> {
   if (!res.data?.success)
     throw new Error(res.data?.message || 'Failed to complete order')
 }
+
+export type WonderGateResyncResult = {
+  trade_no: string
+  gateway: { code: number; meaning: string }
+  local_status_before: string
+  local_status_after: string
+  action:
+    | 'credited'
+    | 'reversed'
+    | 'marked_failed'
+    | 'consistent'
+    | 'none'
+}
+
+// Queries the gateway for the order's real status and makes the local order
+// agree with it (credit / mark failed / reverse a wrong credit).
+export async function resyncWonderGateOrder(
+  tradeNo: string
+): Promise<WonderGateResyncResult> {
+  const res = await api.post<ApiResp<WonderGateResyncResult>>(
+    '/api/admin/topup-orders/wondergate-resync',
+    { trade_no: tradeNo }
+  )
+  if (!res.data?.success || !res.data.data)
+    throw new Error(res.data?.message || 'Failed to sync order status')
+  return res.data.data
+}

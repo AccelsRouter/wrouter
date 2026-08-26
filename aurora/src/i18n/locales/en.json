@@ -1,5 +1,12 @@
 {
   "translation": {
+    "Sync Status": "Sync Status",
+    "Gateway approved — order credited": "Gateway approved — order credited",
+    "Gateway shows unpaid — credit reversed": "Gateway shows unpaid — credit reversed",
+    "Gateway shows unpaid — order marked failed": "Gateway shows unpaid — order marked failed",
+    "Already consistent with gateway": "Already consistent with gateway",
+    "Gateway still pending, no change": "Gateway still pending, no change",
+    "Sync failed": "Sync failed",
     "{{count}} / {{max}} groups selected": "{{count}} / {{max}} groups selected",
     "{{protocol}} auth name": "{{protocol}} auth name",
     "{{protocol}} auth value": "{{protocol}} auth value",
