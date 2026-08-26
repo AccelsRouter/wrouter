@@ -238,8 +238,10 @@ type wonderGateOrderSearchResult struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	Data    []struct {
-		Code    int    `json:"code"`
-		Message string `json:"message"`
+		Code          int    `json:"code"`
+		Message       string `json:"message"`
+		TransactionID string `json:"transactionId"`
+		UniqueID      string `json:"uniqueId"`
 	} `json:"data"`
 }
 
@@ -249,9 +251,14 @@ var ErrWonderGateOrderNotFound = errors.New("wondergate order not found")
 
 // QueryWonderGateOrderCode looks up a transaction by our transactionId via
 // GET /search/list/order and returns its status code (100 approved, 101
-// declined, 102 pending, 103 closed). transactionId is unique per merchant,
-// so at most one entry matches; when several appear (paranoia), an approved
-// entry wins. createdAtUnix bounds the mandatory startDate/endingDate params.
+// declined, 102 pending, 103 closed).
+//
+// SAFETY: the gateway has been observed to return transactions OTHER than the
+// queried transactionId in the result window (a declined $1 order was almost
+// credited off another order's approved entry). Every entry is therefore
+// verified against our transactionId client-side, and entries that do not
+// echo a transactionId are never trusted for crediting.
+// createdAtUnix bounds the mandatory startDate/endingDate params.
 func QueryWonderGateOrderCode(ctx context.Context, transactionId string, createdAtUnix int64) (int, error) {
 	merchantId, secretKey, _ := setting.WonderGateActiveCredentials()
 	if merchantId == "" || secretKey == "" {
@@ -291,15 +298,49 @@ func QueryWonderGateOrderCode(ctx context.Context, transactionId string, created
 	if result.Code != wonderGateCodeSearchSuccess {
 		return 0, fmt.Errorf("WonderGate 订单查询失败: code=%d message=%q", result.Code, result.Message)
 	}
+	return matchWonderGateOrderCode(result, transactionId)
+}
+
+// matchWonderGateOrderCode attributes a status code from the search result to
+// OUR transactionId. This is a billing boundary: crediting on an entry that
+// belongs to a different order turns someone else's approval into free quota,
+// so only an exact transactionId echo is trusted and ambiguity always errs.
+func matchWonderGateOrderCode(result wonderGateOrderSearchResult, transactionId string) (int, error) {
 	if len(result.Data) == 0 {
 		return 0, ErrWonderGateOrderNotFound
 	}
-	code := result.Data[0].Code
+
+	matched := false
+	echoed := false
+	code := 0
 	for _, item := range result.Data {
-		if item.Code == WonderGateCodeTransactionSuccess {
-			return item.Code, nil
+		if item.TransactionID != "" {
+			echoed = true
 		}
+		if item.TransactionID != transactionId {
+			continue
+		}
+		matched = true
 		code = item.Code
+		if code == WonderGateCodeTransactionSuccess {
+			break
+		}
 	}
-	return code, nil
+	if matched {
+		return code, nil
+	}
+	if !echoed {
+		// The gateway did not echo transactionId on any entry, so entries
+		// cannot be attributed to our order. Never credit on ambiguity.
+		common.SysError(fmt.Sprintf(
+			"WonderGate 订单查询结果无 transactionId 回显，拒绝对账 trade_no=%s entries=%d first_code=%d",
+			transactionId, len(result.Data), result.Data[0].Code))
+		return 0, fmt.Errorf("WonderGate 订单查询结果无法安全匹配 trade_no=%s", transactionId)
+	}
+	// Entries echo transactionIds but none is ours: the filter returned other
+	// orders; treat our order as not found and log what came back.
+	common.SysError(fmt.Sprintf(
+		"WonderGate 订单查询过滤失效：返回 %d 条均非目标单 trade_no=%s first_txn=%s",
+		len(result.Data), transactionId, result.Data[0].TransactionID))
+	return 0, ErrWonderGateOrderNotFound
 }
