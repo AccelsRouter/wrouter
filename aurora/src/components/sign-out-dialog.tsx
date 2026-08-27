@@ -18,10 +18,9 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-
+import { clearAuthentication } from '@/lib/auth-session'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { logout } from '@/features/auth/api'
-import { useAuthStore } from '@/stores/auth-store'
 
 interface SignOutDialogProps {
   open: boolean
@@ -30,7 +29,6 @@ interface SignOutDialogProps {
 
 export function SignOutDialog({ open, onOpenChange }: SignOutDialogProps) {
   const { t } = useTranslation()
-  const { auth } = useAuthStore()
 
   const handleSignOut = async () => {
     try {
@@ -38,14 +36,8 @@ export function SignOutDialog({ open, onOpenChange }: SignOutDialogProps) {
     } catch {
       /* empty */
     }
-    auth.reset()
-    try {
-      if (typeof window !== 'undefined') {
-        window.localStorage.removeItem('uid')
-      }
-    } catch {
-      /* empty */
-    }
+    // Clears token/session/uid and broadcasts the sign-out to other tabs.
+    clearAuthentication()
     toast.success(t('Signed out'))
     // Refresh the page to clear all state and update UI
     if (typeof window !== 'undefined') {

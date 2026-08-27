@@ -16,27 +16,35 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { type QueryClient } from '@tanstack/react-query'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { useEffect } from 'react'
+import { useQueryClient, type QueryClient } from '@tanstack/react-query'
 import {
   createRootRouteWithContext,
   Outlet,
   redirect,
+  useNavigate,
 } from '@tanstack/react-router'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-import { useEffect } from 'react'
-
-import { NavigationProgress } from '@/components/navigation-progress'
-import { Toaster } from '@/components/ui/sonner'
+import { useAuthStore } from '@/stores/auth-store'
+import {
+  bootstrapAuthentication,
+  clearAuthentication,
+} from '@/lib/auth-session'
+import { subscribeAuthSessionEvents } from '@/lib/auth-session-sync'
 import { ThemeCustomizationProvider } from '@/context/theme-customization-provider'
+import { useSystemConfig } from '@/hooks/use-system-config'
+import { Toaster } from '@/components/ui/sonner'
+import { NavigationProgress } from '@/components/navigation-progress'
 import { saveAffiliateCode } from '@/features/auth/lib/storage'
 import { GeneralError } from '@/features/errors/general-error'
 import { NotFoundError } from '@/features/errors/not-found-error'
 import { getSetupStatus } from '@/features/setup/api'
-import { useSystemConfig } from '@/hooks/use-system-config'
-import { bootstrapAuthentication } from '@/lib/auth-session'
 
 function RootComponent() {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
   // Load system configuration (logo, system name, etc.) from backend
   const { logo } = useSystemConfig({ autoLoad: true })
 
@@ -74,6 +82,31 @@ function RootComponent() {
       saveAffiliateCode(aff)
     }
   }, [])
+
+  // Cross-tab auth session sync: a login/logout in another tab of the same
+  // browser propagates here (BroadcastChannel with a localStorage fallback).
+  useEffect(
+    () =>
+      subscribeAuthSessionEvents((event) => {
+        const currentSID = useAuthStore.getState().auth.session?.sid
+
+        if (event.kind === 'authenticated') {
+          if (event.sid === currentSID) return
+          if (currentSID) {
+            clearAuthentication(false)
+          }
+          window.location.reload()
+          return
+        }
+
+        if (currentSID && event.sid === currentSID) {
+          queryClient.clear()
+          clearAuthentication(false)
+          void navigate({ to: '/sign-in', replace: true })
+        }
+      }),
+    [navigate, queryClient]
+  )
 
   return (
     <ThemeCustomizationProvider>

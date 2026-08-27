@@ -29,13 +29,13 @@ For commercial licensing, please contact support@quantumnous.com
  * avoid recursion with the interceptors in `@/lib/api`.
  */
 import axios from 'axios'
-
-import { removeUserId, saveUserId } from '@/features/auth/lib/storage'
 import {
   useAuthStore,
   type AuthBundle,
   type LoginSession,
 } from '@/stores/auth-store'
+import { publishAuthSessionEvent } from '@/lib/auth-session-sync'
+import { removeUserId, saveUserId } from '@/features/auth/lib/storage'
 
 export type RefreshOutcome =
   | { kind: 'authenticated'; bundle: AuthBundle }
@@ -92,17 +92,28 @@ export function parseAuthBundle(value: unknown): AuthBundle | null {
 }
 
 /** Store a login/refresh bundle and mirror the user id into legacy storage. */
-export function applyAuthBundle(bundle: AuthBundle): void {
+export function applyAuthBundle(
+  bundle: AuthBundle,
+  synchronizeTabs = true
+): void {
+  const previousSID = useAuthStore.getState().auth.session?.sid
   useAuthStore.getState().auth.setBundle(bundle)
   if (bundle.user?.id != null) {
     saveUserId(bundle.user.id)
   }
+  if (synchronizeTabs && previousSID !== bundle.session.sid) {
+    publishAuthSessionEvent('authenticated', bundle.session.sid)
+  }
 }
 
 /** Clear all local dashboard auth state (token, session, cached user, uid). */
-export function clearAuthentication(): void {
+export function clearAuthentication(synchronizeTabs = true): void {
+  const sid = useAuthStore.getState().auth.session?.sid
   useAuthStore.getState().auth.reset()
   removeUserId()
+  if (synchronizeTabs && sid) {
+    publishAuthSessionEvent('signed_out', sid)
+  }
 }
 
 function nowInSeconds(): number {
@@ -113,19 +124,17 @@ async function runRefresh(): Promise<RefreshOutcome> {
   try {
     const response = await authClient.post('/api/user/auth/refresh')
     const data = isRecord(response.data) ? response.data : undefined
-    const bundle =
-      data?.success === true ? parseAuthBundle(data.data) : null
+    const bundle = data?.success === true ? parseAuthBundle(data.data) : null
     if (bundle) {
-      applyAuthBundle(bundle)
+      // Refresh restores the same session; don't broadcast to other tabs.
+      applyAuthBundle(bundle, false)
       return { kind: 'authenticated', bundle }
     }
     // A 2xx without a valid bundle means the server no longer recognises us.
-    clearAuthentication()
+    clearAuthentication(false)
     return { kind: 'anonymous' }
   } catch (error: unknown) {
-    const status = axios.isAxiosError(error)
-      ? (error.response?.status ?? 0)
-      : 0
+    const status = axios.isAxiosError(error) ? (error.response?.status ?? 0) : 0
     // Network / server hiccups are transient: keep any existing state and let
     // the caller retry later without forcing a sign-out.
     if (!status || status >= 500 || status === 429) {
@@ -133,7 +142,8 @@ async function runRefresh(): Promise<RefreshOutcome> {
       return { kind: 'transient_error', error }
     }
     // 401 / 4xx: the refresh cookie is missing or invalid -> anonymous.
-    clearAuthentication()
+    // Only a definitive 401 is broadcast to other tabs (matches upstream).
+    clearAuthentication(status === 401)
     return { kind: 'anonymous' }
   }
 }
