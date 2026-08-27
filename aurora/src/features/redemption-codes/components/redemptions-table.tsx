@@ -16,21 +16,19 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
-import { useMemo } from 'react'
+import { useMediaQuery } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-
+import { useTableUrlState } from '@/hooks/use-table-url-state'
 import {
   DISABLED_ROW_DESKTOP,
   DISABLED_ROW_MOBILE,
   DataTablePage,
   useDataTable,
 } from '@/components/data-table'
-import { useMediaQuery } from '@/hooks'
-import { useTableUrlState } from '@/hooks/use-table-url-state'
-
 import { getRedemptions, searchRedemptions } from '../api'
 import {
   ERROR_MESSAGES,
@@ -41,6 +39,7 @@ import { isRedemptionExpired } from '../lib'
 import type { Redemption } from '../types'
 import { DataTableBulkActions } from './data-table-bulk-actions'
 import { useRedemptionsColumns } from './redemptions-columns'
+import { RedemptionsMobileList } from './redemptions-mobile-list'
 import { useRedemptions } from './redemptions-provider'
 
 const route = getRouteApi('/_authenticated/redemption-codes/')
@@ -180,6 +179,7 @@ export function RedemptionsTable() {
           },
         ],
       }}
+      mobile={<RedemptionsMobileList table={table} isLoading={isLoading} />}
       getRowClassName={(row, { isMobile }) => {
         if (!isDisabledRedemptionRow(row.original)) return undefined
         return isMobile ? DISABLED_ROW_MOBILE : DISABLED_ROW_DESKTOP
