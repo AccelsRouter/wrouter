@@ -40,8 +40,6 @@ import type {
   WaffoPaymentResponse,
   WaffoPancakePaymentRequest,
   WaffoPancakePaymentResponse,
-  WCheckoutPaymentRequest,
-  WCheckoutPaymentResponse,
 } from './types'
 
 // ============================================================================
@@ -184,18 +182,6 @@ export async function requestWaffoPancakePayment(
   request: WaffoPancakePaymentRequest
 ): Promise<WaffoPancakePaymentResponse> {
   const res = await api.post('/api/user/waffo-pancake/pay', request, {
-    skipBusinessError: true,
-  } as Record<string, unknown>)
-  return res.data
-}
-
-/**
- * Request WCheckout (stablecoin) payment
- */
-export async function requestWCheckoutPayment(
-  request: WCheckoutPaymentRequest
-): Promise<WCheckoutPaymentResponse> {
-  const res = await api.post('/api/user/wcheckout/pay', request, {
     skipBusinessError: true,
   } as Record<string, unknown>)
   return res.data

@@ -332,21 +332,6 @@ export type BillingSettings = {
   // section (saved via /api/option/waffo-pancake/save).
   WaffoPancakeStoreID: string
   WaffoPancakeProductID: string
-  WCheckoutEnabled: boolean
-  WCheckoutSandbox: boolean
-  WCheckoutApiKey: string
-  WCheckoutApiSecret: string
-  WCheckoutSignKey: string
-  WCheckoutSandboxApiKey: string
-  WCheckoutSandboxApiSecret: string
-  WCheckoutSandboxSignKey: string
-  WCheckoutMerchantId: string
-  WCheckoutNotifyUrl: string
-  WCheckoutReturnUrl: string
-  WCheckoutUnitPrice: number
-  WCheckoutMinTopUp: number
-  WCheckoutExpiredIn: number
-  WCheckoutEnabledTokens: string
   WonderGateEnabled: boolean
   WonderGateSandbox: boolean
   WonderGateMerchantId: string

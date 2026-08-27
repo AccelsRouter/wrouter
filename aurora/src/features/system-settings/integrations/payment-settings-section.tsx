@@ -80,10 +80,6 @@ import {
   type WaffoSettingsValues,
 } from './waffo-settings-section'
 import {
-  WCheckoutSettingsSection,
-  type WCheckoutSettingsValues,
-} from './wcheckout-settings-section'
-import {
   WonderGateSettingsSection,
   type WonderGateSettingsValues,
 } from './wondergate-settings-section'
@@ -209,7 +205,6 @@ type PaymentSettingsSectionProps = {
   waffoPancakeDefaultValues: WaffoPancakeSettingsValues
   waffoPancakeProvisionedStoreID?: string
   waffoPancakeProvisionedProductID?: string
-  wcheckoutDefaultValues: WCheckoutSettingsValues
   wondergateDefaultValues: WonderGateSettingsValues
   complianceDefaults: PaymentComplianceDefaults
 }
@@ -229,7 +224,6 @@ export function PaymentSettingsSection({
   waffoPancakeDefaultValues,
   waffoPancakeProvisionedStoreID,
   waffoPancakeProvisionedProductID,
-  wcheckoutDefaultValues,
   wondergateDefaultValues,
   complianceDefaults,
 }: PaymentSettingsSectionProps) {
@@ -875,14 +869,13 @@ export function PaymentSettingsSection({
 
       <Tabs defaultValue='general' className='min-w-0'>
         <div className='overflow-x-auto pb-1'>
-          <TabsList className='grid min-w-[60rem] grid-cols-8'>
+          <TabsList className='grid min-w-[60rem] grid-cols-7'>
             <TabsTrigger value='general'>{t('General')}</TabsTrigger>
             <TabsTrigger value='epay'>Epay</TabsTrigger>
             <TabsTrigger value='stripe'>{t('Stripe')}</TabsTrigger>
             <TabsTrigger value='creem'>Creem</TabsTrigger>
             <TabsTrigger value='waffo-pancake'>Waffo Pancake</TabsTrigger>
             <TabsTrigger value='waffo'>Waffo</TabsTrigger>
-            <TabsTrigger value='wcheckout'>WCheckout</TabsTrigger>
             <TabsTrigger value='wondergate'>WonderGate</TabsTrigger>
           </TabsList>
         </div>
@@ -1627,10 +1620,6 @@ export function PaymentSettingsSection({
             </TabsContent>
         </SettingsForm>
       </Form>
-
-        <TabsContent value='wcheckout' className={paymentTabContentClassName}>
-          <WCheckoutSettingsSection defaultValues={wcheckoutDefaultValues} />
-        </TabsContent>
 
         <TabsContent value='wondergate' className={paymentTabContentClassName}>
           <WonderGateSettingsSection defaultValues={wondergateDefaultValues} />

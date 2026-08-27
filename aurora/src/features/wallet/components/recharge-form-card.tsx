@@ -25,10 +25,8 @@ import {
   Loader2,
   Receipt,
   WalletCards,
-  Coins,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from '@tanstack/react-router'
 import { formatNumber } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -114,12 +112,6 @@ interface RechargeFormCardProps {
   waffoMinTopup?: number
   onWaffoMethodSelect?: (method: WaffoPayMethod, index: number) => void
   enableWaffoPancakeTopup?: boolean
-  enableWCheckoutTopup?: boolean
-  wcheckoutMinTopup?: number
-  // Runs before navigating to the stablecoin (WCheckout) page. Returns
-  // false to abort (e.g. the 2FA guard opened). Mirrors the immediate
-  // check the other payment methods do on click.
-  onBeforeStablecoin?: () => Promise<boolean> | boolean
   enableWonderGateTopup?: boolean
   wondergateMinTopup?: number
   // Creates a WonderGate checkout and redirects to the hosted payment page.
@@ -154,15 +146,11 @@ export function RechargeFormCard({
   waffoMinTopup,
   onWaffoMethodSelect,
   enableWaffoPancakeTopup,
-  enableWCheckoutTopup,
-  wcheckoutMinTopup,
-  onBeforeStablecoin,
   enableWonderGateTopup,
   wondergateMinTopup,
   onWonderGatePay,
 }: RechargeFormCardProps) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const [localAmount, setLocalAmount] = useState(topupAmount.toString())
 
   useEffect(() => {
@@ -186,7 +174,6 @@ export function RechargeFormCard({
     topupInfo?.enable_stripe_topup ||
     enableWaffoTopup ||
     enableWaffoPancakeTopup ||
-    enableWCheckoutTopup ||
     enableWonderGateTopup
   const hasAnyTopup = hasConfigurableTopup || enableCreemTopup
   const hasStandardPaymentMethods =
@@ -369,50 +356,8 @@ export function RechargeFormCard({
                 <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
                   {t('Payment Method')}
                 </Label>
-                {hasStandardPaymentMethods || enableWCheckoutTopup || enableWonderGateTopup ? (
+                {hasStandardPaymentMethods || enableWonderGateTopup ? (
                   <div className='grid grid-cols-2 gap-1.5 sm:gap-3 lg:grid-cols-3'>
-                    {enableWCheckoutTopup &&
-                      (() => {
-                        const wcMin = wcheckoutMinTopup || 0
-                        const belowMin = wcMin > topupAmount
-                        const button = (
-                          <Button
-                            key='__stablecoin'
-                            variant='outline'
-                            onClick={async () => {
-                              if (
-                                onBeforeStablecoin &&
-                                !(await onBeforeStablecoin())
-                              ) {
-                                return
-                              }
-                              void navigate({
-                                to: '/wallet/wcheckout',
-                                search: { amount: topupAmount },
-                              })
-                            }}
-                            disabled={belowMin || !!paymentLoading}
-                            className='border-primary/60 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary h-9 min-w-0 justify-start gap-2 rounded-lg px-3'
-                          >
-                            <Coins className='h-4 w-4' />
-                            <span className='truncate'>{t('Stablecoin Pay')}</span>
-                          </Button>
-                        )
-                        return belowMin ? (
-                          <TooltipProvider key='__stablecoin'>
-                            <Tooltip>
-                              <TooltipTrigger render={button}></TooltipTrigger>
-                              <TooltipContent>
-                                {t('Minimum topup amount: {{amount}}', {
-                                  amount: wcMin,
-                                })}
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        ) : (
-                          button
-                        )
-                      })()}
                     {enableWonderGateTopup &&
                       (() => {
                         const wgMin = wondergateMinTopup || 0

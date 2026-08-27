@@ -342,9 +342,6 @@ export function Wallet(props: WalletProps) {
                   enableWaffoPancakeTopup={
                     topupInfo?.enable_waffo_pancake_topup
                   }
-                  enableWCheckoutTopup={topupInfo?.enable_wcheckout_topup}
-                  wcheckoutMinTopup={topupInfo?.wcheckout_min_topup}
-                  onBeforeStablecoin={ensureSecondFactor}
                   enableWonderGateTopup={topupInfo?.enable_wondergate_topup}
                   wondergateMinTopup={topupInfo?.wondergate_min_topup}
                   onWonderGatePay={handleWonderGatePay}

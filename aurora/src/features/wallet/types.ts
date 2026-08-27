@@ -59,18 +59,6 @@ export type WaffoPancakePaymentResponse = ApiResponse<
     }
   | string
 >
-export type WCheckoutPaymentResponse = ApiResponse<
-  | {
-      payment_url?: string
-      order_id?: string
-      deposit_address?: string
-      paying_amount?: number
-      exchange_rate?: number
-      token?: string
-      expired_in?: number
-    }
-  | string
->
 
 /**
  * Creem product configuration
@@ -129,18 +117,6 @@ export interface WaffoPayMethod {
 }
 
 /**
- * WCheckout supported stablecoin token
- */
-export interface WCheckoutToken {
-  /** Display name (e.g. "USDT (Ethereum)") */
-  name: string
-  /** WCheckout token identifier (e.g. "ETH_USDT") */
-  token: string
-  /** Optional icon path */
-  icon?: string
-}
-
-/**
  * Topup configuration information
  */
 export interface TopupInfo {
@@ -174,12 +150,6 @@ export interface TopupInfo {
   enable_waffo_pancake_topup?: boolean
   /** Minimum topup amount for Waffo Pancake */
   waffo_pancake_min_topup?: number
-  /** Whether WCheckout topup is enabled */
-  enable_wcheckout_topup?: boolean
-  /** Available WCheckout stablecoin tokens */
-  wcheckout_tokens?: WCheckoutToken[]
-  /** Minimum topup amount for WCheckout */
-  wcheckout_min_topup?: number
   /** Whether WonderGate (card / local payment) topup is enabled */
   enable_wondergate_topup?: boolean
   /** Minimum topup amount for WonderGate */
@@ -236,16 +206,6 @@ export interface WaffoPaymentRequest {
 export interface WaffoPancakePaymentRequest {
   /** Topup amount */
   amount: number
-}
-
-/**
- * WCheckout payment request parameters
- */
-export interface WCheckoutPaymentRequest {
-  /** Topup amount (quota units) */
-  amount: number
-  /** Selected stablecoin token (e.g. ETH_USDT) */
-  token: string
 }
 
 /**
