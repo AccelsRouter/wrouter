@@ -96,12 +96,6 @@ func GetTopUpInfo(c *gin.Context) {
 		}
 	}
 
-	// WCheckout is intentionally NOT added to pay_methods. It needs a
-	// dedicated selection page (chain + token picker) and would fail if it
-	// routed through the generic /api/user/pay flow. The frontend reads
-	// enable_wcheckout_topup / wcheckout_min_topup below and renders its own
-	// section that navigates to /wallet/wcheckout.
-	enableWCheckout := isWCheckoutTopUpEnabled()
 	enableWonderGate := isWonderGateTopUpEnabled()
 
 	data := gin.H{
@@ -110,7 +104,6 @@ func GetTopUpInfo(c *gin.Context) {
 		"enable_creem_topup":               isCreemTopUpEnabled(),
 		"enable_waffo_topup":               enableWaffo,
 		"enable_waffo_pancake_topup":       enableWaffoPancake,
-		"enable_wcheckout_topup":           enableWCheckout,
 		"enable_wondergate_topup":          enableWonderGate,
 		"enable_redemption":                complianceConfirmed,
 		"payment_compliance_confirmed":     complianceConfirmed,
@@ -121,19 +114,12 @@ func GetTopUpInfo(c *gin.Context) {
 			}
 			return nil
 		}(),
-		"wcheckout_tokens": func() interface{} {
-			if enableWCheckout {
-				return setting.GetWCheckoutTokens()
-			}
-			return nil
-		}(),
 		"creem_products":          setting.CreemProducts,
 		"pay_methods":             payMethods,
 		"min_topup":               operation_setting.MinTopUp,
 		"stripe_min_topup":        setting.StripeMinTopUp,
 		"waffo_min_topup":         setting.WaffoMinTopUp,
 		"waffo_pancake_min_topup": setting.WaffoPancakeMinTopUp,
-		"wcheckout_min_topup":     setting.WCheckoutMinTopUp,
 		"wondergate_min_topup":    setting.WonderGateMinTopUp,
 		"amount_options":          operation_setting.GetPaymentSetting().AmountOptions,
 		"discount":                operation_setting.GetPaymentSetting().AmountDiscount,

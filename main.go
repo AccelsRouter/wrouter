@@ -157,9 +157,6 @@ func main() {
 	controller.RegisterScheduledSystemTasks()
 	service.StartSystemTaskRunner()
 
-	// WCheckout order reconciliation poller (safety net for lost webhooks)
-	controller.StartWCheckoutReconcileTask()
-
 	// WonderGate order reconciliation poller (its async notification has been
 	// observed to never reach us; it only retries 4 times in 30 minutes)
 	controller.StartWonderGateReconcileTask()

@@ -4,7 +4,7 @@ package setting
 // Docs: https://document.wondergate.io/zh/reference/introduction.html
 //
 // Gateway (API) hosts are fixed per environment; the admin only toggles
-// Sandbox and fills in credentials. Mirrors the WCheckout layout: package-level
+// Sandbox and fills in credentials. Package-level
 // vars for fast access, mutated via the option API in model.UpdateOption.
 var (
 	WonderGateEnabled bool

@@ -29,7 +29,7 @@ type WonderGatePayRequest struct {
 
 // getWonderGatePayMoney converts the user-facing top-up Amount to the USD value
 // charged via WonderGate, reusing the global AmountDiscount and topup group
-// ratio (mirrors the WCheckout helper).
+// ratio.
 func getWonderGatePayMoney(amount float64, group string) float64 {
 	originalAmount := amount
 	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeTokens {
@@ -274,7 +274,7 @@ const wonderGateReconcileWindow = 2 * time.Hour
 // StartWonderGateReconcileTask launches a background poller that recovers
 // WonderGate top-ups whose webhook never arrived (observed in production: the
 // gateway's async notification can fail to reach us entirely, and it only
-// retries 4 times within 30 minutes). Mirrors StartWCheckoutReconcileTask.
+// retries 4 times within 30 minutes).
 // Idempotent: RechargeWonderGate no-ops on already-credited orders, so this
 // is safe alongside live webhooks.
 func StartWonderGateReconcileTask() {

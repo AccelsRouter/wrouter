@@ -1,6 +1,6 @@
 # Fork 同步与定制开发指南（w-newapi）
 
-本仓库是 [QuantumNous/new-api](https://github.com/QuantumNous/new-api) 的 fork，承载 WSPN 的定制化改动（部署配置、WCheckout 支付、品牌相关 UI 等）。
+本仓库是 [QuantumNous/new-api](https://github.com/QuantumNous/new-api) 的 fork，承载 WSPN 的定制化改动（部署配置、支付渠道定制、品牌相关 UI 等）。
 
 本文档定义如何**长期既同步上游更新，又保持定制功能不被冲掉**。所有提交（人工或 AI）必须遵守。
 
