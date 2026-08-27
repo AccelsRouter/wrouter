@@ -24,7 +24,10 @@ func TestUpdateOptionRejectsRetiredFrontendTheme(t *testing.T) {
 	UpdateOption(context)
 
 	assert.Equal(t, http.StatusOK, response.Code)
-	assert.JSONEq(t, `{"success":false,"message":"Classic 前端已移除，主题只能设置为 default"}`, response.Body.String())
+	// Fork: unlike upstream (default-only after rc.22), this fork keeps a
+	// runtime theme switch between "default" and "aurora"; "classic" is still
+	// rejected, with the fork's own message.
+	assert.JSONEq(t, `{"success":false,"message":"无效的主题值，可选值：default（新版前端）、aurora（极光主题）"}`, response.Body.String())
 }
 
 func TestGetStatusAdvertisesDefaultDashboard(t *testing.T) {
@@ -43,5 +46,7 @@ func TestGetStatusAdvertisesDefaultDashboard(t *testing.T) {
 	}
 	require.NoError(t, common.Unmarshal(response.Body.Bytes(), &payload))
 	assert.True(t, payload.Success)
-	assert.Equal(t, "default", payload.Data["theme"])
+	// Fork: "aurora" is the default frontend theme (see
+	// setting/system_setting/theme.go), not upstream's "default".
+	assert.Equal(t, "aurora", payload.Data["theme"])
 }
