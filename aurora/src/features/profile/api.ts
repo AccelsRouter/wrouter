@@ -17,6 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { api } from '@/lib/api'
+import type { LoginSession } from '@/stores/auth-store'
 
 import type {
   ApiResponse,
@@ -126,6 +127,34 @@ export async function bindEmail(
  */
 export async function bindWeChat(code: string): Promise<ApiResponse> {
   const res = await api.get(`/api/oauth/wechat/bind?code=${code}`)
+  return res.data
+}
+
+// ============================================================================
+// Login Session APIs
+// ============================================================================
+
+/**
+ * List the current user's active login sessions
+ */
+export async function getLoginSessions(): Promise<ApiResponse<LoginSession[]>> {
+  const res = await api.get('/api/user/sessions')
+  return res.data
+}
+
+/**
+ * Revoke a single login session by its session id
+ */
+export async function revokeLoginSession(sid: string): Promise<ApiResponse> {
+  const res = await api.delete(`/api/user/sessions/${encodeURIComponent(sid)}`)
+  return res.data
+}
+
+/**
+ * Revoke every login session except the current one
+ */
+export async function revokeOtherLoginSessions(): Promise<ApiResponse> {
+  const res = await api.post('/api/user/sessions/revoke-others')
   return res.data
 }
 
