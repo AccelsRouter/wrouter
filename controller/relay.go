@@ -204,6 +204,27 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 				retryParam.ModelName = next
 				relayInfo.OriginModelName = next
 				c.Set("original_model", next)
+				// Billing safety: PriceData and the pre-consume were computed
+				// for the previous candidate before the loop. Recompute for
+				// the new model and re-align the pre-consumed quota so the
+				// request is billed at the price of the model that actually
+				// serves it — a candidate without a valid price must never be
+				// served, and a cheaper first candidate must never discount a
+				// more expensive fallback.
+				nextPrice, priceErr := helper.ModelPriceHelper(c, relayInfo, tokens, meta)
+				if priceErr != nil {
+					newAPIError = types.NewError(priceErr, types.ErrorCodeModelPriceError, types.ErrOptionWithStatusCode(http.StatusBadRequest))
+					break
+				}
+				if relayInfo.Billing != nil {
+					relayInfo.Billing.Refund(c)
+					relayInfo.Billing = nil
+				}
+				if !nextPrice.FreeModel {
+					if newAPIError = service.PreConsumeBilling(c, nextPrice.QuotaToPreConsume, relayInfo); newAPIError != nil {
+						break
+					}
+				}
 				continue
 			}
 			logger.LogError(c, channelErr.Error())
