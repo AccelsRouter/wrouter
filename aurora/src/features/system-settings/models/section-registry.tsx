@@ -20,6 +20,7 @@ import { ChannelAffinitySection } from '../general/channel-affinity'
 import { IoNetDeploymentSettingsSection } from '../integrations/ionet-deployment-settings-section'
 import type { ModelSettings } from '../types'
 import { createSectionRegistry } from '../utils/section-registry'
+import { AutoModelsSection } from './auto-models-section'
 import { ClaudeSettingsCard } from './claude-settings-card'
 import { GeminiSettingsCard } from './gemini-settings-card'
 import { GlobalSettingsCard } from './global-settings-card'
@@ -87,6 +88,17 @@ const MODELS_SECTIONS = [
             settings['monitor_setting.channel_test_concurrency'],
           'monitor_setting.channel_test_mode':
             settings['monitor_setting.channel_test_mode'],
+        }}
+      />
+    ),
+  },
+  {
+    id: 'auto-models',
+    titleKey: 'Auto Models',
+    build: (settings: ModelSettings) => (
+      <AutoModelsSection
+        defaultValues={{
+          AutoModelConfigs: settings.AutoModelConfigs,
         }}
       />
     ),
