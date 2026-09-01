@@ -102,6 +102,19 @@ func Distribute() func(c *gin.Context) {
 					}
 				}
 
+				// Fork: auto virtual models resolve to a concrete model here —
+				// after the token model-limit check on the requested (auto)
+				// name and the playground group override, but before affinity,
+				// channel selection, and everything billing-related, so no
+				// downstream consumer ever sees the virtual name.
+				if resolved, isAuto := service.ResolveAutoModel(c, usingGroup, modelRequest.Model, c.Request.URL.Path); isAuto {
+					if resolved == "" {
+						abortWithOpenAiMessage(c, http.StatusServiceUnavailable, i18n.T(c, i18n.MsgDistributorNoAvailableChannel, map[string]any{"Group": usingGroup, "Model": modelRequest.Model}), types.ErrorCodeModelNotFound)
+						return
+					}
+					modelRequest.Model = resolved
+				}
+
 				if preferredChannelID, found := service.GetPreferredChannelByAffinity(c, modelRequest.Model, usingGroup); found {
 					affinityUsable := false
 					preferred, err := model.CacheGetChannel(preferredChannelID)

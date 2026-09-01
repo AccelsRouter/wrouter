@@ -117,6 +117,8 @@ func InitOptionMap() {
 	common.OptionMap["WaffoPancakeStoreID"] = setting.WaffoPancakeStoreID
 	common.OptionMap["WaffoPancakeProductID"] = setting.WaffoPancakeProductID
 	// WonderGate (card / local payment) options. See setting/payment_wondergate.go.
+	// Auto virtual models (fork). See setting/auto_model.go.
+	common.OptionMap["AutoModelConfigs"] = setting.AutoModelConfigsJSON()
 	common.OptionMap["WonderGateEnabled"] = strconv.FormatBool(setting.WonderGateEnabled)
 	common.OptionMap["WonderGateSandbox"] = strconv.FormatBool(setting.WonderGateSandbox)
 	common.OptionMap["WonderGateMerchantId"] = setting.WonderGateMerchantId
@@ -514,6 +516,8 @@ func updateOptionMap(key string, value string) (err error) {
 		setting.WaffoPancakeUnitPrice, _ = strconv.ParseFloat(value, 64)
 	case "WaffoPancakeMinTopUp":
 		setting.WaffoPancakeMinTopUp, _ = strconv.Atoi(value)
+	case "AutoModelConfigs":
+		err = setting.UpdateAutoModelConfigs(value)
 	case "WonderGateEnabled":
 		setting.WonderGateEnabled = value == "true"
 	case "WonderGateSandbox":

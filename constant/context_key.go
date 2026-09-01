@@ -73,4 +73,11 @@ const (
 	// fallback in authHelper (finishAdminAudit) skips its record to avoid
 	// duplicate entries.
 	ContextKeyAuditLogged ContextKey = "audit_logged"
+
+	// Fork: auto virtual models (setting/auto_model.go). Original stores the
+	// requested auto name for audit logs; Candidates the ordered concrete
+	// pool; Index the cursor of the candidate currently in use.
+	ContextKeyAutoModelOriginal   ContextKey = "auto_model_original"
+	ContextKeyAutoModelCandidates ContextKey = "auto_model_candidates"
+	ContextKeyAutoModelIndex      ContextKey = "auto_model_index"
 )

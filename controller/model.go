@@ -20,6 +20,7 @@ import (
 	"github.com/QuantumNous/new-api/relaykit/types"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
+	"github.com/QuantumNous/new-api/setting"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
@@ -251,6 +252,30 @@ func ListModels(c *gin.Context, modelType int) {
 			continue
 		}
 		userModelNames = append(userModelNames, modelName)
+	}
+
+	// Fork: expose auto virtual models (setting/auto_model.go). An auto name
+	// is listed only when the token may use it (same limit semantics as the
+	// distributor) and at least one candidate is actually enabled for the
+	// user's groups, so the list never advertises a dead virtual model.
+	enabledModelSet := make(map[string]bool, len(models))
+	for _, m := range models {
+		enabledModelSet[m] = true
+	}
+	for _, autoName := range setting.AutoModelNames() {
+		if modelLimitEnable && !tokenModelLimit[autoName] {
+			continue
+		}
+		candidates, ok := setting.GetAutoModelCandidates(autoName)
+		if !ok {
+			continue
+		}
+		for _, candidate := range candidates {
+			if enabledModelSet[candidate] {
+				userModelNames = append(userModelNames, autoName)
+				break
+			}
+		}
 	}
 
 	ownerByModel := map[string]string{}

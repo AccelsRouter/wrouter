@@ -195,6 +195,17 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 		relayInfo.RetryIndex = retryParam.GetRetry()
 		channel, channelErr := getChannel(c, relayInfo, retryParam)
 		if channelErr != nil {
+			// Fork: when the request came in as an auto virtual model and the
+			// current candidate's channels are exhausted, fail over to the
+			// next available candidate. The cursor is monotonic and the loop
+			// counter keeps advancing, so total attempts stay bounded by
+			// common.RetryTimes.
+			if next, ok := service.AdvanceAutoModel(c, relayInfo.TokenGroup, c.Request.URL.Path); ok {
+				retryParam.ModelName = next
+				relayInfo.OriginModelName = next
+				c.Set("original_model", next)
+				continue
+			}
 			logger.LogError(c, channelErr.Error())
 			newAPIError = channelErr
 			break
