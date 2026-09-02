@@ -162,6 +162,40 @@ func SetApiRouter(router *gin.Engine) {
 			}
 		}
 
+		// Fork: organization system (enterprise / reseller). Admin group manages
+		// orgs and invoiced credit; the org console (UserAuth) lets org
+		// owners/admins manage their own members/customers/workspaces/BYOK.
+		orgAdminRoute := apiRouter.Group("/admin/organizations")
+		orgAdminRoute.Use(middleware.AdminAuth())
+		{
+			orgAdminRoute.GET("/", controller.AdminListOrganizations)
+			orgAdminRoute.POST("/", controller.AdminCreateOrganization)
+			orgAdminRoute.PUT("/:id", controller.AdminUpdateOrganization)
+			orgAdminRoute.POST("/:id/credit", middleware.CriticalRateLimit(), controller.AdminCreditOrganization)
+			orgAdminRoute.GET("/:id/ledger", controller.AdminListOrgLedger)
+		}
+
+		orgRoute := apiRouter.Group("/organization")
+		orgRoute.Use(middleware.UserAuth())
+		{
+			orgRoute.GET("/self", controller.GetMyOrganization)
+			orgRoute.GET("/accounts", controller.ListMyOrgAccounts)
+			orgRoute.POST("/accounts", controller.AttachMyOrgAccount)
+			orgRoute.PUT("/accounts/:user_id", controller.UpdateMyOrgAccount)
+			orgRoute.DELETE("/accounts/:user_id", controller.DetachMyOrgAccount)
+			orgRoute.GET("/ledger", controller.ListMyOrgLedger)
+			orgRoute.POST("/allocate", middleware.CriticalRateLimit(), controller.AllocateFromMyOrg)
+			orgRoute.POST("/revoke", middleware.CriticalRateLimit(), controller.RevokeFromMyOrg)
+			orgRoute.GET("/workspaces", controller.ListMyWorkspaces)
+			orgRoute.POST("/workspaces", controller.CreateMyWorkspace)
+			orgRoute.PUT("/workspaces/:id", controller.UpdateMyWorkspace)
+			orgRoute.DELETE("/workspaces/:id", controller.DeleteMyWorkspace)
+			orgRoute.POST("/workspaces/:id/tokens", controller.BindMyWorkspaceToken)
+			orgRoute.GET("/byok", controller.ListMyByokChannels)
+			orgRoute.POST("/byok", controller.CreateMyByokChannel)
+			orgRoute.DELETE("/byok/:channel_id", controller.DeleteMyByokChannel)
+		}
+
 		// Subscription billing (plans, purchase, admin management)
 		subscriptionRoute := apiRouter.Group("/subscription")
 		subscriptionRoute.Use(middleware.UserAuth())

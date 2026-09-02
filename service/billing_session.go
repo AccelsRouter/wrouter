@@ -359,6 +359,14 @@ func NewBillingSession(c *gin.Context, relayInfo *relaycommon.RelayInfo, preCons
 		return nil, types.NewError(fmt.Errorf("relayInfo is nil"), types.ErrorCodeInvalidRequest, types.ErrOptionWithSkipRetry())
 	}
 
+	// Fork: managed accounts bill their organization (consolidated billing,
+	// see service/org_funding.go). A managed account never falls back to
+	// personal wallet/subscription — suspension or an empty org wallet must
+	// stop the request, not shift the cost onto the member.
+	if session, apiErr := tryOrgBillingSession(c, relayInfo, preConsumedQuota); session != nil || apiErr != nil {
+		return session, apiErr
+	}
+
 	pref := common.NormalizeBillingPreference(relayInfo.UserSetting.BillingPreference)
 
 	// 钱包路径需要先检查用户额度
