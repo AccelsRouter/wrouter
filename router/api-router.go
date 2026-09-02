@@ -175,6 +175,9 @@ func SetApiRouter(router *gin.Engine) {
 			orgAdminRoute.GET("/:id/ledger", controller.AdminListOrgLedger)
 			orgAdminRoute.POST("/accounts", controller.AdminAttachOrgAccount)
 			orgAdminRoute.DELETE("/:id/accounts/:user_id", controller.AdminDetachOrgAccount)
+			orgAdminRoute.GET("/applications", controller.AdminListOrgApplications)
+			orgAdminRoute.POST("/applications/:id/approve", controller.AdminApproveOrgApplication)
+			orgAdminRoute.POST("/applications/:id/reject", controller.AdminRejectOrgApplication)
 		}
 
 		orgRoute := apiRouter.Group("/organization")
@@ -195,6 +198,14 @@ func SetApiRouter(router *gin.Engine) {
 			orgRoute.GET("/byok", controller.ListMyByokChannels)
 			orgRoute.POST("/byok", controller.CreateMyByokChannel)
 			orgRoute.DELETE("/byok/:channel_id", controller.DeleteMyByokChannel)
+			// Self-service onboarding: apply to open an org, and invitations.
+			orgRoute.POST("/apply", middleware.CriticalRateLimit(), controller.ApplyForOrganization)
+			orgRoute.GET("/apply/self", controller.GetMyOrgApplication)
+			orgRoute.GET("/invitations", controller.ListMyOrgInvitations)
+			orgRoute.POST("/invitations", controller.CreateMyOrgInvitation)
+			orgRoute.DELETE("/invitations/:id", controller.RevokeMyOrgInvitation)
+			orgRoute.GET("/invitations/preview", controller.PreviewOrgInvitation)
+			orgRoute.POST("/invitations/accept", middleware.CriticalRateLimit(), controller.AcceptOrgInvitation)
 		}
 
 		// Subscription billing (plans, purchase, admin management)

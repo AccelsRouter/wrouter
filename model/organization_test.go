@@ -13,6 +13,7 @@ func migrateOrgTables(t *testing.T) {
 	t.Helper()
 	require.NoError(t, DB.AutoMigrate(
 		&Organization{}, &OrgAccount{}, &CreditLedger{}, &Workspace{}, &WorkspaceToken{}, &OrgChannel{},
+		&OrgApplication{}, &OrgInvitation{},
 	))
 	// isolate between tests
 	DB.Exec("DELETE FROM organizations")
@@ -20,6 +21,8 @@ func migrateOrgTables(t *testing.T) {
 	DB.Exec("DELETE FROM credit_ledgers")
 	DB.Exec("DELETE FROM workspaces")
 	DB.Exec("DELETE FROM workspace_tokens")
+	DB.Exec("DELETE FROM org_applications")
+	DB.Exec("DELETE FROM org_invitations")
 }
 
 func mustCreateOrg(t *testing.T, name, typ string, wallet int) *Organization {
