@@ -178,6 +178,11 @@ func SetApiRouter(router *gin.Engine) {
 			orgAdminRoute.GET("/applications", controller.AdminListOrgApplications)
 			orgAdminRoute.POST("/applications/:id/approve", controller.AdminApproveOrgApplication)
 			orgAdminRoute.POST("/applications/:id/reject", controller.AdminRejectOrgApplication)
+			// SSO domain mappings (JIT provisioning) are admin-managed only.
+			orgAdminRoute.GET("/:id/sso-domains", controller.AdminListOrgSsoDomains)
+			orgAdminRoute.POST("/:id/sso-domains", controller.AdminAddOrgSsoDomain)
+			orgAdminRoute.DELETE("/:id/sso-domains/:domain_id", controller.AdminDeleteOrgSsoDomain)
+			orgAdminRoute.GET("/:id/usage", controller.AdminGetOrgUsage)
 		}
 
 		orgRoute := apiRouter.Group("/organization")
@@ -207,6 +212,10 @@ func SetApiRouter(router *gin.Engine) {
 			orgRoute.DELETE("/invitations/:id", controller.RevokeMyOrgInvitation)
 			orgRoute.GET("/invitations/preview", controller.PreviewOrgInvitation)
 			orgRoute.POST("/invitations/accept", middleware.CriticalRateLimit(), controller.AcceptOrgInvitation)
+			// SSO domains (read-only) + usage reporting / invoice export.
+			orgRoute.GET("/sso-domains", controller.ListMyOrgSsoDomains)
+			orgRoute.GET("/usage", controller.GetMyOrgUsage)
+			orgRoute.GET("/usage/export", controller.ExportMyOrgUsage)
 		}
 
 		// Subscription billing (plans, purchase, admin management)

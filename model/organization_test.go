@@ -13,7 +13,7 @@ func migrateOrgTables(t *testing.T) {
 	t.Helper()
 	require.NoError(t, DB.AutoMigrate(
 		&Organization{}, &OrgAccount{}, &CreditLedger{}, &Workspace{}, &WorkspaceToken{}, &OrgChannel{},
-		&OrgApplication{}, &OrgInvitation{},
+		&OrgApplication{}, &OrgInvitation{}, &OrgSsoDomain{},
 	))
 	// isolate between tests
 	DB.Exec("DELETE FROM organizations")
@@ -23,6 +23,7 @@ func migrateOrgTables(t *testing.T) {
 	DB.Exec("DELETE FROM workspace_tokens")
 	DB.Exec("DELETE FROM org_applications")
 	DB.Exec("DELETE FROM org_invitations")
+	DB.Exec("DELETE FROM org_sso_domains")
 }
 
 func mustCreateOrg(t *testing.T, name, typ string, wallet int) *Organization {
@@ -244,4 +245,132 @@ func TestMemberSpendTolerantOfNonMember(t *testing.T) {
 	ok, err := AddOrgAccountSpend(org.Id, 4242, 10, true) // no OrgAccount row
 	require.NoError(t, err)
 	assert.True(t, ok, "no member row ⇒ no per-seat cap ⇒ allowed")
+}
+
+// SSO JIT provisioning attaches a user to the org mapped to its email domain,
+// but must never move an existing payer or claim an inactive org.
+func TestAutoProvisionOrgMembership(t *testing.T) {
+	migrateOrgTables(t)
+	org := mustCreateOrg(t, "acme", OrgTypeEnterprise, 0)
+
+	// Domain normalization accepts "@Domain " / rejects non-domains.
+	assert.Equal(t, "acme.com", NormalizeSsoDomain("  @Acme.com "))
+	assert.Equal(t, "", NormalizeSsoDomain("notadomain"))
+	assert.Equal(t, "", NormalizeSsoDomain("has space.com"))
+
+	_, err := AddOrgSsoDomain(org.Id, "acme.com", "oidc")
+	require.NoError(t, err)
+	// UNIQUE(domain): a domain provisions exactly one org.
+	_, err = AddOrgSsoDomain(org.Id, "acme.com", "oidc")
+	require.Error(t, err)
+	// Provider is mandatory.
+	_, err = AddOrgSsoDomain(org.Id, "other.com", "")
+	require.Error(t, err)
+
+	// A matching domain from the WRONG provider must NOT provision (self-
+	// asserted email via public GitHub can't hijack the org's billing).
+	imposter := &User{Id: 90000, Username: "imposter", Email: "imposter@acme.com"}
+	joined, err := AutoProvisionOrgMembership(imposter, "github")
+	require.NoError(t, err)
+	assert.False(t, joined, "provider mismatch must not provision")
+	acc0, _ := GetOrgAccountByUser(imposter.Id)
+	assert.Nil(t, acc0)
+
+	// Matching domain AND provider → attached as a plain member.
+	alice := &User{Id: 90001, Username: "alice", Email: "alice@acme.com"}
+	joined, err = AutoProvisionOrgMembership(alice, "oidc")
+	require.NoError(t, err)
+	assert.True(t, joined)
+	acc, err := GetOrgAccountByUser(alice.Id)
+	require.NoError(t, err)
+	require.NotNil(t, acc)
+	assert.Equal(t, org.Id, acc.OrgId)
+	assert.Equal(t, OrgRoleMember, acc.Role)
+
+	// Idempotent: a second login does not re-attach.
+	joined, err = AutoProvisionOrgMembership(alice, "oidc")
+	require.NoError(t, err)
+	assert.False(t, joined)
+
+	// Unmapped domain → no membership.
+	bob := &User{Id: 90002, Username: "bob", Email: "bob@other.com"}
+	joined, err = AutoProvisionOrgMembership(bob, "oidc")
+	require.NoError(t, err)
+	assert.False(t, joined)
+	acc, _ = GetOrgAccountByUser(bob.Id)
+	assert.Nil(t, acc)
+
+	// An existing payer is never moved by a domain match (acme.com still maps
+	// to org, but carol already belongs to another org).
+	other := mustCreateOrg(t, "other", OrgTypeReseller, 0)
+	carol := &User{Id: 90003, Username: "carol", Email: "carol@acme.com"}
+	require.NoError(t, AttachOrgAccount(&OrgAccount{OrgId: other.Id, UserId: carol.Id, Relation: OrgRelationMember, Role: OrgRoleMember}))
+	joined, err = AutoProvisionOrgMembership(carol, "oidc")
+	require.NoError(t, err)
+	assert.False(t, joined, "a user already in an org must not be moved")
+	acc, _ = GetOrgAccountByUser(carol.Id)
+	require.NotNil(t, acc)
+	assert.Equal(t, other.Id, acc.OrgId)
+
+	// A suspended target org does not provision.
+	require.NoError(t, UpdateOrganizationFields(org.Id, map[string]interface{}{"status": OrgStatusSuspended}))
+	dave := &User{Id: 90004, Username: "dave", Email: "dave@acme.com"}
+	joined, err = AutoProvisionOrgMembership(dave, "oidc")
+	require.NoError(t, err)
+	assert.False(t, joined)
+}
+
+// Usage reporting attributes each consume log to the org via its workspace
+// token binding, and never counts logs of tokens outside the org.
+func TestGetOrgUsage(t *testing.T) {
+	migrateOrgTables(t)
+	// No global wipes here: the model tests share one in-memory DB, so this
+	// test attributes only its OWN org-bound tokens and never reads foreign
+	// rows (GetOrgUsage filters logs to the org's bound token set).
+	org := mustCreateOrg(t, "acme", OrgTypeEnterprise, 0)
+	ws := &Workspace{OrgId: org.Id, Name: "prod"}
+	require.NoError(t, CreateWorkspace(ws))
+
+	// AffCode is UNIQUE; set a distinct one so this row can't collide with
+	// other tests' users on the shared in-memory DB.
+	bob := &User{Username: "bob", AffCode: "usage-bob-aff"}
+	require.NoError(t, DB.Create(bob).Error)
+	boundTok := &Token{UserId: bob.Id, Name: "bound", Key: "usage-bound-key"}
+	require.NoError(t, DB.Create(boundTok).Error)
+	require.NoError(t, BindTokenToWorkspace(org.Id, ws.Id, boundTok.Id))
+
+	// A token NOT bound to the org — its logs must be excluded.
+	strayTok := &Token{UserId: bob.Id, Name: "stray", Key: "usage-stray-key"}
+	require.NoError(t, DB.Create(strayTok).Error)
+
+	seed := func(tokenId int, model string, quota, prompt, completion int, at int64) {
+		require.NoError(t, DB.Create(&Log{
+			UserId: bob.Id, Username: "bob", Type: LogTypeConsume,
+			TokenId: tokenId, ModelName: model, Quota: quota,
+			PromptTokens: prompt, CompletionTokens: completion, CreatedAt: at,
+		}).Error)
+	}
+	seed(boundTok.Id, "gpt-4o", 100, 10, 20, 1000)
+	seed(boundTok.Id, "gpt-4o", 50, 5, 10, 2000)
+	seed(boundTok.Id, "claude-3", 30, 3, 6, 3000)
+	seed(strayTok.Id, "gpt-4o", 999, 99, 99, 1500) // excluded: not org-bound
+
+	report, err := GetOrgUsage(org.Id, 0, 0)
+	require.NoError(t, err)
+	assert.Equal(t, int64(180), report.TotalQuota, "only org-bound tokens count")
+	assert.Equal(t, int64(3), report.TotalRequests)
+	assert.Equal(t, int64(18), report.TotalPrompt)
+
+	require.Len(t, report.ByModel, 2)
+	assert.Equal(t, "gpt-4o", report.ByModel[0].Key) // highest quota first
+	assert.Equal(t, int64(150), report.ByModel[0].Quota)
+	require.Len(t, report.ByWorkspace, 1)
+	assert.Equal(t, "prod", report.ByWorkspace[0].Key)
+	require.Len(t, report.ByMember, 1)
+	assert.Equal(t, "bob", report.ByMember[0].Key)
+
+	// Time window excludes out-of-range logs.
+	windowed, err := GetOrgUsage(org.Id, 2000, 3000)
+	require.NoError(t, err)
+	assert.Equal(t, int64(80), windowed.TotalQuota)
 }
