@@ -25,9 +25,19 @@ func callerOrg(c *gin.Context) (*model.Organization, bool, bool) {
 		common.ApiErrorMsg(c, "无组织管理权限")
 		return nil, false, false
 	}
+	// A suspended admin/owner account keeps no management authority: suspension
+	// must be a reliable containment lever for a compromised or rogue admin.
+	if acc.Status == model.OrgStatusSuspended {
+		common.ApiErrorMsg(c, "账号已被暂停")
+		return nil, false, false
+	}
 	org, err := model.GetOrganizationById(acc.OrgId)
 	if err != nil || org == nil {
 		common.ApiErrorMsg(c, "organization not found")
+		return nil, false, false
+	}
+	if org.Status == model.OrgStatusSuspended {
+		common.ApiErrorMsg(c, "组织已被暂停")
 		return nil, false, false
 	}
 	return org, acc.Role == model.OrgRoleOwner, true
@@ -64,59 +74,6 @@ func ListMyOrgAccounts(c *gin.Context) {
 	common.ApiSuccess(c, accounts)
 }
 
-type attachAccountRequest struct {
-	UserId        int    `json:"user_id"`
-	Relation      string `json:"relation"`
-	MonthlyBudget int    `json:"monthly_budget"`
-	RegisteredBy  string `json:"registered_by"`
-}
-
-// AttachMyOrgAccount — POST /api/organization/accounts
-// Binds an existing user to the caller's org. Fails if the user is already
-// managed anywhere (UNIQUE user_id), so a customer can't be silently poached.
-func AttachMyOrgAccount(c *gin.Context) {
-	org, _, ok := callerOrg(c)
-	if !ok {
-		return
-	}
-	var req attachAccountRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		common.ApiError(c, err)
-		return
-	}
-	if u, err := model.GetUserById(req.UserId, false); err != nil || u == nil {
-		common.ApiErrorMsg(c, "user not found")
-		return
-	}
-	if existing, _ := model.GetOrgAccountByUser(req.UserId); existing != nil {
-		common.ApiErrorMsg(c, "该用户已归属某个组织，请先解绑")
-		return
-	}
-	if req.Relation == "" {
-		if org.Type == model.OrgTypeReseller {
-			req.Relation = model.OrgRelationCustomer
-		} else {
-			req.Relation = model.OrgRelationMember
-		}
-	}
-	if req.MonthlyBudget < 0 {
-		common.ApiErrorMsg(c, "budget cannot be negative")
-		return
-	}
-	acc := &model.OrgAccount{
-		OrgId:         org.Id,
-		UserId:        req.UserId,
-		Relation:      req.Relation,
-		Role:          model.OrgRoleMember,
-		MonthlyBudget: req.MonthlyBudget,
-		RegisteredBy:  req.RegisteredBy,
-	}
-	if err := model.AttachOrgAccount(acc); err != nil {
-		common.ApiErrorMsg(c, err.Error())
-		return
-	}
-	common.ApiSuccess(c, acc)
-}
 
 type updateAccountRequest struct {
 	MonthlyBudget *int    `json:"monthly_budget"`
@@ -138,6 +95,14 @@ func UpdateMyOrgAccount(c *gin.Context) {
 	}
 	if target == nil || target.OrgId != org.Id {
 		common.ApiErrorMsg(c, "account not in your organization")
+		return
+	}
+	if userId == c.GetInt("id") {
+		common.ApiErrorMsg(c, "不能修改自己的账号状态")
+		return
+	}
+	if target.Role == model.OrgRoleOwner && !isOwner {
+		common.ApiErrorMsg(c, "只有 owner 可以修改 owner 账号")
 		return
 	}
 	var req updateAccountRequest

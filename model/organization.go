@@ -516,7 +516,26 @@ func AttachOrgAccount(acc *OrgAccount) error {
 }
 
 func DetachOrgAccount(orgId, userId int) error {
-	err := DB.Where("org_id = ? AND user_id = ?", orgId, userId).Delete(&OrgAccount{}).Error
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("org_id = ? AND user_id = ?", orgId, userId).Delete(&OrgAccount{}).Error; err != nil {
+			return err
+		}
+		// Clear the user's workspace bindings so a later re-attach to another
+		// org can't be gated by / pollute this org's workspace budget.
+		var tokenIds []int
+		if err := tx.Model(&Token{}).Where("user_id = ?", userId).Pluck("id", &tokenIds).Error; err != nil {
+			return err
+		}
+		if len(tokenIds) > 0 {
+			if err := tx.Where("token_id IN ?", tokenIds).Delete(&WorkspaceToken{}).Error; err != nil {
+				return err
+			}
+			for _, tid := range tokenIds {
+				InvalidateTokenWorkspaceCache(tid)
+			}
+		}
+		return nil
+	})
 	if err == nil {
 		InvalidateOrgPayerCache(userId)
 	}

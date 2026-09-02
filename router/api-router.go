@@ -173,6 +173,8 @@ func SetApiRouter(router *gin.Engine) {
 			orgAdminRoute.PUT("/:id", controller.AdminUpdateOrganization)
 			orgAdminRoute.POST("/:id/credit", middleware.CriticalRateLimit(), controller.AdminCreditOrganization)
 			orgAdminRoute.GET("/:id/ledger", controller.AdminListOrgLedger)
+			orgAdminRoute.POST("/accounts", controller.AdminAttachOrgAccount)
+			orgAdminRoute.DELETE("/:id/accounts/:user_id", controller.AdminDetachOrgAccount)
 		}
 
 		orgRoute := apiRouter.Group("/organization")
@@ -180,7 +182,6 @@ func SetApiRouter(router *gin.Engine) {
 		{
 			orgRoute.GET("/self", controller.GetMyOrganization)
 			orgRoute.GET("/accounts", controller.ListMyOrgAccounts)
-			orgRoute.POST("/accounts", controller.AttachMyOrgAccount)
 			orgRoute.PUT("/accounts/:user_id", controller.UpdateMyOrgAccount)
 			orgRoute.DELETE("/accounts/:user_id", controller.DetachMyOrgAccount)
 			orgRoute.GET("/ledger", controller.ListMyOrgLedger)

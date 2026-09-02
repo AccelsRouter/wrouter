@@ -160,3 +160,84 @@ func invalidateOrgAccountsCache(orgId int) {
 		model.InvalidateOrgPayerCache(a.UserId)
 	}
 }
+
+type adminAttachRequest struct {
+	OrgId         int    `json:"org_id"`
+	UserId        int    `json:"user_id"`
+	Relation      string `json:"relation"`
+	Role          string `json:"role"`
+	MonthlyBudget int    `json:"monthly_budget"`
+	RegisteredBy  string `json:"registered_by"`
+}
+
+// AdminAttachOrgAccount — POST /api/admin/organizations/accounts
+// Platform-provisioned membership: only a platform admin binds a user to an
+// org, so an org operator cannot conscript an arbitrary user into its billing
+// (the org console can manage and detach existing accounts, never attach new
+// ones). Fails if the user is already managed anywhere (UNIQUE user_id).
+func AdminAttachOrgAccount(c *gin.Context) {
+	var req adminAttachRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	org, err := model.GetOrganizationById(req.OrgId)
+	if err != nil || org == nil {
+		common.ApiErrorMsg(c, "organization not found")
+		return
+	}
+	if u, uErr := model.GetUserById(req.UserId, false); uErr != nil || u == nil {
+		common.ApiErrorMsg(c, "user not found")
+		return
+	}
+	if existing, _ := model.GetOrgAccountByUser(req.UserId); existing != nil {
+		common.ApiErrorMsg(c, "该用户已归属某个组织，请先解绑")
+		return
+	}
+	relation := req.Relation
+	if relation == "" {
+		if org.Type == model.OrgTypeReseller {
+			relation = model.OrgRelationCustomer
+		} else {
+			relation = model.OrgRelationMember
+		}
+	}
+	role := req.Role
+	if role == "" {
+		role = model.OrgRoleMember
+	}
+	if req.MonthlyBudget < 0 {
+		common.ApiErrorMsg(c, "budget cannot be negative")
+		return
+	}
+	acc := &model.OrgAccount{
+		OrgId: req.OrgId, UserId: req.UserId, Relation: relation, Role: role,
+		MonthlyBudget: req.MonthlyBudget, RegisteredBy: req.RegisteredBy,
+	}
+	if err := model.AttachOrgAccount(acc); err != nil {
+		common.ApiErrorMsg(c, err.Error())
+		return
+	}
+	common.ApiSuccess(c, acc)
+}
+
+// AdminDetachOrgAccount — DELETE /api/admin/organizations/:id/accounts/:user_id
+// Platform remediation path (a wrongly-attached user always has an exit).
+func AdminDetachOrgAccount(c *gin.Context) {
+	orgId, _ := strconv.Atoi(c.Param("id"))
+	userId, _ := strconv.Atoi(c.Param("user_id"))
+	target, err := model.GetOrgAccountByUser(userId)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	if target == nil || target.OrgId != orgId {
+		common.ApiErrorMsg(c, "account not in this organization")
+		return
+	}
+	if err := model.DetachOrgAccount(orgId, userId); err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	common.ApiSuccess(c, nil)
+}

@@ -263,6 +263,15 @@ func (s *BillingSession) reserveFunding(delta int) error {
 			)
 		}
 		return nil
+	case *OrgWalletFunding:
+		// Mid-stream reserve for tiered pricing: charge the org wallet
+		// unconditionally (the tokens are consumed) and record the spend on
+		// the member/workspace counters past the budget, mirroring Settle.
+		if err := funding.Settle(delta); err != nil {
+			return types.NewError(err, types.ErrorCodeUpdateDataError, types.ErrOptionWithSkipRetry())
+		}
+		funding.consumed += delta
+		return nil
 	default:
 		return types.NewError(fmt.Errorf("unsupported funding source: %s", s.funding.Source()), types.ErrorCodeUpdateDataError, types.ErrOptionWithSkipRetry())
 	}
@@ -279,6 +288,12 @@ func (s *BillingSession) rollbackFundingReserve(delta int) {
 	case *SubscriptionFunding:
 		if err := model.PostConsumeUserSubscriptionDelta(funding.subscriptionId, -int64(delta)); err != nil {
 			common.SysLog("error rolling back subscription funding reserve: " + err.Error())
+		}
+	case *OrgWalletFunding:
+		if err := funding.Settle(-delta); err != nil {
+			common.SysLog("error rolling back org funding reserve: " + err.Error())
+		} else {
+			funding.consumed -= delta
 		}
 	}
 }
