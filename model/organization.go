@@ -273,6 +273,11 @@ func AddOrgAccountSpend(orgId, userId, quota int, enforceBudget bool) (bool, err
 	}
 	var acc OrgAccount
 	if err := DB.Where("org_id = ? AND user_id = ?", orgId, userId).First(&acc).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// Key-level billing: the token owner need not be an org member; when
+			// there is no member row there is no per-seat cap to enforce.
+			return true, nil
+		}
 		return false, err
 	}
 	if err := rollPeriodIfNeeded("org_accounts", "org_id = ? AND user_id = ?", []interface{}{orgId, userId}, acc.PeriodKey); err != nil {
@@ -342,6 +347,52 @@ type tokenWorkspaceEntry struct {
 
 func InvalidateTokenWorkspaceCache(tokenId int) {
 	tokenWorkspaceCache.Delete(tokenId)
+}
+
+// WorkspaceBillingInfo is what the billing path needs when a request's TOKEN
+// is bound to an organization workspace (OpenRouter-style key-level billing:
+// a request bills the org only when its key lives in an org workspace; a
+// personal/unbound key bills the user personally).
+type WorkspaceBillingInfo struct {
+	WorkspaceId     int
+	OrgId           int
+	OrgStatus       string
+	WorkspaceStatus string
+}
+
+// GetWorkspaceBillingInfo resolves the org that pays for a token via its
+// workspace binding, or nil when the token is not bound (personal billing).
+// The token→workspace mapping is TTL-cached; org/workspace status is read
+// live (two PK lookups) so suspension takes effect immediately.
+func GetWorkspaceBillingInfo(tokenId int) (*WorkspaceBillingInfo, error) {
+	wsId, err := GetTokenWorkspaceId(tokenId)
+	if err != nil {
+		return nil, err
+	}
+	if wsId == 0 {
+		return nil, nil
+	}
+	ws, err := GetWorkspaceById(wsId)
+	if err != nil {
+		return nil, err
+	}
+	if ws == nil {
+		// Stale binding (workspace deleted) — treat as unbound.
+		return nil, nil
+	}
+	org, err := GetOrganizationById(ws.OrgId)
+	if err != nil {
+		return nil, err
+	}
+	if org == nil {
+		return nil, nil
+	}
+	return &WorkspaceBillingInfo{
+		WorkspaceId:     wsId,
+		OrgId:           ws.OrgId,
+		OrgStatus:       org.Status,
+		WorkspaceStatus: ws.Status,
+	}, nil
 }
 
 func GetTokenWorkspaceId(tokenId int) (int, error) {

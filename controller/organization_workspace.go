@@ -172,6 +172,66 @@ func BindMyWorkspaceToken(c *gin.Context) {
 	common.ApiSuccess(c, nil)
 }
 
+type createWorkspaceKeyRequest struct {
+	Name           string `json:"name"`
+	UnlimitedQuota bool   `json:"unlimited_quota"`
+	RemainQuota    int    `json:"remain_quota"`
+}
+
+// CreateWorkspaceKey — POST /api/organization/workspaces/:id/keys
+// OpenRouter-style "create a key inside a workspace": provisions a new API
+// token owned by the caller and binds it to the workspace in one step, so its
+// usage bills the org. The caller must be an admin/owner of the workspace's
+// org (callerOrg already enforces that). The plaintext key is returned once.
+func CreateWorkspaceKey(c *gin.Context) {
+	org, _, ok := callerOrg(c)
+	if !ok {
+		return
+	}
+	ws := ownWorkspace(c, org)
+	if ws == nil {
+		return
+	}
+	var req createWorkspaceKeyRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	if strings.TrimSpace(req.Name) == "" {
+		common.ApiErrorMsg(c, "key name is required")
+		return
+	}
+	if !req.UnlimitedQuota && req.RemainQuota < 0 {
+		common.ApiErrorMsg(c, "remain_quota cannot be negative")
+		return
+	}
+	key, err := common.GenerateKey()
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	token := &model.Token{
+		UserId:         c.GetInt("id"),
+		Name:           strings.TrimSpace(req.Name),
+		Key:            key,
+		CreatedTime:    common.GetTimestamp(),
+		AccessedTime:   common.GetTimestamp(),
+		ExpiredTime:    -1,
+		RemainQuota:    req.RemainQuota,
+		UnlimitedQuota: req.UnlimitedQuota,
+		Status:         common.TokenStatusEnabled,
+	}
+	if err := token.Insert(); err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	if err := model.BindTokenToWorkspace(org.Id, ws.Id, token.Id); err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	common.ApiSuccess(c, gin.H{"token_id": token.Id, "key": "sk-" + key})
+}
+
 // ---------------------------------------------------------------------------
 // BYOK: an org supplies provider credentials, materialized as a normal channel
 // serving the org's private group. Reuses the whole channel machinery; only

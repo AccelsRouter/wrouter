@@ -1,9 +1,12 @@
 package service
 
 // Fork-only organization funding source (design doc: "wrouter 组织与分销架构").
-// A managed account's requests are paid by its organization's wallet —
-// consolidated billing, AWS-reseller style. Plugs into the existing
-// FundingSource seam next to WalletFunding and SubscriptionFunding.
+// OpenRouter-style key-level billing: a request bills the organization that
+// owns the workspace its API token is bound to. Three enforcement tiers,
+// matching OpenRouter (key limit → workspace budget → org credits): the token
+// remain-quota (existing pre-consume), the workspace monthly budget, and the
+// org wallet. A per-seat member budget is an optional extra gate. Plugs into
+// the existing FundingSource seam next to WalletFunding and SubscriptionFunding.
 //
 // Invariants:
 //   - Reserve is a single atomic conditional UPDATE on the org wallet; an
@@ -136,49 +139,47 @@ func (o *OrgWalletFunding) Refund() error {
 	return nil
 }
 
-// tryOrgBillingSession returns a session charging the managing organization
-// when the user is a managed account, (nil, nil) when the user pays for
-// itself, or an error that must abort the request (suspension, budget, or an
-// empty org wallet — managed accounts never fall back to personal funds:
-// consolidated billing would otherwise silently leak cost onto employees).
+// tryOrgBillingSession implements OpenRouter-style key-level billing: a
+// request bills an organization ONLY when its API token is bound to that
+// org's workspace. A personal/unbound token returns (nil, nil) and the caller
+// proceeds with the user's own wallet/subscription — so a user keeps a
+// personal balance for personal keys and never has it silently bypassed by
+// org membership. When the token IS workspace-bound, the org wallet pays and
+// there is no fallback to personal funds (that would leak the org's cost onto
+// the member); a suspended org/workspace or an empty org wallet aborts.
 func tryOrgBillingSession(c *gin.Context, relayInfo *relaycommon.RelayInfo, preConsumedQuota int) (*BillingSession, *types.NewAPIError) {
-	payer, err := model.GetOrgPayerInfo(relayInfo.UserId)
+	info, err := model.GetWorkspaceBillingInfo(relayInfo.TokenId)
 	if err != nil {
 		return nil, types.NewError(err, types.ErrorCodeQueryDataError, types.ErrOptionWithSkipRetry())
 	}
-	if payer == nil {
-		return nil, nil // not managed — caller proceeds with wallet/subscription
+	if info == nil {
+		return nil, nil // token not bound to a workspace — personal billing
 	}
-	if payer.OrgStatus != model.OrgStatusActive {
+	if info.OrgStatus != model.OrgStatusActive {
 		return nil, types.NewErrorWithStatusCode(
 			fmt.Errorf("所属组织已被暂停"),
 			types.ErrorCodeInsufficientUserQuota, http.StatusForbidden,
 			types.ErrOptionWithSkipRetry(), types.ErrOptionWithNoRecordErrorLog())
 	}
-	if payer.AccountStatus != model.OrgStatusActive {
+	if info.WorkspaceStatus == model.OrgStatusSuspended {
 		return nil, types.NewErrorWithStatusCode(
-			fmt.Errorf("账号已被组织暂停"),
+			fmt.Errorf("该 workspace 已被暂停"),
 			types.ErrorCodeInsufficientUserQuota, http.StatusForbidden,
 			types.ErrOptionWithSkipRetry(), types.ErrOptionWithNoRecordErrorLog())
-	}
-
-	workspaceId, wsErr := model.GetTokenWorkspaceId(relayInfo.TokenId)
-	if wsErr != nil {
-		return nil, types.NewError(wsErr, types.ErrorCodeQueryDataError, types.ErrOptionWithSkipRetry())
 	}
 
 	session := &BillingSession{
 		relayInfo: relayInfo,
 		funding: &OrgWalletFunding{
-			orgId:       payer.OrgId,
+			orgId:       info.OrgId,
 			userId:      relayInfo.UserId,
-			workspaceId: workspaceId,
+			workspaceId: info.WorkspaceId,
 		},
 	}
 	if apiErr := session.preConsume(c, preConsumedQuota); apiErr != nil {
 		return nil, orgFundingError(apiErr)
 	}
-	logger.LogInfo(c.Request.Context(), fmt.Sprintf("org billing: user %d charged to org %d (workspace %d)", relayInfo.UserId, payer.OrgId, workspaceId))
+	logger.LogInfo(c.Request.Context(), fmt.Sprintf("org billing: token %d (user %d) charged to org %d workspace %d", relayInfo.TokenId, relayInfo.UserId, info.OrgId, info.WorkspaceId))
 	return session, nil
 }
 

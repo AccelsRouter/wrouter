@@ -197,3 +197,51 @@ func TestWorkspaceBudgetAndBinding(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 0, got)
 }
+
+// Key-level billing: a request bills the org only when its TOKEN is bound to
+// an org workspace; an unbound token bills personally (nil). Suspension of the
+// org or workspace surfaces so the billing path can abort.
+func TestGetWorkspaceBillingInfo(t *testing.T) {
+	migrateOrgTables(t)
+	org := mustCreateOrg(t, "acme", OrgTypeEnterprise, 100)
+	ws := &Workspace{OrgId: org.Id, Name: "prod"}
+	require.NoError(t, CreateWorkspace(ws))
+
+	// Unbound token → personal billing.
+	info, err := GetWorkspaceBillingInfo(555)
+	require.NoError(t, err)
+	assert.Nil(t, info, "an unbound token must bill personally")
+
+	// Bound token → org billing info.
+	require.NoError(t, BindTokenToWorkspace(org.Id, ws.Id, 555))
+	info, err = GetWorkspaceBillingInfo(555)
+	require.NoError(t, err)
+	require.NotNil(t, info)
+	assert.Equal(t, org.Id, info.OrgId)
+	assert.Equal(t, ws.Id, info.WorkspaceId)
+	assert.Equal(t, OrgStatusActive, info.OrgStatus)
+
+	// Suspending the org surfaces on the billing info (fresh status read).
+	require.NoError(t, UpdateOrganizationFields(org.Id, map[string]interface{}{"status": OrgStatusSuspended}))
+	info, err = GetWorkspaceBillingInfo(555)
+	require.NoError(t, err)
+	require.NotNil(t, info)
+	assert.Equal(t, OrgStatusSuspended, info.OrgStatus)
+
+	// A deleted workspace makes the binding stale → personal billing again.
+	require.NoError(t, UpdateOrganizationFields(org.Id, map[string]interface{}{"status": OrgStatusActive}))
+	require.NoError(t, DeleteWorkspace(ws.Id))
+	info, err = GetWorkspaceBillingInfo(555)
+	require.NoError(t, err)
+	assert.Nil(t, info, "a stale binding (deleted workspace) falls back to personal")
+}
+
+// The per-seat member budget is optional: a token owner who is not a member
+// of the workspace's org has no cap and is allowed.
+func TestMemberSpendTolerantOfNonMember(t *testing.T) {
+	migrateOrgTables(t)
+	org := mustCreateOrg(t, "acme", OrgTypeEnterprise, 0)
+	ok, err := AddOrgAccountSpend(org.Id, 4242, 10, true) // no OrgAccount row
+	require.NoError(t, err)
+	assert.True(t, ok, "no member row ⇒ no per-seat cap ⇒ allowed")
+}
