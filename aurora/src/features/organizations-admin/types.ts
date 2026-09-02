@@ -75,3 +75,21 @@ export type CreditOrgPayload = {
   trade_no: string
   remark: string
 }
+
+export type OrgApplicationStatus = 'pending' | 'approved' | 'rejected'
+
+// A self-service request to open an organization, awaiting admin review.
+// Mirrors the item shape of GET /api/admin/organizations/applications.
+export type OrgApplication = {
+  id: number
+  user_id: number
+  type: OrgType
+  org_name: string
+  contact: string
+  remark: string
+  status: OrgApplicationStatus
+  review_note: string
+  org_id: number
+  created_time: number
+  processed_at: number
+}

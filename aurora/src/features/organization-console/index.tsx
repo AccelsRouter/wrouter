@@ -21,12 +21,13 @@ For commercial licensing, please contact support@quantumnous.com
 Shows the wallet balance and tabs for members/customers, workspaces, BYOK
 channels and the ledger; resellers additionally get allocate/revoke actions.
 
-Renders a friendly empty state (and the parent hides its nav entry) when the
-caller does not manage an organization — see useOrgConsoleAccess.
+When the caller does not manage an organization, renders the self-service
+ApplyPanel (apply to open an org + latest application status) instead. The
+"My Organization" nav entry is shown to every user so this page is reachable.
 */
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Building2, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { SectionPageLayout } from '@/components/layout'
@@ -38,7 +39,9 @@ import { formatQuotaWithCurrency } from '@/lib/currency'
 import { AccountsTab } from './accounts-tab'
 import { AllocationDialog, type AllocationMode } from './allocation-dialog'
 import { getOrgSelf } from './api'
+import { ApplyPanel } from './apply-panel'
 import { ByokTab } from './byok-tab'
+import { InvitationsTab } from './invitations-tab'
 import { LedgerTab } from './ledger-tab'
 import { WorkspacesTab } from './workspaces-tab'
 
@@ -84,12 +87,7 @@ export function OrganizationConsole() {
             <Loader2 className='text-muted-foreground h-5 w-5 animate-spin' />
           </div>
         ) : !self ? (
-          <div className='border-border/40 flex h-56 flex-col items-center justify-center gap-2 rounded-md border border-dashed'>
-            <Building2 className='text-muted-foreground/60 h-8 w-8' />
-            <p className='text-muted-foreground text-sm'>
-              {t('You do not manage an organization.')}
-            </p>
-          </div>
+          <ApplyPanel />
         ) : (
           <div className='flex flex-col gap-5'>
             <div className='border-border/60 bg-muted/30 flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4'>
@@ -128,12 +126,18 @@ export function OrganizationConsole() {
                 <TabsTrigger value='accounts'>
                   {isReseller ? t('Customers') : t('Members')}
                 </TabsTrigger>
+                <TabsTrigger value='invitations'>
+                  {t('Invitations')}
+                </TabsTrigger>
                 <TabsTrigger value='workspaces'>{t('Workspaces')}</TabsTrigger>
                 <TabsTrigger value='byok'>{t('BYOK')}</TabsTrigger>
                 <TabsTrigger value='ledger'>{t('Ledger')}</TabsTrigger>
               </TabsList>
               <TabsContent value='accounts' className='pt-4'>
                 <AccountsTab orgType={self.type} />
+              </TabsContent>
+              <TabsContent value='invitations' className='pt-4'>
+                <InvitationsTab orgType={self.type} />
               </TabsContent>
               <TabsContent value='workspaces' className='pt-4'>
                 <WorkspacesTab />

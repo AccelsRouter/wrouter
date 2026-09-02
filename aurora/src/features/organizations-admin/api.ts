@@ -25,6 +25,7 @@ import type {
   CreateOrgPayload,
   CreditOrgPayload,
   Organization,
+  OrgApplication,
   OrgLedgerEntry,
   PagedResponse,
   UpdateOrgPayload,
@@ -117,4 +118,49 @@ export async function attachOrgAccount(payload: {
   )
   if (!res.data?.success)
     throw new Error(res.data?.message || 'Failed to attach account')
+}
+
+// --- Self-service application review ---
+
+export async function listApplications(params: {
+  status?: string
+  type?: string
+  page: number
+  pageSize: number
+}): Promise<PagedResponse<OrgApplication>> {
+  const qs = new URLSearchParams()
+  if (params.status) qs.set('status', params.status)
+  if (params.type) qs.set('type', params.type)
+  qs.set('p', String(params.page))
+  qs.set('page_size', String(params.pageSize))
+  const res = await api.get<ApiResp<PagedResponse<OrgApplication>>>(
+    `/api/admin/organizations/applications?${qs.toString()}`
+  )
+  if (!res.data?.success || !res.data.data)
+    throw new Error(res.data?.message || 'Failed to load applications')
+  return res.data.data
+}
+
+export async function approveApplication(
+  id: number,
+  payload: { price_group?: string; note?: string }
+): Promise<void> {
+  const res = await api.post<ApiResp<unknown>>(
+    `/api/admin/organizations/applications/${id}/approve`,
+    payload
+  )
+  if (!res.data?.success)
+    throw new Error(res.data?.message || 'Failed to approve application')
+}
+
+export async function rejectApplication(
+  id: number,
+  payload: { note?: string }
+): Promise<void> {
+  const res = await api.post<ApiResp<unknown>>(
+    `/api/admin/organizations/applications/${id}/reject`,
+    payload
+  )
+  if (!res.data?.success)
+    throw new Error(res.data?.message || 'Failed to reject application')
 }

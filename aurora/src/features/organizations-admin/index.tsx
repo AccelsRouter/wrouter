@@ -50,6 +50,7 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from '@/components/ui/native-select'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { formatQuotaWithCurrency } from '@/lib/currency'
 
@@ -61,6 +62,7 @@ import {
   listOrgLedger,
   updateOrganization,
 } from './api'
+import { ApplicationsPanel } from './applications'
 import type {
   Organization,
   OrgStatus,
@@ -72,6 +74,7 @@ const PAGE_SIZE = 20
 export function OrganizationsAdmin() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const [view, setView] = useState<'orgs' | 'applications'>('orgs')
   const [page, setPage] = useState(1)
   const [createOpen, setCreateOpen] = useState(false)
   const [editOrg, setEditOrg] = useState<Organization | null>(null)
@@ -96,31 +99,46 @@ export function OrganizationsAdmin() {
   return (
     <SectionPageLayout>
       <SectionPageLayout.Title>{t('Organizations')}</SectionPageLayout.Title>
-      <SectionPageLayout.Actions>
-        <Button
-          variant='outline'
-          size='sm'
-          className='gap-1.5'
-          onClick={() => refetch()}
-          disabled={isFetching}
-        >
-          {isFetching ? (
-            <Loader2 className='h-3.5 w-3.5 animate-spin' />
-          ) : (
-            <RefreshCw className='h-3.5 w-3.5' />
-          )}
-          {t('Refresh')}
-        </Button>
-        <Button
-          size='sm'
-          className='gap-1.5'
-          onClick={() => setCreateOpen(true)}
-        >
-          <Plus className='h-3.5 w-3.5' />
-          {t('New Organization')}
-        </Button>
-      </SectionPageLayout.Actions>
+      {view === 'orgs' && (
+        <SectionPageLayout.Actions>
+          <Button
+            variant='outline'
+            size='sm'
+            className='gap-1.5'
+            onClick={() => refetch()}
+            disabled={isFetching}
+          >
+            {isFetching ? (
+              <Loader2 className='h-3.5 w-3.5 animate-spin' />
+            ) : (
+              <RefreshCw className='h-3.5 w-3.5' />
+            )}
+            {t('Refresh')}
+          </Button>
+          <Button
+            size='sm'
+            className='gap-1.5'
+            onClick={() => setCreateOpen(true)}
+          >
+            <Plus className='h-3.5 w-3.5' />
+            {t('New Organization')}
+          </Button>
+        </SectionPageLayout.Actions>
+      )}
       <SectionPageLayout.Content>
+        <Tabs
+          value={view}
+          onValueChange={(v) => setView(v as 'orgs' | 'applications')}
+          className='mb-4'
+        >
+          <TabsList>
+            <TabsTrigger value='orgs'>{t('Organizations')}</TabsTrigger>
+            <TabsTrigger value='applications'>{t('Applications')}</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        {view === 'applications' ? (
+          <ApplicationsPanel />
+        ) : (
         <div className='flex flex-col gap-4'>
           {isLoading ? (
             <div className='flex h-40 items-center justify-center'>
@@ -234,6 +252,7 @@ export function OrganizationsAdmin() {
             </div>
           )}
         </div>
+        )}
 
         <CreateOrgDialog
           open={createOpen}

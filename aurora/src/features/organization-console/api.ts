@@ -23,10 +23,15 @@ by an org owner/admin to manage their own organization.
 import { api } from '@/lib/api'
 
 import type {
+  ApplyResult,
+  InvitationPreview,
   OrgAccount,
+  OrgApplication,
   OrgByokChannel,
+  OrgInvitation,
   OrgLedgerEntry,
   OrgSelf,
+  OrgType,
   OrgWorkspace,
   PagedResponse,
 } from './types'
@@ -194,4 +199,79 @@ export async function revokeQuota(payload: {
     payload
   )
   assertOk(res, 'Failed to revoke quota')
+}
+
+// --- Self-service onboarding (any authenticated user) ---
+
+export async function applyForOrg(payload: {
+  type: OrgType
+  org_name: string
+  contact: string
+  remark: string
+}): Promise<ApplyResult> {
+  const res = await api.post<ApiResp<ApplyResult>>(
+    '/api/organization/apply',
+    payload
+  )
+  return unwrap(res, 'Failed to submit application')
+}
+
+// Returns the caller's latest application, or null when they never applied.
+// A successful response with a null payload is a valid "no application" state.
+export async function getSelfApplication(): Promise<OrgApplication | null> {
+  const res = await api.get<ApiResp<OrgApplication | null>>(
+    '/api/organization/apply/self',
+    { skipErrorHandler: true, skipBusinessError: true }
+  )
+  if (!res.data?.success) return null
+  return res.data.data ?? null
+}
+
+export async function previewInvitation(
+  code: string
+): Promise<InvitationPreview> {
+  const res = await api.get<ApiResp<InvitationPreview>>(
+    `/api/organization/invitations/preview?code=${encodeURIComponent(code)}`,
+    { skipErrorHandler: true, skipBusinessError: true }
+  )
+  return unwrap(res, 'This invitation is invalid or has expired.')
+}
+
+export async function acceptInvitation(
+  code: string
+): Promise<{ org_id: number }> {
+  const res = await api.post<ApiResp<{ org_id: number }>>(
+    '/api/organization/invitations/accept',
+    { code }
+  )
+  return unwrap(res, 'Failed to accept invitation')
+}
+
+// --- Org console invitations (owner/admin of the caller's org) ---
+
+export async function listInvitations(): Promise<OrgInvitation[]> {
+  const res = await api.get<ApiResp<OrgInvitation[]>>(
+    '/api/organization/invitations'
+  )
+  return unwrap(res, 'Failed to load invitations')
+}
+
+export async function createInvitation(payload: {
+  relation?: string
+  role?: string
+  monthly_budget?: number
+  invited_email?: string
+}): Promise<{ code: string; expires_at: number }> {
+  const res = await api.post<ApiResp<{ code: string; expires_at: number }>>(
+    '/api/organization/invitations',
+    payload
+  )
+  return unwrap(res, 'Failed to create invitation')
+}
+
+export async function revokeInvitation(id: number): Promise<void> {
+  const res = await api.delete<ApiResp<unknown>>(
+    `/api/organization/invitations/${id}`
+  )
+  assertOk(res, 'Failed to revoke invitation')
 }

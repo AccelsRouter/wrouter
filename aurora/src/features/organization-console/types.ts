@@ -80,3 +80,49 @@ export type PagedResponse<T> = {
   page: number
   page_size: number
 }
+
+export type OrgApplicationStatus = 'pending' | 'approved' | 'rejected'
+
+// Self-service application to open an organization. Mirrors the object
+// returned by GET /api/organization/apply/self.
+export type OrgApplication = {
+  id: number
+  type: OrgType
+  org_name: string
+  status: OrgApplicationStatus
+  review_note: string
+  org_id: number
+  created_time: number
+  processed_at: number
+}
+
+export type ApplyResult = {
+  status: 'pending' | 'approved'
+  auto_approved: boolean
+  org_id?: number
+}
+
+export type InvitationStatus = 'pending' | 'accepted' | 'revoked'
+
+export type OrgInvitation = {
+  id: number
+  code: string
+  relation: string // member | customer
+  role: string // member | admin
+  monthly_budget: number
+  invited_email: string
+  status: InvitationStatus
+  expires_at: number
+  accepted_user_id: number
+  created_time: number
+}
+
+// Public preview of an invitation code, shown to the invited user before
+// they consent to joining. Mirrors GET /api/organization/invitations/preview.
+export type InvitationPreview = {
+  org_name: string
+  org_type: OrgType
+  relation: string
+  role: string
+  expires_at: number
+}

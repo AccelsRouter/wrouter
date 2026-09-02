@@ -38,7 +38,6 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import { type NavItem, type SidebarData } from '@/components/layout/types'
-import { useOrgConsoleAccess } from '@/features/organization-console/use-org-console-access'
 import { ROLE } from '@/lib/roles'
 
 /**
@@ -49,8 +48,9 @@ import { ROLE } from '@/lib/roles'
  */
 export function useSidebarData(): SidebarData {
   const { t } = useTranslation()
-  const hasOrgConsole = useOrgConsoleAccess()
 
+  // "My Organization" is shown to every user: those without an org land on the
+  // self-service apply page, org owners/admins land on their console.
   const personalItems: NavItem[] = [
     {
       title: t('Wallet'),
@@ -58,18 +58,16 @@ export function useSidebarData(): SidebarData {
       icon: Wallet,
     },
     {
+      title: t('My Organization'),
+      url: '/organization',
+      icon: Building2,
+    },
+    {
       title: t('Profile'),
       url: '/profile',
       icon: User,
     },
   ]
-  if (hasOrgConsole) {
-    personalItems.splice(1, 0, {
-      title: t('My Organization'),
-      url: '/organization',
-      icon: Building2,
-    })
-  }
 
   return {
     navGroups: [
