@@ -1,5 +1,9 @@
 {
   "translation": {
+    "Create Key": "创建密钥",
+    "Create an API key inside this workspace. Its usage is billed to the organization wallet.": "在此工作区内创建一个 API 密钥,其用量由组织钱包结算。",
+    "Copy this key now — it will not be shown again.": "请立即复制该密钥,它不会再次显示。",
+    "Key copied": "密钥已复制",
     "Accepted": "已接受",
     "Anyone with the link": "任何拥有链接的人",
     "Applicant": "申请人",

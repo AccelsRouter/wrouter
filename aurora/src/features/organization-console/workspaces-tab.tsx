@@ -42,6 +42,7 @@ import { formatQuotaWithCurrency } from '@/lib/currency'
 import {
   bindWorkspaceToken,
   createOrgWorkspace,
+  createWorkspaceKey,
   deleteOrgWorkspace,
   listOrgWorkspaces,
   updateOrgWorkspace,
@@ -55,6 +56,7 @@ export function WorkspacesTab() {
   const [formWs, setFormWs] = useState<OrgWorkspace | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [bindWs, setBindWs] = useState<OrgWorkspace | null>(null)
+  const [keyWs, setKeyWs] = useState<OrgWorkspace | null>(null)
   const [deleteWs, setDeleteWs] = useState<OrgWorkspace | null>(null)
 
   const { data, isLoading } = useQuery({
@@ -131,6 +133,13 @@ export function WorkspacesTab() {
                       <Button
                         size='sm'
                         variant='outline'
+                        onClick={() => setKeyWs(w)}
+                      >
+                        {t('Create Key')}
+                      </Button>
+                      <Button
+                        size='sm'
+                        variant='outline'
                         onClick={() => setBindWs(w)}
                       >
                         {t('Bind Token')}
@@ -171,6 +180,7 @@ export function WorkspacesTab() {
         workspace={bindWs}
         onClose={() => setBindWs(null)}
       />
+      <CreateKeyDialog workspace={keyWs} onClose={() => setKeyWs(null)} />
       <ConfirmDialog
         open={!!deleteWs}
         onOpenChange={(o) => !o && setDeleteWs(null)}
@@ -328,6 +338,101 @@ function BindTokenDialog(props: {
             {t('Bind')}
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function CreateKeyDialog(props: {
+  workspace: OrgWorkspace | null
+  onClose: () => void
+}) {
+  const { t } = useTranslation()
+  const ws = props.workspace
+  const [name, setName] = useState('')
+  const [createdKey, setCreatedKey] = useState('')
+  const [loadedId, setLoadedId] = useState<number | null>(null)
+
+  if (ws && ws.id !== loadedId) {
+    setLoadedId(ws.id)
+    setName('')
+    setCreatedKey('')
+  }
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      createWorkspaceKey(ws!.id, {
+        name: name.trim(),
+        unlimited_quota: true,
+        remain_quota: 0,
+      }),
+    onSuccess: (res) => {
+      setCreatedKey(res.key)
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
+  })
+
+  return (
+    <Dialog open={!!ws} onOpenChange={(o) => !o && props.onClose()}>
+      <DialogContent className='sm:max-w-md'>
+        <DialogHeader>
+          <DialogTitle>{t('Create Key')}</DialogTitle>
+          <DialogDescription>
+            {t(
+              'Create an API key inside this workspace. Its usage is billed to the organization wallet.'
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        {createdKey ? (
+          <div className='flex flex-col gap-3'>
+            <p className='text-muted-foreground text-sm'>
+              {t('Copy this key now — it will not be shown again.')}
+            </p>
+            <div className='border-border/60 bg-muted/30 flex items-center gap-2 rounded-md border px-3 py-2'>
+              <code className='flex-1 truncate font-mono text-xs'>
+                {createdKey}
+              </code>
+              <Button
+                size='sm'
+                variant='outline'
+                onClick={() => {
+                  void navigator.clipboard.writeText(createdKey)
+                  toast.success(t('Key copied'))
+                }}
+              >
+                {t('Copy')}
+              </Button>
+            </div>
+            <DialogFooter>
+              <Button onClick={props.onClose}>{t('Done')}</Button>
+            </DialogFooter>
+          </div>
+        ) : (
+          <div className='flex flex-col gap-3'>
+            <Field label={t('Name')}>
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
+            </Field>
+            <DialogFooter className='gap-2'>
+              <Button
+                variant='outline'
+                onClick={props.onClose}
+                disabled={mutation.isPending}
+              >
+                {t('Cancel')}
+              </Button>
+              <Button
+                onClick={() => mutation.mutate()}
+                disabled={name.trim().length === 0 || mutation.isPending}
+                className='gap-1.5'
+              >
+                {mutation.isPending && (
+                  <Loader2 className='h-4 w-4 animate-spin' />
+                )}
+                {t('Create Key')}
+              </Button>
+            </DialogFooter>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

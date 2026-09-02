@@ -138,6 +138,17 @@ export async function bindWorkspaceToken(
   assertOk(res, 'Failed to bind token')
 }
 
+export async function createWorkspaceKey(
+  id: number,
+  payload: { name: string; unlimited_quota: boolean; remain_quota: number }
+): Promise<{ key: string; token_id: number }> {
+  const res = await api.post<ApiResp<{ key: string; token_id: number }>>(
+    `/api/organization/workspaces/${id}/keys`,
+    payload
+  )
+  return unwrap(res, 'Failed to create key')
+}
+
 export async function listOrgByok(): Promise<OrgByokChannel[]> {
   const res = await api.get<ApiResp<OrgByokChannel[]>>('/api/organization/byok')
   return unwrap(res, 'Failed to load BYOK channels')

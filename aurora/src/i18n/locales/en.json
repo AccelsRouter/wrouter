@@ -1,5 +1,9 @@
 {
   "translation": {
+    "Create Key": "Create Key",
+    "Create an API key inside this workspace. Its usage is billed to the organization wallet.": "Create an API key inside this workspace. Its usage is billed to the organization wallet.",
+    "Copy this key now — it will not be shown again.": "Copy this key now — it will not be shown again.",
+    "Key copied": "Key copied",
     "Accepted": "Accepted",
     "Anyone with the link": "Anyone with the link",
     "Applicant": "Applicant",
