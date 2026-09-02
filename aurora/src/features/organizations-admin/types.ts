@@ -76,6 +76,17 @@ export type CreditOrgPayload = {
   remark: string
 }
 
+// A JIT-provisioning email-domain mapping for an org. New users signing in
+// with a matching email domain are auto-added to the org. Admin-managed.
+// Mirrors GET /api/admin/organizations/:id/sso-domains.
+export type SsoDomain = {
+  id: number
+  org_id: number
+  domain: string
+  provider: string
+  created_time: number
+}
+
 export type OrgApplicationStatus = 'pending' | 'approved' | 'rejected'
 
 // A self-service request to open an organization, awaiting admin review.

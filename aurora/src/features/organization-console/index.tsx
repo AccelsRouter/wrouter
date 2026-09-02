@@ -43,6 +43,8 @@ import { ApplyPanel } from './apply-panel'
 import { ByokTab } from './byok-tab'
 import { InvitationsTab } from './invitations-tab'
 import { LedgerTab } from './ledger-tab'
+import { SsoTab } from './sso-tab'
+import { UsageTab } from './usage-tab'
 import { WorkspacesTab } from './workspaces-tab'
 
 export function OrganizationConsole() {
@@ -131,6 +133,8 @@ export function OrganizationConsole() {
                 </TabsTrigger>
                 <TabsTrigger value='workspaces'>{t('Workspaces')}</TabsTrigger>
                 <TabsTrigger value='byok'>{t('BYOK')}</TabsTrigger>
+                <TabsTrigger value='usage'>{t('Usage')}</TabsTrigger>
+                <TabsTrigger value='sso'>{t('SSO')}</TabsTrigger>
                 <TabsTrigger value='ledger'>{t('Ledger')}</TabsTrigger>
               </TabsList>
               <TabsContent value='accounts' className='pt-4'>
@@ -144,6 +148,12 @@ export function OrganizationConsole() {
               </TabsContent>
               <TabsContent value='byok' className='pt-4'>
                 <ByokTab />
+              </TabsContent>
+              <TabsContent value='usage' className='pt-4'>
+                <UsageTab />
+              </TabsContent>
+              <TabsContent value='sso' className='pt-4'>
+                <SsoTab />
               </TabsContent>
               <TabsContent value='ledger' className='pt-4'>
                 <LedgerTab />

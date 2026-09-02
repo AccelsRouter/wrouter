@@ -126,3 +126,38 @@ export type InvitationPreview = {
   role: string
   expires_at: number
 }
+
+// One row of a usage breakdown (by workspace, model, or member). Mirrors the
+// Bucket shape returned inside the usage report.
+export type UsageBucket = {
+  key: string
+  quota: number
+  requests: number
+  prompt_tokens: number
+  completion_tokens: number
+}
+
+// Aggregated usage report for an organization over a time window. Mirrors
+// GET /api/organization/usage (and the admin equivalent).
+export type OrgUsageReport = {
+  org_id: number
+  from: number
+  to: number
+  total_quota: number
+  total_requests: number
+  total_prompt_tokens: number
+  total_completion_tokens: number
+  by_workspace: UsageBucket[]
+  by_model: UsageBucket[]
+  by_member: UsageBucket[]
+}
+
+// A JIT-provisioning email-domain mapping. New members whose email matches an
+// org's domain are auto-added on login. Managed by the platform admin only.
+export type SsoDomain = {
+  id: number
+  org_id: number
+  domain: string
+  provider: string
+  created_time: number
+}

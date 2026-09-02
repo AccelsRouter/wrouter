@@ -32,8 +32,10 @@ import type {
   OrgLedgerEntry,
   OrgSelf,
   OrgType,
+  OrgUsageReport,
   OrgWorkspace,
   PagedResponse,
+  SsoDomain,
 } from './types'
 
 type ApiResp<T> = {
@@ -285,4 +287,58 @@ export async function revokeInvitation(id: number): Promise<void> {
     `/api/organization/invitations/${id}`
   )
   assertOk(res, 'Failed to revoke invitation')
+}
+
+// --- Usage reporting (caller's own org) ---
+
+// from/to are unix seconds; omit both to let the backend default to the
+// last 30 days.
+function usageRangeQuery(from?: number, to?: number): string {
+  const qs = new URLSearchParams()
+  if (from != null) qs.set('from', String(from))
+  if (to != null) qs.set('to', String(to))
+  const s = qs.toString()
+  return s ? `?${s}` : ''
+}
+
+export async function getOrgUsage(
+  from?: number,
+  to?: number
+): Promise<OrgUsageReport> {
+  const res = await api.get<ApiResp<OrgUsageReport>>(
+    `/api/organization/usage${usageRangeQuery(from, to)}`
+  )
+  return unwrap(res, 'Failed to load usage')
+}
+
+// Downloads the usage report as CSV via the Bearer-authenticated api client
+// (cookie session was removed, so a plain anchor would not authenticate),
+// then triggers a browser download.
+export async function exportOrgUsage(
+  from?: number,
+  to?: number
+): Promise<void> {
+  const res = await api.get(
+    `/api/organization/usage/export${usageRangeQuery(from, to)}`,
+    { responseType: 'blob', skipErrorHandler: true }
+  )
+  const blob = new Blob([res.data as BlobPart], {
+    type: 'text/csv;charset=utf-8',
+  })
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `org_usage_${Date.now()}.csv`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  window.URL.revokeObjectURL(url)
+}
+
+// Read-only for the org: the platform admin manages these domain mappings.
+export async function listOrgSsoDomains(): Promise<SsoDomain[]> {
+  const res = await api.get<ApiResp<SsoDomain[]>>(
+    '/api/organization/sso-domains'
+  )
+  return unwrap(res, 'Failed to load SSO domains')
 }

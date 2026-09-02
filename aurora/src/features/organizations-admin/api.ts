@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 /*
 Admin organization API client. Wraps /api/admin/organizations endpoints.
 */
+import type { OrgUsageReport } from '@/features/organization-console/types'
 import { api } from '@/lib/api'
 
 import type {
@@ -28,6 +29,7 @@ import type {
   OrgApplication,
   OrgLedgerEntry,
   PagedResponse,
+  SsoDomain,
   UpdateOrgPayload,
 } from './types'
 
@@ -163,4 +165,58 @@ export async function rejectApplication(
   )
   if (!res.data?.success)
     throw new Error(res.data?.message || 'Failed to reject application')
+}
+
+// --- SSO domain management (admin, per org) ---
+
+export async function listSsoDomains(orgId: number): Promise<SsoDomain[]> {
+  const res = await api.get<ApiResp<SsoDomain[]>>(
+    `/api/admin/organizations/${orgId}/sso-domains`
+  )
+  if (!res.data?.success || !res.data.data)
+    throw new Error(res.data?.message || 'Failed to load SSO domains')
+  return res.data.data
+}
+
+export async function addSsoDomain(
+  orgId: number,
+  domain: string,
+  provider: string
+): Promise<void> {
+  const res = await api.post<ApiResp<unknown>>(
+    `/api/admin/organizations/${orgId}/sso-domains`,
+    { domain, provider }
+  )
+  if (!res.data?.success)
+    throw new Error(res.data?.message || 'Failed to add SSO domain')
+}
+
+export async function deleteSsoDomain(
+  orgId: number,
+  domainId: number
+): Promise<void> {
+  const res = await api.delete<ApiResp<unknown>>(
+    `/api/admin/organizations/${orgId}/sso-domains/${domainId}`
+  )
+  if (!res.data?.success)
+    throw new Error(res.data?.message || 'Failed to delete SSO domain')
+}
+
+// --- Usage reporting (admin, per org) ---
+
+export async function getOrgUsage(
+  orgId: number,
+  from?: number,
+  to?: number
+): Promise<OrgUsageReport> {
+  const qs = new URLSearchParams()
+  if (from != null) qs.set('from', String(from))
+  if (to != null) qs.set('to', String(to))
+  const s = qs.toString()
+  const res = await api.get<ApiResp<OrgUsageReport>>(
+    `/api/admin/organizations/${orgId}/usage${s ? `?${s}` : ''}`
+  )
+  if (!res.data?.success || !res.data.data)
+    throw new Error(res.data?.message || 'Failed to load usage')
+  return res.data.data
 }

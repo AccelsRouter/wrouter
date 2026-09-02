@@ -29,7 +29,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import { Inbox, Loader2, Plus, RefreshCw } from 'lucide-react'
+import { Inbox, Loader2, Plus, RefreshCw, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
@@ -52,14 +52,21 @@ import {
 } from '@/components/ui/native-select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { UsageReport } from '@/features/organization-console/usage-report'
+import { CompactDateTimeRangePicker } from '@/features/usage-logs/components/compact-date-time-range-picker'
 import { formatQuotaWithCurrency } from '@/lib/currency'
+import dayjs from '@/lib/dayjs'
 
 import {
+  addSsoDomain,
   createOrganization,
   creditOrganization,
   attachOrgAccount,
+  deleteSsoDomain,
+  getOrgUsage,
   listOrganizations,
   listOrgLedger,
+  listSsoDomains,
   updateOrganization,
 } from './api'
 import { ApplicationsPanel } from './applications'
@@ -81,6 +88,8 @@ export function OrganizationsAdmin() {
   const [creditOrg, setCreditOrg] = useState<Organization | null>(null)
   const [ledgerOrg, setLedgerOrg] = useState<Organization | null>(null)
   const [attachOrg, setAttachOrg] = useState<Organization | null>(null)
+  const [ssoOrg, setSsoOrg] = useState<Organization | null>(null)
+  const [usageOrg, setUsageOrg] = useState<Organization | null>(null)
 
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['admin-organizations', page],
@@ -208,6 +217,20 @@ export function OrganizationsAdmin() {
                           <Button
                             size='sm'
                             variant='outline'
+                            onClick={() => setUsageOrg(o)}
+                          >
+                            {t('Usage')}
+                          </Button>
+                          <Button
+                            size='sm'
+                            variant='outline'
+                            onClick={() => setSsoOrg(o)}
+                          >
+                            {t('SSO Domains')}
+                          </Button>
+                          <Button
+                            size='sm'
+                            variant='outline'
                             onClick={() => setLedgerOrg(o)}
                           >
                             {t('Ledger')}
@@ -275,6 +298,8 @@ export function OrganizationsAdmin() {
           onSaved={invalidate}
         />
         <LedgerDialog org={ledgerOrg} onClose={() => setLedgerOrg(null)} />
+        <SsoDomainsDialog org={ssoOrg} onClose={() => setSsoOrg(null)} />
+        <UsageDialog org={usageOrg} onClose={() => setUsageOrg(null)} />
       </SectionPageLayout.Content>
     </SectionPageLayout>
   )
@@ -836,6 +861,213 @@ function AttachAccountDialog(props: {
             {t('Attach Account')}
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function SsoDomainsDialog(props: {
+  org: Organization | null
+  onClose: () => void
+}) {
+  const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  const org = props.org
+  const [domain, setDomain] = useState('')
+  const [provider, setProvider] = useState('oidc')
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin-org-sso-domains', org?.id],
+    queryFn: () => listSsoDomains(org!.id),
+    enabled: !!org,
+  })
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({
+      queryKey: ['admin-org-sso-domains', org?.id],
+    })
+
+  const addMutation = useMutation({
+    mutationFn: () => addSsoDomain(org!.id, domain.trim(), provider.trim()),
+    onSuccess: () => {
+      toast.success(t('SSO domain added'))
+      setDomain('')
+      setProvider('oidc')
+      invalidate()
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (domainId: number) => deleteSsoDomain(org!.id, domainId),
+    onSuccess: () => {
+      toast.success(t('SSO domain removed'))
+      invalidate()
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
+  })
+
+  const domains = data ?? []
+  const canAdd =
+    domain.trim().length > 0 &&
+    provider.trim().length > 0 &&
+    !addMutation.isPending
+
+  return (
+    <Dialog
+      open={!!org}
+      onOpenChange={(o) => {
+        if (!o) {
+          setDomain('')
+          setProvider('oidc')
+          props.onClose()
+        }
+      }}
+    >
+      <DialogContent className='sm:max-w-lg'>
+        <DialogHeader>
+          <DialogTitle>
+            {t('SSO Domains')}
+            {org ? ` — ${org.name}` : ''}
+          </DialogTitle>
+          <DialogDescription>
+            {t(
+              'New users signing in with an email at one of these domains through the matching provider are automatically added to this organization.'
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <div className='flex items-end gap-2'>
+          <div className='flex-1'>
+            <Field label={t('Domain')}>
+              <Input
+                value={domain}
+                placeholder='example.com'
+                onChange={(e) => setDomain(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && canAdd) addMutation.mutate()
+                }}
+              />
+            </Field>
+          </div>
+          <div className='w-32'>
+            <Field label={t('SSO Provider')}>
+              <Input
+                value={provider}
+                placeholder='oidc'
+                onChange={(e) => setProvider(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && canAdd) addMutation.mutate()
+                }}
+              />
+            </Field>
+          </div>
+          <Button
+            onClick={() => addMutation.mutate()}
+            disabled={!canAdd}
+            className='gap-1.5'
+          >
+            {addMutation.isPending && (
+              <Loader2 className='h-4 w-4 animate-spin' />
+            )}
+            {t('Add')}
+          </Button>
+        </div>
+        {isLoading ? (
+          <div className='flex h-24 items-center justify-center'>
+            <Loader2 className='text-muted-foreground h-5 w-5 animate-spin' />
+          </div>
+        ) : domains.length === 0 ? (
+          <p className='text-muted-foreground py-6 text-center text-sm'>
+            {t('No SSO domains configured.')}
+          </p>
+        ) : (
+          <div className='border-border/60 max-h-[40vh] overflow-auto rounded-md border'>
+            <table className='w-full text-sm'>
+              <thead className='bg-muted/40 text-muted-foreground text-xs'>
+                <tr>
+                  <Th>{t('Domain')}</Th>
+                  <Th>{t('Provider')}</Th>
+                  <Th>{t('Created')}</Th>
+                  <Th className='text-right'>{t('Action')}</Th>
+                </tr>
+              </thead>
+              <tbody className='divide-border/60 divide-y'>
+                {domains.map((d) => (
+                  <tr key={d.id} className='hover:bg-muted/30'>
+                    <Td className='font-mono text-[13px]'>{d.domain}</Td>
+                    <Td className='font-mono text-[13px]'>{d.provider}</Td>
+                    <Td className='text-muted-foreground whitespace-nowrap text-xs'>
+                      {fmtTime(d.created_time)}
+                    </Td>
+                    <Td className='text-right'>
+                      <Button
+                        size='sm'
+                        variant='ghost'
+                        className='text-destructive hover:text-destructive h-7 gap-1.5'
+                        onClick={() => deleteMutation.mutate(d.id)}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className='h-3.5 w-3.5' />
+                        {t('Delete')}
+                      </Button>
+                    </Td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function toUnix(date?: Date): number | undefined {
+  return date ? Math.floor(date.getTime() / 1000) : undefined
+}
+
+function UsageDialog(props: { org: Organization | null; onClose: () => void }) {
+  const { t } = useTranslation()
+  const org = props.org
+  const [range, setRange] = useState<{ start?: Date; end?: Date }>(() => ({
+    start: dayjs().subtract(30, 'day').startOf('day').toDate(),
+    end: dayjs().endOf('day').toDate(),
+  }))
+
+  const from = toUnix(range.start)
+  const to = toUnix(range.end)
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin-org-usage', org?.id, from, to],
+    queryFn: () => getOrgUsage(org!.id, from, to),
+    enabled: !!org,
+    placeholderData: keepPreviousData,
+  })
+
+  return (
+    <Dialog
+      open={!!org}
+      onOpenChange={(o) => {
+        if (!o) props.onClose()
+      }}
+    >
+      <DialogContent className='sm:max-w-3xl'>
+        <DialogHeader>
+          <DialogTitle>
+            {t('Usage')}
+            {org ? ` — ${org.name}` : ''}
+          </DialogTitle>
+        </DialogHeader>
+        <div className='mb-1 w-full sm:w-auto sm:min-w-[280px]'>
+          <CompactDateTimeRangePicker
+            start={range.start}
+            end={range.end}
+            onChange={setRange}
+          />
+        </div>
+        <div className='max-h-[60vh] overflow-auto'>
+          <UsageReport report={data} isLoading={isLoading} />
+        </div>
       </DialogContent>
     </Dialog>
   )
