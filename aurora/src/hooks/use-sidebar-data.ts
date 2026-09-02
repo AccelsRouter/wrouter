@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import {
   Activity,
   Box,
+  Building2,
   CreditCard,
   FileText,
   FlaskConical,
@@ -36,7 +37,8 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { type SidebarData } from '@/components/layout/types'
+import { type NavItem, type SidebarData } from '@/components/layout/types'
+import { useOrgConsoleAccess } from '@/features/organization-console/use-org-console-access'
 import { ROLE } from '@/lib/roles'
 
 /**
@@ -47,6 +49,27 @@ import { ROLE } from '@/lib/roles'
  */
 export function useSidebarData(): SidebarData {
   const { t } = useTranslation()
+  const hasOrgConsole = useOrgConsoleAccess()
+
+  const personalItems: NavItem[] = [
+    {
+      title: t('Wallet'),
+      url: '/wallet',
+      icon: Wallet,
+    },
+    {
+      title: t('Profile'),
+      url: '/profile',
+      icon: User,
+    },
+  ]
+  if (hasOrgConsole) {
+    personalItems.splice(1, 0, {
+      title: t('My Organization'),
+      url: '/organization',
+      icon: Building2,
+    })
+  }
 
   return {
     navGroups: [
@@ -102,18 +125,7 @@ export function useSidebarData(): SidebarData {
       {
         id: 'personal',
         title: t('Personal'),
-        items: [
-          {
-            title: t('Wallet'),
-            url: '/wallet',
-            icon: Wallet,
-          },
-          {
-            title: t('Profile'),
-            url: '/profile',
-            icon: User,
-          },
-        ],
+        items: personalItems,
       },
       {
         id: 'admin',
