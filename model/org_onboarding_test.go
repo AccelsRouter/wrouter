@@ -72,40 +72,53 @@ func TestOrgInvitationConsent(t *testing.T) {
 	migrateOrgTables(t)
 	org := mustCreateOrg(t, "acme", OrgTypeEnterprise, 0)
 
-	inv := &OrgInvitation{OrgId: org.Id, Relation: OrgRelationMember, Role: OrgRoleMember, MonthlyBudget: 500, CreatedBy: 1}
+	// The invited user must exist with the matching email (accept is email-scoped).
+	bob := &User{Username: "inv-bob", Email: "bob@acme.com", AffCode: "inv-bob-aff"}
+	require.NoError(t, DB.Create(bob).Error)
+
+	// Email is required on create.
+	require.Error(t, CreateOrgInvitation(&OrgInvitation{OrgId: org.Id, Relation: OrgRelationMember, Role: OrgRoleMember, CreatedBy: 1}))
+
+	inv := &OrgInvitation{OrgId: org.Id, Relation: OrgRelationMember, Role: OrgRoleMember, MonthlyBudget: 500, InvitedEmail: "bob@acme.com", CreatedBy: 1}
 	require.NoError(t, CreateOrgInvitation(inv))
 	assert.NotEmpty(t, inv.Code)
 
-	// A random user accepts → becomes a managed member.
-	accepted, err := AcceptOrgInvitation(inv.Code, 55)
+	// A user whose email does NOT match cannot accept.
+	carol := &User{Username: "inv-carol", Email: "carol@acme.com", AffCode: "inv-carol-aff"}
+	require.NoError(t, DB.Create(carol).Error)
+	_, err := AcceptOrgInvitation(inv.Code, carol.Id)
+	require.Error(t, err, "only the invited email may accept")
+
+	// The invited user accepts → becomes a managed member.
+	accepted, err := AcceptOrgInvitation(inv.Code, bob.Id)
 	require.NoError(t, err)
 	assert.Equal(t, org.Id, accepted.OrgId)
-	info, err := GetOrgPayerInfo(55)
+	info, err := GetOrgPayerInfo(bob.Id)
 	require.NoError(t, err)
 	require.NotNil(t, info)
 	assert.Equal(t, org.Id, info.OrgId)
 	assert.Equal(t, 500, info.MonthlyBudget)
 
 	// Single-use: the same code cannot be accepted again.
-	_, err = AcceptOrgInvitation(inv.Code, 66)
+	_, err = AcceptOrgInvitation(inv.Code, carol.Id)
 	require.Error(t, err)
 
 	// A user already in an org cannot accept a new invite.
-	inv2 := &OrgInvitation{OrgId: org.Id, Relation: OrgRelationMember, Role: OrgRoleMember, CreatedBy: 1}
+	inv2 := &OrgInvitation{OrgId: org.Id, Relation: OrgRelationMember, Role: OrgRoleMember, InvitedEmail: "bob@acme.com", CreatedBy: 1}
 	require.NoError(t, CreateOrgInvitation(inv2))
-	_, err = AcceptOrgInvitation(inv2.Code, 55)
+	_, err = AcceptOrgInvitation(inv2.Code, bob.Id)
 	require.Error(t, err, "an already-managed user cannot be double-attached")
 
 	// Revoked invites cannot be accepted.
-	inv3 := &OrgInvitation{OrgId: org.Id, Relation: OrgRelationMember, Role: OrgRoleMember, CreatedBy: 1}
+	inv3 := &OrgInvitation{OrgId: org.Id, Relation: OrgRelationMember, Role: OrgRoleMember, InvitedEmail: "carol@acme.com", CreatedBy: 1}
 	require.NoError(t, CreateOrgInvitation(inv3))
 	require.NoError(t, RevokeOrgInvitation(org.Id, inv3.Id))
-	_, err = AcceptOrgInvitation(inv3.Code, 77)
+	_, err = AcceptOrgInvitation(inv3.Code, carol.Id)
 	require.Error(t, err)
 
 	// An invite can only be revoked by its owning org.
 	other := mustCreateOrg(t, "other", OrgTypeEnterprise, 0)
-	inv4 := &OrgInvitation{OrgId: org.Id, Relation: OrgRelationMember, Role: OrgRoleMember, CreatedBy: 1}
+	inv4 := &OrgInvitation{OrgId: org.Id, Relation: OrgRelationMember, Role: OrgRoleMember, InvitedEmail: "carol@acme.com", CreatedBy: 1}
 	require.NoError(t, CreateOrgInvitation(inv4))
 	require.Error(t, RevokeOrgInvitation(other.Id, inv4.Id), "a foreign org cannot revoke another org's invite")
 }

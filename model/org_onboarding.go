@@ -50,18 +50,18 @@ var (
 // no billing effect; approval creates the Organization with the applicant as
 // owner.
 type OrgApplication struct {
-	Id           int    `json:"id" gorm:"primarykey"`
-	UserId       int    `json:"user_id" gorm:"index;not null"`
-	Type         string `json:"type" gorm:"type:varchar(16);index"` // enterprise | reseller
-	OrgName      string `json:"org_name" gorm:"type:varchar(128)"`
-	Contact      string `json:"contact" gorm:"type:varchar(128)"`
-	Remark       string `json:"remark" gorm:"type:varchar(255)"`
-	Status       string `json:"status" gorm:"type:varchar(16);index"`
-	ReviewNote   string `json:"review_note" gorm:"type:varchar(255)"`
-	ReviewerId   int    `json:"reviewer_id"`
-	OrgId        int    `json:"org_id"` // set on approval
-	CreatedTime  int64  `json:"created_time"`
-	ProcessedAt  int64  `json:"processed_at"`
+	Id          int    `json:"id" gorm:"primarykey"`
+	UserId      int    `json:"user_id" gorm:"index;not null"`
+	Type        string `json:"type" gorm:"type:varchar(16);index"` // enterprise | reseller
+	OrgName     string `json:"org_name" gorm:"type:varchar(128)"`
+	Contact     string `json:"contact" gorm:"type:varchar(128)"`
+	Remark      string `json:"remark" gorm:"type:varchar(255)"`
+	Status      string `json:"status" gorm:"type:varchar(16);index"`
+	ReviewNote  string `json:"review_note" gorm:"type:varchar(255)"`
+	ReviewerId  int    `json:"reviewer_id"`
+	OrgId       int    `json:"org_id"` // set on approval
+	CreatedTime int64  `json:"created_time"`
+	ProcessedAt int64  `json:"processed_at"`
 }
 
 // OrgInvitation is a consent token: a target user must accept it before being
@@ -258,6 +258,13 @@ func CreateOrgInvitation(inv *OrgInvitation) error {
 	if inv.MonthlyBudget < 0 {
 		return errors.New("budget cannot be negative")
 	}
+	// The invited email is required and scopes the invite to one person: only a
+	// user whose account email matches may accept it (enforced in Accept). An
+	// unenforced, optional email would be meaningless.
+	inv.InvitedEmail = NormalizeEmail(strings.TrimSpace(inv.InvitedEmail))
+	if inv.InvitedEmail == "" || !strings.Contains(inv.InvitedEmail, "@") {
+		return errors.New("受邀邮箱必填")
+	}
 	inv.Code = common.GetUUID()
 	inv.Status = OrgInvitationPending
 	inv.ExpiresAt = time.Now().Add(orgInvitationTTL).Unix()
@@ -317,6 +324,17 @@ func AcceptOrgInvitation(code string, userId int) (*OrgInvitation, error) {
 		}
 		if managed > 0 {
 			return errors.New("你已归属某个组织，请先解绑")
+		}
+		// Enforce the invite's email scope: only the invited address may accept.
+		// (Legacy invitations with an empty email are unscoped for compatibility.)
+		if inv.InvitedEmail != "" {
+			var u User
+			if err := tx.Select("email").Where("id = ?", userId).First(&u).Error; err != nil {
+				return errors.New("用户不存在")
+			}
+			if !strings.EqualFold(NormalizeEmail(u.Email), inv.InvitedEmail) {
+				return errors.New("该邀请指定的邮箱与你的账号邮箱不一致")
+			}
 		}
 		acc := &OrgAccount{
 			OrgId: inv.OrgId, UserId: userId, Relation: inv.Relation, Role: inv.Role,
