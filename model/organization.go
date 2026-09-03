@@ -18,6 +18,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/QuantumNous/new-api/common"
 	"gorm.io/gorm"
@@ -507,10 +509,33 @@ func TransferOrgCredit(fromOrgId, toOrgId, quota, operatorId int, ledgerType, re
 // CRUD & console queries
 // ---------------------------------------------------------------------------
 
+// ValidateOrgName enforces the org-name rules shared by self-serve and admin
+// creation: at least 3 characters, at most 64, and no special characters —
+// only letters (any script, including CJK), digits, spaces, hyphen and
+// underscore. Callers should pass an already-trimmed name; it trims again to
+// be safe.
+func ValidateOrgName(name string) error {
+	name = strings.TrimSpace(name)
+	n := utf8.RuneCountInString(name)
+	if n < 3 {
+		return errors.New("组织名称至少 3 个字符")
+	}
+	if n > 64 {
+		return errors.New("组织名称过长（最多 64 个字符）")
+	}
+	for _, r := range name {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == ' ' || r == '-' || r == '_' {
+			continue
+		}
+		return errors.New("组织名称不支持特殊字符")
+	}
+	return nil
+}
+
 func CreateOrganization(org *Organization) error {
 	org.Name = strings.TrimSpace(org.Name)
-	if org.Name == "" {
-		return errors.New("organization name is required")
+	if err := ValidateOrgName(org.Name); err != nil {
+		return err
 	}
 	if org.Type != OrgTypeEnterprise && org.Type != OrgTypeReseller {
 		return errors.New("invalid organization type")

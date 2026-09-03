@@ -89,8 +89,8 @@ type OrgInvitation struct {
 // pending application and must not already belong to an organization.
 func CreateOrgApplication(app *OrgApplication) error {
 	app.OrgName = strings.TrimSpace(app.OrgName)
-	if app.OrgName == "" {
-		return errors.New("组织名称必填")
+	if err := ValidateOrgName(app.OrgName); err != nil {
+		return err
 	}
 	if app.Type != OrgTypeEnterprise && app.Type != OrgTypeReseller {
 		return errors.New("invalid organization type")

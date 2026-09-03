@@ -37,8 +37,24 @@ func TestOrgApplicationApproval(t *testing.T) {
 	_, err = ApproveOrgApplication(app.Id, 1, "", "")
 	require.Error(t, err)
 
-	// A user already in an org cannot apply again.
-	require.Error(t, CreateOrgApplication(&OrgApplication{UserId: 100, Type: OrgTypeEnterprise, OrgName: "x"}))
+	// A user already in an org cannot apply again (valid name, so the failure
+	// is the already-managed guard, not name validation).
+	require.Error(t, CreateOrgApplication(&OrgApplication{UserId: 100, Type: OrgTypeEnterprise, OrgName: "another-org"}))
+}
+
+// Org names must be at least 3 characters and free of special characters.
+func TestValidateOrgName(t *testing.T) {
+	require.NoError(t, ValidateOrgName("acme"))
+	require.NoError(t, ValidateOrgName("Acme Corp"))
+	require.NoError(t, ValidateOrgName("acme-2_test"))
+	require.NoError(t, ValidateOrgName("北京团队"))    // CJK letters count
+	require.NoError(t, ValidateOrgName("  abc  ")) // trimmed to 3
+
+	require.Error(t, ValidateOrgName(""))
+	require.Error(t, ValidateOrgName("ab"))       // < 3
+	require.Error(t, ValidateOrgName("acme!"))    // special char
+	require.Error(t, ValidateOrgName("a@b.com"))  // special chars
+	require.Error(t, ValidateOrgName("<script>")) // special chars
 }
 
 // Default onboarding policy mirrors OpenRouter: an enterprise org opens
