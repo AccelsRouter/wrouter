@@ -5727,6 +5727,10 @@
     "Trade No.": "Trade No.",
     "Action": "Action",
     "Confirm reconcile": "Confirm reconcile",
-    "Manually mark this order as paid and credit the balance. Only do this after confirming the payment actually arrived.": "Manually mark this order as paid and credit the balance. Only do this after confirming the payment actually arrived."
+    "Manually mark this order as paid and credit the balance. Only do this after confirming the payment actually arrived.": "Manually mark this order as paid and credit the balance. Only do this after confirming the payment actually arrived.",
+    "Create your organization": "Create your organization",
+    "Set up an enterprise workspace for your team. No approval needed — it is ready to use right away.": "Set up an enterprise workspace for your team. No approval needed — it is ready to use right away.",
+    "Apply for a reseller organization to manage downstream customers. Reseller applications are reviewed by an administrator.": "Apply for a reseller organization to manage downstream customers. Reseller applications are reviewed by an administrator.",
+    "Create organization": "Create organization"
   }
 }

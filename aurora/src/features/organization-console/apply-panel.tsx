@@ -100,7 +100,13 @@ export function ApplyPanel() {
   // A pending or approved application blocks re-applying; a rejected one lets
   // the user revise and submit again below the status card.
   const showForm = !application || application.status === 'rejected'
-  const canSubmit = orgName.trim().length > 0 && contact.trim().length > 0
+  // Enterprise orgs open instantly (no human review), so the form is a simple
+  // "create" with just a name. Reseller stays an application that an admin
+  // reviews, so contact details matter and are required.
+  const isEnterprise = type === 'enterprise'
+  const canSubmit =
+    orgName.trim().length > 0 &&
+    (isEnterprise || contact.trim().length > 0)
 
   return (
     <div className='mx-auto flex w-full max-w-xl flex-col gap-5'>
@@ -150,12 +156,18 @@ export function ApplyPanel() {
         <div className='border-border/60 flex flex-col gap-4 rounded-lg border p-5'>
           <div className='flex flex-col gap-1'>
             <h2 className='text-base font-semibold'>
-              {t('Apply to open an organization')}
+              {isEnterprise
+                ? t('Create your organization')
+                : t('Apply to open an organization')}
             </h2>
             <p className='text-muted-foreground text-sm'>
-              {t(
-                'Open an enterprise workspace for your team, or a reseller organization to manage downstream customers.'
-              )}
+              {isEnterprise
+                ? t(
+                    'Set up an enterprise workspace for your team. No approval needed — it is ready to use right away.'
+                  )
+                : t(
+                    'Apply for a reseller organization to manage downstream customers. Reseller applications are reviewed by an administrator.'
+                  )}
             </p>
           </div>
           <Field label={t('Organization type')}>
@@ -178,26 +190,32 @@ export function ApplyPanel() {
               onChange={(e) => setOrgName(e.target.value)}
             />
           </Field>
-          <Field label={t('Contact (email or phone)')}>
-            <Input
-              value={contact}
-              onChange={(e) => setContact(e.target.value)}
-            />
-          </Field>
-          <Field label={t('Remark')}>
-            <Textarea
-              value={remark}
-              onChange={(e) => setRemark(e.target.value)}
-              rows={3}
-            />
-          </Field>
+          {!isEnterprise && (
+            <>
+              <Field label={t('Contact (email or phone)')}>
+                <Input
+                  value={contact}
+                  onChange={(e) => setContact(e.target.value)}
+                />
+              </Field>
+              <Field label={t('Remark')}>
+                <Textarea
+                  value={remark}
+                  onChange={(e) => setRemark(e.target.value)}
+                  rows={3}
+                />
+              </Field>
+            </>
+          )}
           <Button
             onClick={() => mutation.mutate()}
             disabled={!canSubmit || mutation.isPending}
             className='gap-1.5 self-start'
           >
             {mutation.isPending && <Loader2 className='h-4 w-4 animate-spin' />}
-            {t('Submit application')}
+            {isEnterprise
+              ? t('Create organization')
+              : t('Submit application')}
           </Button>
         </div>
       )}

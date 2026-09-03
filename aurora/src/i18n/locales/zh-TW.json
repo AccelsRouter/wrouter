@@ -5753,6 +5753,10 @@
     "Trade No.": "訂單編號",
     "Action": "操作",
     "Confirm reconcile": "確認補單",
-    "Manually mark this order as paid and credit the balance. Only do this after confirming the payment actually arrived.": "手動將此訂單標記為已支付併入賬。請在確認款項確實到賬後再操作。"
+    "Manually mark this order as paid and credit the balance. Only do this after confirming the payment actually arrived.": "手動將此訂單標記為已支付併入賬。請在確認款項確實到賬後再操作。",
+    "Create your organization": "建立你的組織",
+    "Set up an enterprise workspace for your team. No approval needed — it is ready to use right away.": "為你的團隊開通企業工作區，無需審批，立即可用。",
+    "Apply for a reseller organization to manage downstream customers. Reseller applications are reviewed by an administrator.": "申請經銷商組織以管理下游客戶。經銷商申請需管理員審核。",
+    "Create organization": "建立組織"
   }
 }

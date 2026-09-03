@@ -5765,6 +5765,10 @@
     "Trade No.": "订单编号",
     "Action": "操作",
     "Confirm reconcile": "确认补单",
-    "Manually mark this order as paid and credit the balance. Only do this after confirming the payment actually arrived.": "手动将此订单标记为已支付并入账。请在确认款项确实到账后再操作。"
+    "Manually mark this order as paid and credit the balance. Only do this after confirming the payment actually arrived.": "手动将此订单标记为已支付并入账。请在确认款项确实到账后再操作。",
+    "Create your organization": "创建你的组织",
+    "Set up an enterprise workspace for your team. No approval needed — it is ready to use right away.": "为你的团队开通企业工作区，无需审批，立即可用。",
+    "Apply for a reseller organization to manage downstream customers. Reseller applications are reviewed by an administrator.": "申请经销商组织以管理下游客户。经销商申请需管理员审核。",
+    "Create organization": "创建组织"
   }
 }
