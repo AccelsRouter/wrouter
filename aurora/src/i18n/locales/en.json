@@ -5733,6 +5733,7 @@
     "Apply for a reseller organization to manage downstream customers. Reseller applications are reviewed by an administrator.": "Apply for a reseller organization to manage downstream customers. Reseller applications are reviewed by an administrator.",
     "Create organization": "Create organization",
     "Organization name must be at least 3 characters.": "Organization name must be at least 3 characters.",
-    "Organization name cannot contain special characters.": "Organization name cannot contain special characters."
+    "Organization name cannot contain special characters.": "Organization name cannot contain special characters.",
+    "No OAuth providers are enabled. Enable an SSO/OAuth login method first.": "No OAuth providers are enabled. Enable an SSO/OAuth login method first."
   }
 }

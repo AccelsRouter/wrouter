@@ -30,6 +30,7 @@ import type {
   OrgLedgerEntry,
   PagedResponse,
   SsoDomain,
+  SsoProvider,
   UpdateOrgPayload,
 } from './types'
 
@@ -168,6 +169,14 @@ export async function rejectApplication(
 }
 
 // --- SSO domain management (admin, per org) ---
+
+export async function listSsoProviders(): Promise<SsoProvider[]> {
+  const res = await api.get<ApiResp<SsoProvider[]>>(
+    `/api/admin/organizations/sso-providers`
+  )
+  if (!res.data?.success) throw new Error(res.data?.message || 'Failed')
+  return res.data.data ?? []
+}
 
 export async function listSsoDomains(orgId: number): Promise<SsoDomain[]> {
   const res = await api.get<ApiResp<SsoDomain[]>>(

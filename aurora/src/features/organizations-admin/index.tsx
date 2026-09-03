@@ -22,7 +22,7 @@ with create, edit, invoiced credit (top-up), and a per-org ledger dialog.
 
 Backend: /api/admin/organizations (see controller/organization_admin.go).
 */
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   keepPreviousData,
   useMutation,
@@ -67,6 +67,7 @@ import {
   listOrganizations,
   listOrgLedger,
   listSsoDomains,
+  listSsoProviders,
   updateOrganization,
 } from './api'
 import { ApplicationsPanel } from './applications'
@@ -882,6 +883,23 @@ function SsoDomainsDialog(props: {
     enabled: !!org,
   })
 
+  const { data: providers } = useQuery({
+    queryKey: ['admin-sso-providers'],
+    queryFn: listSsoProviders,
+    enabled: !!org,
+    staleTime: 60_000,
+  })
+
+  // Keep the selection valid: once the enabled-provider list loads, snap to the
+  // first available one if the current pick is not among them.
+  useEffect(() => {
+    if (providers && providers.length > 0) {
+      if (!providers.some((p) => p.slug === provider)) {
+        setProvider(providers[0].slug)
+      }
+    }
+  }, [providers, provider])
+
   const invalidate = () =>
     queryClient.invalidateQueries({
       queryKey: ['admin-org-sso-domains', org?.id],
@@ -908,9 +926,11 @@ function SsoDomainsDialog(props: {
   })
 
   const domains = data ?? []
+  const noProviders = !!providers && providers.length === 0
   const canAdd =
     domain.trim().length > 0 &&
     provider.trim().length > 0 &&
+    !noProviders &&
     !addMutation.isPending
 
   return (
@@ -949,16 +969,20 @@ function SsoDomainsDialog(props: {
               />
             </Field>
           </div>
-          <div className='w-32'>
+          <div className='w-40'>
             <Field label={t('SSO Provider')}>
-              <Input
+              <NativeSelect
+                className='w-full'
                 value={provider}
-                placeholder='oidc'
                 onChange={(e) => setProvider(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && canAdd) addMutation.mutate()
-                }}
-              />
+                disabled={!providers || providers.length === 0}
+              >
+                {(providers ?? []).map((p) => (
+                  <NativeSelectOption key={p.slug} value={p.slug}>
+                    {p.name}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
             </Field>
           </div>
           <Button
@@ -972,6 +996,13 @@ function SsoDomainsDialog(props: {
             {t('Add')}
           </Button>
         </div>
+        {noProviders && (
+          <p className='text-muted-foreground text-xs'>
+            {t(
+              'No OAuth providers are enabled. Enable an SSO/OAuth login method first.'
+            )}
+          </p>
+        )}
         {isLoading ? (
           <div className='flex h-24 items-center justify-center'>
             <Loader2 className='text-muted-foreground h-5 w-5 animate-spin' />

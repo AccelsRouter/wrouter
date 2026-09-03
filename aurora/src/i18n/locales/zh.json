@@ -5771,6 +5771,7 @@
     "Apply for a reseller organization to manage downstream customers. Reseller applications are reviewed by an administrator.": "申请经销商组织以管理下游客户。经销商申请需管理员审核。",
     "Create organization": "创建组织",
     "Organization name must be at least 3 characters.": "组织名称至少 3 个字符。",
-    "Organization name cannot contain special characters.": "组织名称不支持特殊字符。"
+    "Organization name cannot contain special characters.": "组织名称不支持特殊字符。",
+    "No OAuth providers are enabled. Enable an SSO/OAuth login method first.": "尚未启用任何 OAuth 登录方式，请先启用一个 SSO/OAuth 登录方式。"
   }
 }

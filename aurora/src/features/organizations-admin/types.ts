@@ -87,6 +87,11 @@ export type SsoDomain = {
   created_time: number
 }
 
+export type SsoProvider = {
+  slug: string
+  name: string
+}
+
 export type OrgApplicationStatus = 'pending' | 'approved' | 'rejected'
 
 // A self-service request to open an organization, awaiting admin review.
