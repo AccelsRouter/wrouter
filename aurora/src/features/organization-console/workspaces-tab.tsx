@@ -179,8 +179,13 @@ export function WorkspacesTab() {
       <BindTokenDialog
         workspace={bindWs}
         onClose={() => setBindWs(null)}
+        onSaved={invalidate}
       />
-      <CreateKeyDialog workspace={keyWs} onClose={() => setKeyWs(null)} />
+      <CreateKeyDialog
+        workspace={keyWs}
+        onClose={() => setKeyWs(null)}
+        onSaved={invalidate}
+      />
       <ConfirmDialog
         open={!!deleteWs}
         onOpenChange={(o) => !o && setDeleteWs(null)}
@@ -285,6 +290,7 @@ function WorkspaceFormDialog(props: {
 function BindTokenDialog(props: {
   workspace: OrgWorkspace | null
   onClose: () => void
+  onSaved: () => void
 }) {
   const { t } = useTranslation()
   const ws = props.workspace
@@ -300,6 +306,7 @@ function BindTokenDialog(props: {
     mutationFn: () => bindWorkspaceToken(ws!.id, Number(tokenId) || 0),
     onSuccess: () => {
       toast.success(t('Token bound'))
+      props.onSaved()
       props.onClose()
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
@@ -346,6 +353,7 @@ function BindTokenDialog(props: {
 function CreateKeyDialog(props: {
   workspace: OrgWorkspace | null
   onClose: () => void
+  onSaved: () => void
 }) {
   const { t } = useTranslation()
   const ws = props.workspace
@@ -368,6 +376,7 @@ function CreateKeyDialog(props: {
       }),
     onSuccess: (res) => {
       setCreatedKey(res.key)
+      props.onSaved()
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
   })

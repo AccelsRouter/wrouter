@@ -220,6 +220,8 @@ function NewInvitationDialog(props: {
   const [email, setEmail] = useState('')
   const [wasOpen, setWasOpen] = useState(false)
 
+  const emailValid = /.+@.+\..+/.test(email.trim())
+
   // Reset the form each time the dialog opens.
   if (props.open && !wasOpen) {
     setWasOpen(true)
@@ -236,7 +238,7 @@ function NewInvitationDialog(props: {
         relation,
         role,
         monthly_budget: Number(budget) || 0,
-        invited_email: email.trim() || undefined,
+        invited_email: email.trim(),
       }),
     onSuccess: () => {
       toast.success(t('Invitation created'))
@@ -279,8 +281,17 @@ function NewInvitationDialog(props: {
               onChange={(e) => setBudget(e.target.value)}
             />
           </Field>
-          <Field label={t('Invited Email (optional)')}>
-            <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Field label={`${t('Invited Email')} *`}>
+            <Input
+              type='email'
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            {email.trim().length > 0 && !emailValid && (
+              <p className='text-destructive text-xs'>
+                {t('Please enter a valid email address')}
+              </p>
+            )}
           </Field>
         </div>
         <DialogFooter className='gap-2'>
@@ -293,7 +304,7 @@ function NewInvitationDialog(props: {
           </Button>
           <Button
             onClick={() => mutation.mutate()}
-            disabled={mutation.isPending}
+            disabled={!emailValid || mutation.isPending}
             className='gap-1.5'
           >
             {mutation.isPending && <Loader2 className='h-4 w-4 animate-spin' />}

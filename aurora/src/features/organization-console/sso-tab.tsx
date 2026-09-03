@@ -43,11 +43,16 @@ export function SsoTab() {
     <div className='flex flex-col gap-4'>
       <div className='border-border/60 bg-muted/30 text-muted-foreground flex items-start gap-2 rounded-md border p-3 text-xs'>
         <Info className='mt-0.5 h-4 w-4 shrink-0' />
-        <span>
-          {t(
-            'New users signing in with an email at one of these domains are automatically added to your organization. Only logins through the matching provider auto-join, and only the platform admin can change these mappings.'
-          )}
-        </span>
+        <div className='flex flex-col gap-1'>
+          <span className='text-foreground font-medium'>
+            {t('How it works')}
+          </span>
+          <span>
+            {t(
+              'Members are provisioned automatically: when someone signs in through the linked SSO provider with an email at one of these domains, they are added to this organization on their first login. Domains are configured by the platform administrator — contact them to add or change one.'
+            )}
+          </span>
+        </div>
       </div>
 
       {isLoading ? (
