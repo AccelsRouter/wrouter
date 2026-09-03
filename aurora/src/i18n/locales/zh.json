@@ -5769,6 +5769,8 @@
     "Create your organization": "创建你的组织",
     "Set up an enterprise workspace for your team. No approval needed — it is ready to use right away.": "为你的团队开通企业工作区，无需审批，立即可用。",
     "Apply for a reseller organization to manage downstream customers. Reseller applications are reviewed by an administrator.": "申请经销商组织以管理下游客户。经销商申请需管理员审核。",
-    "Create organization": "创建组织"
+    "Create organization": "创建组织",
+    "Organization name must be at least 3 characters.": "组织名称至少 3 个字符。",
+    "Organization name cannot contain special characters.": "组织名称不支持特殊字符。"
   }
 }

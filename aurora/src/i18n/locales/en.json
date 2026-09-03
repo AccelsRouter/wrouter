@@ -5731,6 +5731,8 @@
     "Create your organization": "Create your organization",
     "Set up an enterprise workspace for your team. No approval needed — it is ready to use right away.": "Set up an enterprise workspace for your team. No approval needed — it is ready to use right away.",
     "Apply for a reseller organization to manage downstream customers. Reseller applications are reviewed by an administrator.": "Apply for a reseller organization to manage downstream customers. Reseller applications are reviewed by an administrator.",
-    "Create organization": "Create organization"
+    "Create organization": "Create organization",
+    "Organization name must be at least 3 characters.": "Organization name must be at least 3 characters.",
+    "Organization name cannot contain special characters.": "Organization name cannot contain special characters."
   }
 }

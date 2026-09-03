@@ -104,9 +104,23 @@ export function ApplyPanel() {
   // "create" with just a name. Reseller stays an application that an admin
   // reviews, so contact details matter and are required.
   const isEnterprise = type === 'enterprise'
+  // Mirror the backend ValidateOrgName rule: >= 3 chars, letters/digits/space/
+  // hyphen/underscore only (letters include CJK).
+  const trimmedName = orgName.trim()
+  const nameCharCount = [...trimmedName].length
+  const nameCharsOk =
+    trimmedName === '' || /^[\p{L}\p{N} _-]+$/u.test(trimmedName)
+  const nameError =
+    trimmedName === ''
+      ? ''
+      : nameCharCount < 3
+        ? t('Organization name must be at least 3 characters.')
+        : !nameCharsOk
+          ? t('Organization name cannot contain special characters.')
+          : ''
+  const nameValid = nameCharCount >= 3 && nameCharsOk
   const canSubmit =
-    orgName.trim().length > 0 &&
-    (isEnterprise || contact.trim().length > 0)
+    nameValid && (isEnterprise || contact.trim().length > 0)
 
   return (
     <div className='mx-auto flex w-full max-w-xl flex-col gap-5'>
@@ -189,6 +203,9 @@ export function ApplyPanel() {
               value={orgName}
               onChange={(e) => setOrgName(e.target.value)}
             />
+            {nameError && (
+              <p className='text-destructive text-xs'>{nameError}</p>
+            )}
           </Field>
           {!isEnterprise && (
             <>
