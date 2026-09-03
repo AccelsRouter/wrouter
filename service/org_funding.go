@@ -177,6 +177,15 @@ func tryOrgBillingSession(c *gin.Context, relayInfo *relaycommon.RelayInfo, preC
 		},
 	}
 	if apiErr := session.preConsume(c, preConsumedQuota); apiErr != nil {
+		// Alert the org owner about the block (best-effort, rate-limited).
+		switch {
+		case errors.Is(apiErr.Err, errOrgWalletInsufficient):
+			notifyOrgOwnerBudget(info.OrgId, "wallet")
+		case errors.Is(apiErr.Err, errOrgBudgetExceeded):
+			notifyOrgOwnerBudget(info.OrgId, "member")
+		case errors.Is(apiErr.Err, errWorkspaceBudgetExceeded):
+			notifyOrgOwnerBudget(info.OrgId, "workspace")
+		}
 		return nil, orgFundingError(apiErr)
 	}
 	logger.LogInfo(c.Request.Context(), fmt.Sprintf("org billing: token %d (user %d) charged to org %d workspace %d", relayInfo.TokenId, relayInfo.UserId, info.OrgId, info.WorkspaceId))

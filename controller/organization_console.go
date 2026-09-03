@@ -6,6 +6,7 @@
 package controller
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/QuantumNous/new-api/common"
@@ -73,7 +74,6 @@ func ListMyOrgAccounts(c *gin.Context) {
 	}
 	common.ApiSuccess(c, accounts)
 }
-
 
 type updateAccountRequest struct {
 	MonthlyBudget *int    `json:"monthly_budget"`
@@ -144,6 +144,7 @@ func UpdateMyOrgAccount(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
+	model.RecordOrgAudit(org.Id, c.GetInt("id"), "account.update", fmt.Sprintf("user:%d", userId), fmt.Sprintf("%v", fields))
 	common.ApiSuccess(c, nil)
 }
 
@@ -171,6 +172,7 @@ func DetachMyOrgAccount(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
+	model.RecordOrgAudit(org.Id, c.GetInt("id"), "account.detach", fmt.Sprintf("user:%d", userId), "")
 	common.ApiSuccess(c, nil)
 }
 
@@ -221,6 +223,7 @@ func AllocateFromMyOrg(c *gin.Context) {
 		common.ApiErrorMsg(c, err.Error())
 		return
 	}
+	model.RecordOrgAudit(org.Id, c.GetInt("id"), "credit.allocate", fmt.Sprintf("org:%d", req.ToOrgId), fmt.Sprintf("quota=%d", req.Quota))
 	common.ApiSuccess(c, nil)
 }
 
@@ -260,5 +263,23 @@ func RevokeFromMyOrg(c *gin.Context) {
 		common.ApiErrorMsg(c, err.Error())
 		return
 	}
+	model.RecordOrgAudit(org.Id, c.GetInt("id"), "credit.revoke", fmt.Sprintf("org:%d", req.ToOrgId), fmt.Sprintf("quota=%d", req.Quota))
 	common.ApiSuccess(c, nil)
+}
+
+// ListMyOrgAudit — GET /api/organization/audit
+func ListMyOrgAudit(c *gin.Context) {
+	org, _, ok := callerOrg(c)
+	if !ok {
+		return
+	}
+	page := common.GetPageQuery(c)
+	rows, total, err := model.ListOrgAuditLogs(org.Id, page.GetStartIdx(), page.GetPageSize())
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	page.SetTotal(int(total))
+	page.SetItems(rows)
+	common.ApiSuccess(c, page)
 }

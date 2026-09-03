@@ -2,6 +2,7 @@
 package controller
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -54,6 +55,7 @@ func CreateMyWorkspace(c *gin.Context) {
 		common.ApiErrorMsg(c, err.Error())
 		return
 	}
+	model.RecordOrgAudit(org.Id, c.GetInt("id"), "workspace.create", fmt.Sprintf("workspace:%d", ws.Id), ws.Name)
 	common.ApiSuccess(c, ws)
 }
 
@@ -119,6 +121,7 @@ func UpdateMyWorkspace(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
+	model.RecordOrgAudit(org.Id, c.GetInt("id"), "workspace.update", fmt.Sprintf("workspace:%d", ws.Id), fmt.Sprintf("%v", fields))
 	common.ApiSuccess(c, nil)
 }
 
@@ -136,6 +139,7 @@ func DeleteMyWorkspace(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
+	model.RecordOrgAudit(org.Id, c.GetInt("id"), "workspace.delete", fmt.Sprintf("workspace:%d", ws.Id), ws.Name)
 	common.ApiSuccess(c, nil)
 }
 
@@ -174,6 +178,7 @@ func BindMyWorkspaceToken(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
+	model.RecordOrgAudit(org.Id, c.GetInt("id"), "workspace.token.bind", fmt.Sprintf("workspace:%d", ws.Id), fmt.Sprintf("token:%d", req.TokenId))
 	common.ApiSuccess(c, nil)
 }
 
@@ -234,6 +239,7 @@ func CreateWorkspaceKey(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
+	model.RecordOrgAudit(org.Id, c.GetInt("id"), "workspace.key.create", fmt.Sprintf("workspace:%d", ws.Id), fmt.Sprintf("token:%d %s", token.Id, token.Name))
 	common.ApiSuccess(c, gin.H{"token_id": token.Id, "key": "sk-" + key})
 }
 
@@ -289,6 +295,7 @@ func CreateMyByokChannel(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
+	model.RecordOrgAudit(org.Id, c.GetInt("id"), "byok.create", fmt.Sprintf("channel:%d", channel.Id), req.Name)
 	common.ApiSuccess(c, gin.H{"channel_id": channel.Id, "group": group})
 }
 
@@ -347,6 +354,7 @@ func DeleteMyByokChannel(c *gin.Context) {
 		return
 	}
 	_ = model.RemoveOrgChannel(org.Id, channelId)
+	model.RecordOrgAudit(org.Id, c.GetInt("id"), "byok.delete", fmt.Sprintf("channel:%d", channelId), ch.Name)
 	common.ApiSuccess(c, nil)
 }
 

@@ -6,6 +6,7 @@
 package controller
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -59,6 +60,7 @@ func AdminCreateOrganization(c *gin.Context) {
 		common.ApiErrorMsg(c, err.Error())
 		return
 	}
+	model.RecordOrgAudit(org.Id, c.GetInt("id"), "org.create", fmt.Sprintf("org:%d", org.Id), fmt.Sprintf("%s (%s)", org.Name, org.Type))
 	common.ApiSuccess(c, org)
 }
 
@@ -111,6 +113,7 @@ func AdminUpdateOrganization(c *gin.Context) {
 	if req.Status != nil {
 		invalidateOrgAccountsCache(id)
 	}
+	model.RecordOrgAudit(id, c.GetInt("id"), "org.update", fmt.Sprintf("org:%d", id), fmt.Sprintf("%v", fields))
 	common.ApiSuccess(c, nil)
 }
 
@@ -138,7 +141,22 @@ func AdminCreditOrganization(c *gin.Context) {
 		common.ApiErrorMsg(c, err.Error())
 		return
 	}
+	model.RecordOrgAudit(id, c.GetInt("id"), "org.credit", fmt.Sprintf("org:%d", id), fmt.Sprintf("quota=%d trade=%s", req.Quota, req.TradeNo))
 	common.ApiSuccess(c, nil)
+}
+
+// AdminListOrgAudit — GET /api/admin/organizations/:id/audit
+func AdminListOrgAudit(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	page := common.GetPageQuery(c)
+	rows, total, err := model.ListOrgAuditLogs(id, page.GetStartIdx(), page.GetPageSize())
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	page.SetTotal(int(total))
+	page.SetItems(rows)
+	common.ApiSuccess(c, page)
 }
 
 // AdminListOrgLedger — GET /api/admin/organizations/:id/ledger
@@ -224,6 +242,7 @@ func AdminAttachOrgAccount(c *gin.Context) {
 		common.ApiErrorMsg(c, err.Error())
 		return
 	}
+	model.RecordOrgAudit(req.OrgId, c.GetInt("id"), "account.attach", fmt.Sprintf("user:%d", req.UserId), fmt.Sprintf("relation=%s role=%s", relation, role))
 	common.ApiSuccess(c, acc)
 }
 
@@ -245,5 +264,6 @@ func AdminDetachOrgAccount(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
+	model.RecordOrgAudit(orgId, c.GetInt("id"), "account.detach", fmt.Sprintf("user:%d", userId), "")
 	common.ApiSuccess(c, nil)
 }

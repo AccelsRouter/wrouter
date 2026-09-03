@@ -184,6 +184,7 @@ func SetApiRouter(router *gin.Engine) {
 			orgAdminRoute.POST("/:id/sso-domains", controller.AdminAddOrgSsoDomain)
 			orgAdminRoute.DELETE("/:id/sso-domains/:domain_id", controller.AdminDeleteOrgSsoDomain)
 			orgAdminRoute.GET("/:id/usage", controller.AdminGetOrgUsage)
+			orgAdminRoute.GET("/:id/audit", controller.AdminListOrgAudit)
 		}
 
 		orgRoute := apiRouter.Group("/organization")
@@ -217,6 +218,7 @@ func SetApiRouter(router *gin.Engine) {
 			orgRoute.GET("/sso-domains", controller.ListMyOrgSsoDomains)
 			orgRoute.GET("/usage", controller.GetMyOrgUsage)
 			orgRoute.GET("/usage/export", controller.ExportMyOrgUsage)
+			orgRoute.GET("/audit", controller.ListMyOrgAudit)
 		}
 
 		// Subscription billing (plans, purchase, admin management)

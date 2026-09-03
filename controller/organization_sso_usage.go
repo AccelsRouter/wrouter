@@ -76,6 +76,7 @@ func AdminAddOrgSsoDomain(c *gin.Context) {
 		common.ApiErrorMsg(c, err.Error())
 		return
 	}
+	model.RecordOrgAudit(orgId, c.GetInt("id"), "sso.domain.add", rec.Domain, "provider="+provider)
 	common.ApiSuccess(c, rec)
 }
 
@@ -87,6 +88,7 @@ func AdminDeleteOrgSsoDomain(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
+	model.RecordOrgAudit(orgId, c.GetInt("id"), "sso.domain.delete", fmt.Sprintf("domain:%d", domainId), "")
 	common.ApiSuccess(c, nil)
 }
 

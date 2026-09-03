@@ -13,7 +13,7 @@ func migrateOrgTables(t *testing.T) {
 	t.Helper()
 	require.NoError(t, DB.AutoMigrate(
 		&Organization{}, &OrgAccount{}, &CreditLedger{}, &Workspace{}, &WorkspaceToken{}, &OrgChannel{},
-		&OrgApplication{}, &OrgInvitation{}, &OrgSsoDomain{},
+		&OrgApplication{}, &OrgInvitation{}, &OrgSsoDomain{}, &OrgAuditLog{},
 	))
 	// isolate between tests
 	DB.Exec("DELETE FROM organizations")
@@ -24,6 +24,33 @@ func migrateOrgTables(t *testing.T) {
 	DB.Exec("DELETE FROM org_applications")
 	DB.Exec("DELETE FROM org_invitations")
 	DB.Exec("DELETE FROM org_sso_domains")
+	DB.Exec("DELETE FROM org_audit_logs")
+}
+
+// The audit trail is append-only, scoped per org, and returned newest-first.
+func TestOrgAuditLog(t *testing.T) {
+	migrateOrgTables(t)
+	orgA := mustCreateOrg(t, "acme", OrgTypeEnterprise, 0)
+	orgB := mustCreateOrg(t, "other", OrgTypeEnterprise, 0)
+
+	RecordOrgAudit(orgA.Id, 1, "workspace.create", "workspace:1", "prod")
+	RecordOrgAudit(orgA.Id, 2, "credit.allocate", "org:9", "quota=100")
+	RecordOrgAudit(orgB.Id, 3, "org.update", "org:2", "name=x")
+	RecordOrgAudit(0, 1, "ignored", "", "") // invalid org id → no row
+
+	rows, total, err := ListOrgAuditLogs(orgA.Id, 0, 20)
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), total, "only orgA's rows, invalid ignored")
+	require.Len(t, rows, 2)
+	assert.Equal(t, "credit.allocate", rows[0].Action, "newest first")
+	assert.Equal(t, "workspace.create", rows[1].Action)
+
+	// Another org's trail is isolated.
+	rowsB, totalB, err := ListOrgAuditLogs(orgB.Id, 0, 20)
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), totalB)
+	require.Len(t, rowsB, 1)
+	assert.Equal(t, "org.update", rowsB[0].Action)
 }
 
 func mustCreateOrg(t *testing.T, name, typ string, wallet int) *Organization {
