@@ -7,6 +7,7 @@ package controller
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
@@ -78,7 +79,12 @@ func AdminUpdateOrganization(c *gin.Context) {
 	}
 	fields := map[string]interface{}{}
 	if req.Name != nil {
-		fields["name"] = *req.Name
+		name := strings.TrimSpace(*req.Name)
+		if err := model.ValidateOrgName(name); err != nil {
+			common.ApiErrorMsg(c, err.Error())
+			return
+		}
+		fields["name"] = name
 	}
 	if req.PriceGroup != nil {
 		fields["price_group"] = *req.PriceGroup

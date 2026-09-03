@@ -82,9 +82,9 @@ type CreditLedger struct {
 	Id          int    `json:"id" gorm:"primarykey"`
 	FromOrgId   int    `json:"from_org_id" gorm:"index"` // 0 = platform (purchase)
 	ToOrgId     int    `json:"to_org_id" gorm:"index"`
-	Quota       int    `json:"quota"`                          // always positive
-	Type        string `json:"type" gorm:"type:varchar(16)"`   // purchase | allocate | revoke
-	OperatorId  int    `json:"operator_id"`                    // acting user
+	Quota       int    `json:"quota"`                        // always positive
+	Type        string `json:"type" gorm:"type:varchar(16)"` // purchase | allocate | revoke
+	OperatorId  int    `json:"operator_id"`                  // acting user
 	TradeNo     string `json:"trade_no" gorm:"type:varchar(64);index"`
 	Remark      string `json:"remark" gorm:"type:varchar(255)"`
 	CreatedTime int64  `json:"created_time"`
@@ -136,7 +136,7 @@ type orgPayerCacheEntry struct {
 }
 
 var (
-	orgPayerCache   sync.Map // userId -> orgPayerCacheEntry
+	orgPayerCache    sync.Map // userId -> orgPayerCacheEntry
 	orgPayerCacheTTL = 30 * time.Second
 )
 
@@ -680,8 +680,10 @@ func ListOrgLedger(orgId int, offset, limit int) ([]*CreditLedger, int64, error)
 
 func CreateWorkspace(ws *Workspace) error {
 	ws.Name = strings.TrimSpace(ws.Name)
-	if ws.Name == "" {
-		return errors.New("workspace name is required")
+	// Workspace names follow the same rule as org names (>= 3 chars, no
+	// special characters) for a consistent, injection-safe identifier.
+	if err := ValidateOrgName(ws.Name); err != nil {
+		return err
 	}
 	ws.Status = OrgStatusActive
 	ws.PeriodKey = currentPeriodKey()

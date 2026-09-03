@@ -179,6 +179,7 @@ func SetApiRouter(router *gin.Engine) {
 			orgAdminRoute.POST("/applications/:id/approve", controller.AdminApproveOrgApplication)
 			orgAdminRoute.POST("/applications/:id/reject", controller.AdminRejectOrgApplication)
 			// SSO domain mappings (JIT provisioning) are admin-managed only.
+			orgAdminRoute.GET("/sso-providers", controller.AdminListSsoProviders)
 			orgAdminRoute.GET("/:id/sso-domains", controller.AdminListOrgSsoDomains)
 			orgAdminRoute.POST("/:id/sso-domains", controller.AdminAddOrgSsoDomain)
 			orgAdminRoute.DELETE("/:id/sso-domains/:domain_id", controller.AdminDeleteOrgSsoDomain)

@@ -90,7 +90,12 @@ func UpdateMyWorkspace(c *gin.Context) {
 	}
 	fields := map[string]interface{}{}
 	if strings.TrimSpace(req.Name) != "" {
-		fields["name"] = strings.TrimSpace(req.Name)
+		name := strings.TrimSpace(req.Name)
+		if err := model.ValidateOrgName(name); err != nil {
+			common.ApiErrorMsg(c, err.Error())
+			return
+		}
+		fields["name"] = name
 	}
 	if req.MonthlyBudget != nil {
 		if *req.MonthlyBudget < 0 {

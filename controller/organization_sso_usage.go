@@ -7,12 +7,21 @@ import (
 	"encoding/csv"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/oauth"
 	"github.com/gin-gonic/gin"
 )
+
+// AdminListSsoProviders — GET /api/admin/organizations/sso-providers
+// Lists the enabled OAuth providers an SSO domain mapping can bind to, so the
+// admin UI can offer a picker instead of a free-text field.
+func AdminListSsoProviders(c *gin.Context) {
+	common.ApiSuccess(c, oauth.ListEnabledProviders())
+}
 
 // ---------------------------------------------------------------------------
 // SSO domain mappings — admin-managed
@@ -51,11 +60,18 @@ func AdminAddOrgSsoDomain(c *gin.Context) {
 		common.ApiErrorMsg(c, "invalid domain")
 		return
 	}
-	if req.Provider == "" {
+	provider := strings.ToLower(strings.TrimSpace(req.Provider))
+	if provider == "" {
 		common.ApiErrorMsg(c, "provider is required")
 		return
 	}
-	rec, err := model.AddOrgSsoDomain(orgId, req.Domain, req.Provider)
+	// The provider must be a currently enabled OAuth connection, otherwise the
+	// mapping could never match a login and would silently never provision.
+	if !oauth.IsProviderEnabled(provider) {
+		common.ApiErrorMsg(c, "provider is not an enabled OAuth connection")
+		return
+	}
+	rec, err := model.AddOrgSsoDomain(orgId, req.Domain, provider)
 	if err != nil {
 		common.ApiErrorMsg(c, err.Error())
 		return
@@ -92,15 +108,35 @@ func ListMyOrgSsoDomains(c *gin.Context) {
 // Usage reporting + invoice export
 // ---------------------------------------------------------------------------
 
-// usageWindow parses ?from=&to= (unix seconds). When both are absent it
-// defaults to the last 30 days. A missing/zero bound stays open on that side.
-func usageWindow(c *gin.Context) (from, to int64) {
+const (
+	usageDefaultSpan int64 = 30 * 24 * 3600  // 30 days
+	usageMaxSpan     int64 = 366 * 24 * 3600 // 1 year
+)
+
+// parseUsageWindow parses ?from=&to= (unix seconds) into a bounded, ordered
+// window and defaults sensibly: a missing end is "now"; a missing start is one
+// default span before the end. It rejects an inverted range and any span wider
+// than the max (so a report/invoice never scans an unbounded slice of the log
+// DB). On rejection it writes the error and returns ok=false.
+func parseUsageWindow(c *gin.Context) (from, to int64, ok bool) {
 	from, _ = strconv.ParseInt(c.Query("from"), 10, 64)
 	to, _ = strconv.ParseInt(c.Query("to"), 10, 64)
-	if from == 0 && to == 0 {
-		from = time.Now().AddDate(0, 0, -30).Unix()
+	now := time.Now().Unix()
+	if to <= 0 {
+		to = now
 	}
-	return from, to
+	if from <= 0 {
+		from = to - usageDefaultSpan
+	}
+	if from > to {
+		common.ApiErrorMsg(c, "invalid range: from must not be after to")
+		return 0, 0, false
+	}
+	if to-from > usageMaxSpan {
+		common.ApiErrorMsg(c, "date range too large (max 1 year)")
+		return 0, 0, false
+	}
+	return from, to, true
 }
 
 // GetMyOrgUsage — GET /api/organization/usage
@@ -109,7 +145,10 @@ func GetMyOrgUsage(c *gin.Context) {
 	if !ok {
 		return
 	}
-	from, to := usageWindow(c)
+	from, to, ok := parseUsageWindow(c)
+	if !ok {
+		return
+	}
 	report, err := model.GetOrgUsage(org.Id, from, to)
 	if err != nil {
 		common.ApiError(c, err)
@@ -124,7 +163,10 @@ func ExportMyOrgUsage(c *gin.Context) {
 	if !ok {
 		return
 	}
-	from, to := usageWindow(c)
+	from, to, ok := parseUsageWindow(c)
+	if !ok {
+		return
+	}
 	report, err := model.GetOrgUsage(org.Id, from, to)
 	if err != nil {
 		common.ApiError(c, err)
@@ -136,7 +178,10 @@ func ExportMyOrgUsage(c *gin.Context) {
 // AdminGetOrgUsage — GET /api/admin/organizations/:id/usage
 func AdminGetOrgUsage(c *gin.Context) {
 	orgId, _ := strconv.Atoi(c.Param("id"))
-	from, to := usageWindow(c)
+	from, to, ok := parseUsageWindow(c)
+	if !ok {
+		return
+	}
 	report, err := model.GetOrgUsage(orgId, from, to)
 	if err != nil {
 		common.ApiError(c, err)
