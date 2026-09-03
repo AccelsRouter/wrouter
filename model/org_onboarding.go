@@ -31,9 +31,16 @@ const (
 )
 
 // Decoupled per-type auto-approve policy, set via the option API.
+//
+// Defaults mirror OpenRouter: opening an ENTERPRISE org is instant self-serve
+// (their in-product "Create Organization"). It is low-risk — an org cannot
+// spend until it is funded, and billing is key/workspace-scoped — so there is
+// nothing for a human to gate. A RESELLER stays review-gated: a reseller can
+// allocate credit to OTHER orgs (real trust / margin), which warrants a human
+// decision. An admin can still flip either policy via the option API.
 var (
-	OrgEnterpriseAutoApprove bool
-	OrgResellerAutoApprove   bool
+	OrgEnterpriseAutoApprove = true
+	OrgResellerAutoApprove   = false
 	// Default price group assigned to an auto/blank approval. Never a wholesale
 	// group by default: granting reseller margin stays an explicit admin act.
 	OrgDefaultPriceGroup = "default"

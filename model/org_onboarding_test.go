@@ -41,6 +41,15 @@ func TestOrgApplicationApproval(t *testing.T) {
 	require.Error(t, CreateOrgApplication(&OrgApplication{UserId: 100, Type: OrgTypeEnterprise, OrgName: "x"}))
 }
 
+// Default onboarding policy mirrors OpenRouter: an enterprise org opens
+// instantly (self-serve), while a reseller stays review-gated. This guards the
+// product decision that opening an enterprise org needs no human approval but
+// granting reseller (which can allocate credit to other orgs) does.
+func TestDefaultOrgAutoApprovePolicy(t *testing.T) {
+	assert.True(t, OrgTypeAutoApproves(OrgTypeEnterprise), "enterprise must open instantly by default")
+	assert.False(t, OrgTypeAutoApproves(OrgTypeReseller), "reseller must stay review-gated by default")
+}
+
 // Invitations are consent tokens: only the accepting user is attached, an
 // invite is single-use, and a user already in an org cannot accept.
 func TestOrgInvitationConsent(t *testing.T) {
