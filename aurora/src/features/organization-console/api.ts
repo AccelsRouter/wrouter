@@ -27,6 +27,7 @@ import type {
   InvitationPreview,
   OrgAccount,
   OrgApplication,
+  OrgAuditLog,
   OrgByokChannel,
   OrgInvitation,
   OrgLedgerEntry,
@@ -188,6 +189,19 @@ export async function listOrgLedger(params: {
     `/api/organization/ledger?${qs.toString()}`
   )
   return unwrap(res, 'Failed to load ledger')
+}
+
+export async function listOrgAudit(params: {
+  page: number
+  pageSize: number
+}): Promise<PagedResponse<OrgAuditLog>> {
+  const qs = new URLSearchParams()
+  qs.set('p', String(params.page))
+  qs.set('page_size', String(params.pageSize))
+  const res = await api.get<ApiResp<PagedResponse<OrgAuditLog>>>(
+    `/api/organization/audit?${qs.toString()}`
+  )
+  return unwrap(res, 'Failed to load audit log')
 }
 
 export async function allocateQuota(payload: {

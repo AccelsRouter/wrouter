@@ -74,6 +74,19 @@ export type OrgLedgerEntry = {
   created_time: number
 }
 
+// One organization audit-log row. Mirrors model.OrgAuditLog. actor_user_id 0
+// means the platform/system acted; otherwise it is the acting user's id.
+// created_time is unix seconds.
+export type OrgAuditLog = {
+  id: number
+  org_id: number
+  actor_user_id: number
+  action: string
+  target: string
+  detail: string
+  created_time: number
+}
+
 export type PagedResponse<T> = {
   items: T[]
   total: number

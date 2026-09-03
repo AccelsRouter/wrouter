@@ -52,6 +52,7 @@ import {
 } from '@/components/ui/native-select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { AuditPanel } from '@/features/organization-console/audit-panel'
 import { UsageReport } from '@/features/organization-console/usage-report'
 import { CompactDateTimeRangePicker } from '@/features/usage-logs/components/compact-date-time-range-picker'
 import { formatQuotaWithCurrency } from '@/lib/currency'
@@ -59,6 +60,7 @@ import dayjs from '@/lib/dayjs'
 
 import {
   addSsoDomain,
+  adminListOrgAudit,
   createOrganization,
   creditOrganization,
   attachOrgAccount,
@@ -88,6 +90,7 @@ export function OrganizationsAdmin() {
   const [editOrg, setEditOrg] = useState<Organization | null>(null)
   const [creditOrg, setCreditOrg] = useState<Organization | null>(null)
   const [ledgerOrg, setLedgerOrg] = useState<Organization | null>(null)
+  const [auditOrg, setAuditOrg] = useState<Organization | null>(null)
   const [attachOrg, setAttachOrg] = useState<Organization | null>(null)
   const [ssoOrg, setSsoOrg] = useState<Organization | null>(null)
   const [usageOrg, setUsageOrg] = useState<Organization | null>(null)
@@ -239,6 +242,13 @@ export function OrganizationsAdmin() {
                           <Button
                             size='sm'
                             variant='outline'
+                            onClick={() => setAuditOrg(o)}
+                          >
+                            {t('Audit')}
+                          </Button>
+                          <Button
+                            size='sm'
+                            variant='outline'
                             onClick={() => setEditOrg(o)}
                           >
                             {t('Edit')}
@@ -299,6 +309,7 @@ export function OrganizationsAdmin() {
           onSaved={invalidate}
         />
         <LedgerDialog org={ledgerOrg} onClose={() => setLedgerOrg(null)} />
+        <AuditDialog org={auditOrg} onClose={() => setAuditOrg(null)} />
         <SsoDomainsDialog org={ssoOrg} onClose={() => setSsoOrg(null)} />
         <UsageDialog org={usageOrg} onClose={() => setUsageOrg(null)} />
       </SectionPageLayout.Content>
@@ -722,6 +733,42 @@ function LedgerDialog(props: { org: Organization | null; onClose: () => void }) 
             </Button>
           </div>
         )}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function AuditDialog(props: { org: Organization | null; onClose: () => void }) {
+  const { t } = useTranslation()
+  const org = props.org
+  const [page, setPage] = useState(1)
+
+  return (
+    <Dialog
+      open={!!org}
+      onOpenChange={(o) => {
+        if (!o) {
+          setPage(1)
+          props.onClose()
+        }
+      }}
+    >
+      <DialogContent className='sm:max-w-2xl'>
+        <DialogHeader>
+          <DialogTitle>
+            {t('Audit log')}
+            {org ? ` — ${org.name}` : ''}
+          </DialogTitle>
+        </DialogHeader>
+        <AuditPanel
+          queryKey={['admin-org-audit', org?.id, page]}
+          queryFn={({ pageSize }) =>
+            adminListOrgAudit({ id: org!.id, page, pageSize })
+          }
+          page={page}
+          onPageChange={setPage}
+          enabled={!!org}
+        />
       </DialogContent>
     </Dialog>
   )

@@ -19,7 +19,10 @@ For commercial licensing, please contact support@quantumnous.com
 /*
 Admin organization API client. Wraps /api/admin/organizations endpoints.
 */
-import type { OrgUsageReport } from '@/features/organization-console/types'
+import type {
+  OrgAuditLog,
+  OrgUsageReport,
+} from '@/features/organization-console/types'
 import { api } from '@/lib/api'
 
 import type {
@@ -103,6 +106,22 @@ export async function listOrgLedger(params: {
   )
   if (!res.data?.success || !res.data.data)
     throw new Error(res.data?.message || 'Failed to load ledger')
+  return res.data.data
+}
+
+export async function adminListOrgAudit(params: {
+  id: number
+  page: number
+  pageSize: number
+}): Promise<PagedResponse<OrgAuditLog>> {
+  const qs = new URLSearchParams()
+  qs.set('p', String(params.page))
+  qs.set('page_size', String(params.pageSize))
+  const res = await api.get<ApiResp<PagedResponse<OrgAuditLog>>>(
+    `/api/admin/organizations/${params.id}/audit?${qs.toString()}`
+  )
+  if (!res.data?.success || !res.data.data)
+    throw new Error(res.data?.message || 'Failed to load audit log')
   return res.data.data
 }
 

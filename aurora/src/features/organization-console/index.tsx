@@ -39,6 +39,7 @@ import { formatQuotaWithCurrency } from '@/lib/currency'
 import { AccountsTab } from './accounts-tab'
 import { AllocationDialog, type AllocationMode } from './allocation-dialog'
 import { getOrgSelf } from './api'
+import { AuditTab } from './audit-tab'
 import { ApplyPanel } from './apply-panel'
 import { ByokTab } from './byok-tab'
 import { InvitationsTab } from './invitations-tab'
@@ -136,6 +137,7 @@ export function OrganizationConsole() {
                 <TabsTrigger value='usage'>{t('Usage')}</TabsTrigger>
                 <TabsTrigger value='sso'>{t('SSO')}</TabsTrigger>
                 <TabsTrigger value='ledger'>{t('Ledger')}</TabsTrigger>
+                <TabsTrigger value='audit'>{t('Audit')}</TabsTrigger>
               </TabsList>
               <TabsContent value='accounts' className='pt-4'>
                 <AccountsTab orgType={self.type} />
@@ -157,6 +159,9 @@ export function OrganizationConsole() {
               </TabsContent>
               <TabsContent value='ledger' className='pt-4'>
                 <LedgerTab />
+              </TabsContent>
+              <TabsContent value='audit' className='pt-4'>
+                <AuditTab />
               </TabsContent>
             </Tabs>
           </div>
