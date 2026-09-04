@@ -11,8 +11,21 @@ package model
 import (
 	"errors"
 
-	"gorm.io/gorm"
+	"github.com/QuantumNous/new-api/common"
 )
+
+// ResellerCustomerLink is the explicit reseller⇄customer relationship. It is
+// the AUTHORIZATION record (not the ledger): a reseller may fund/view only an
+// org linked to it here. CustomerOrgId is UNIQUE — a customer belongs to at
+// most one reseller. This is intentionally NOT a field on Organization and is
+// never consulted in the request-time billing path, so billing stays single-
+// hop; it only scopes reseller-console access.
+type ResellerCustomerLink struct {
+	Id            int   `json:"id" gorm:"primarykey"`
+	ResellerOrgId int   `json:"reseller_org_id" gorm:"index;not null"`
+	CustomerOrgId int   `json:"customer_org_id" gorm:"uniqueIndex;not null"`
+	CreatedTime   int64 `json:"created_time"`
+}
 
 // ResellerCustomer is one row of a reseller's customer list: the customer org
 // plus how much the reseller has net-allocated to it (allocated − revoked).
@@ -48,9 +61,15 @@ func CreateResellerCustomer(resellerOrgId int, name, priceGroup string, initialQ
 	if err := CreateOrganization(customer); err != nil {
 		return nil, err
 	}
+	// Record the authorization link before funding.
+	if err := DB.Create(&ResellerCustomerLink{ResellerOrgId: resellerOrgId, CustomerOrgId: customer.Id, CreatedTime: common.GetTimestamp()}).Error; err != nil {
+		DB.Delete(&Organization{}, customer.Id)
+		return nil, err
+	}
 	// Fund it (atomic wallet move + ledger). On failure — e.g. a race drained
-	// the reseller wallet after the pre-check — remove the orphan shell.
+	// the reseller wallet after the pre-check — remove the orphan shell + link.
 	if err := TransferOrgCredit(resellerOrgId, customer.Id, initialQuota, operatorId, LedgerTypeAllocate, "initial allocation"); err != nil {
+		DB.Where("customer_org_id = ?", customer.Id).Delete(&ResellerCustomerLink{})
 		DB.Delete(&Organization{}, customer.Id)
 		return nil, err
 	}
@@ -62,23 +81,20 @@ func CreateResellerCustomer(resellerOrgId int, name, priceGroup string, initialQ
 	return customer, nil
 }
 
-// ListResellerCustomers returns every org the reseller has ever allocated to
-// (its customers), each with the org and the current net allocation. Derived
-// from the ledger — no parent link.
+// ListResellerCustomers returns the reseller's linked customers, each with the
+// org and the current net allocation.
 func ListResellerCustomers(resellerOrgId int) ([]*ResellerCustomer, error) {
-	var customerIds []int
-	if err := DB.Model(&CreditLedger{}).
-		Where("from_org_id = ? AND type = ?", resellerOrgId, LedgerTypeAllocate).
-		Distinct().Pluck("to_org_id", &customerIds).Error; err != nil {
+	var links []ResellerCustomerLink
+	if err := DB.Where("reseller_org_id = ?", resellerOrgId).Order("id ASC").Find(&links).Error; err != nil {
 		return nil, err
 	}
-	out := make([]*ResellerCustomer, 0, len(customerIds))
-	for _, id := range customerIds {
-		org, err := GetOrganizationById(id)
+	out := make([]*ResellerCustomer, 0, len(links))
+	for _, link := range links {
+		org, err := GetOrganizationById(link.CustomerOrgId)
 		if err != nil || org == nil {
 			continue
 		}
-		net, err := NetAllocatedBetween(resellerOrgId, id)
+		net, err := NetAllocatedBetween(resellerOrgId, link.CustomerOrgId)
 		if err != nil {
 			return nil, err
 		}
@@ -87,16 +103,14 @@ func ListResellerCustomers(resellerOrgId int) ([]*ResellerCustomer, error) {
 	return out, nil
 }
 
-// IsResellerCustomer authorizes a reseller to view/manage a customer: true when
-// the reseller has ever allocated credit to it. Prevents a reseller from
-// reaching arbitrary orgs it has no relationship with.
+// IsResellerCustomer authorizes a reseller to fund/view a customer: true only
+// when an explicit link exists. A ledger allocation alone does NOT grant
+// access, so a reseller can never reach an org it did not provision (e.g. by
+// pushing 1 quota at a stranger org to spy on its usage).
 func IsResellerCustomer(resellerOrgId, customerOrgId int) (bool, error) {
 	var count int64
-	err := DB.Model(&CreditLedger{}).
-		Where("from_org_id = ? AND to_org_id = ? AND type = ?", resellerOrgId, customerOrgId, LedgerTypeAllocate).
+	err := DB.Model(&ResellerCustomerLink{}).
+		Where("reseller_org_id = ? AND customer_org_id = ?", resellerOrgId, customerOrgId).
 		Count(&count).Error
-	if err == gorm.ErrRecordNotFound {
-		return false, nil
-	}
 	return count > 0, err
 }

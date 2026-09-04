@@ -219,6 +219,14 @@ func AllocateFromMyOrg(c *gin.Context) {
 		common.ApiErrorMsg(c, "quota must be positive")
 		return
 	}
+	// A reseller may only fund its own linked customers.
+	if isCustomer, err := model.IsResellerCustomer(org.Id, req.ToOrgId); err != nil {
+		common.ApiError(c, err)
+		return
+	} else if !isCustomer {
+		common.ApiErrorMsg(c, "该组织不是你的客户")
+		return
+	}
 	if err := model.TransferOrgCredit(org.Id, req.ToOrgId, req.Quota, c.GetInt("id"), model.LedgerTypeAllocate, req.Remark); err != nil {
 		common.ApiErrorMsg(c, err.Error())
 		return
@@ -246,6 +254,13 @@ func RevokeFromMyOrg(c *gin.Context) {
 	}
 	if req.Quota <= 0 {
 		common.ApiErrorMsg(c, "quota must be positive")
+		return
+	}
+	if isCustomer, err := model.IsResellerCustomer(org.Id, req.ToOrgId); err != nil {
+		common.ApiError(c, err)
+		return
+	} else if !isCustomer {
+		common.ApiErrorMsg(c, "该组织不是你的客户")
 		return
 	}
 	net, err := model.NetAllocatedBetween(org.Id, req.ToOrgId)
