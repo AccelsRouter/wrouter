@@ -227,6 +227,9 @@ func AllocateFromMyOrg(c *gin.Context) {
 		common.ApiErrorMsg(c, "该组织不是你的客户")
 		return
 	}
+	if r := []rune(req.Remark); len(r) > 255 {
+		req.Remark = string(r[:255])
+	}
 	if err := model.TransferOrgCredit(org.Id, req.ToOrgId, req.Quota, c.GetInt("id"), model.LedgerTypeAllocate, req.Remark); err != nil {
 		common.ApiErrorMsg(c, err.Error())
 		return
@@ -274,6 +277,9 @@ func RevokeFromMyOrg(c *gin.Context) {
 	}
 	// from = customer, to = reseller; the customer's own unconsumed balance
 	// still bounds the actual pull (TransferOrgCredit's conditional deduct).
+	if r := []rune(req.Remark); len(r) > 255 {
+		req.Remark = string(r[:255])
+	}
 	if err := model.TransferOrgCredit(req.ToOrgId, org.Id, req.Quota, c.GetInt("id"), model.LedgerTypeRevoke, req.Remark); err != nil {
 		common.ApiErrorMsg(c, err.Error())
 		return

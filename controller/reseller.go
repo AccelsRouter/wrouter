@@ -12,6 +12,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/setting/ratio_setting"
 	"github.com/gin-gonic/gin"
 )
 
@@ -49,7 +50,14 @@ func CreateMyCustomer(c *gin.Context) {
 		common.ApiErrorMsg(c, err.Error())
 		return
 	}
-	customer, err := model.CreateResellerCustomer(reseller.Id, strings.TrimSpace(req.Name), strings.TrimSpace(req.PriceGroup), req.InitialQuota, c.GetInt("id"))
+	// The retail price group must be a configured group (or the default), so a
+	// customer can't be assigned a non-existent group with undefined pricing.
+	priceGroup := strings.TrimSpace(req.PriceGroup)
+	if priceGroup != "" && priceGroup != "default" && !ratio_setting.ContainsGroupRatio(priceGroup) {
+		common.ApiErrorMsg(c, "价格组不存在")
+		return
+	}
+	customer, err := model.CreateResellerCustomer(reseller.Id, strings.TrimSpace(req.Name), priceGroup, req.InitialQuota, c.GetInt("id"))
 	if err != nil {
 		common.ApiErrorMsg(c, err.Error())
 		return
