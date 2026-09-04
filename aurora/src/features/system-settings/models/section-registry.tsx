@@ -25,6 +25,7 @@ import { ClaudeSettingsCard } from './claude-settings-card'
 import { GeminiSettingsCard } from './gemini-settings-card'
 import { GlobalSettingsCard } from './global-settings-card'
 import { GrokSettingsCard } from './grok-settings-card'
+import { PersonalByokSection } from './personal-byok-section'
 import { RoutingReliabilitySection } from './routing-reliability-section'
 
 function formatJsonForEditor(value: string, fallback: string) {
@@ -189,6 +190,18 @@ const MODELS_SECTIONS = [
         defaultValues={{
           enabled: settings['model_deployment.ionet.enabled'],
           apiKey: settings['model_deployment.ionet.api_key'],
+        }}
+      />
+    ),
+  },
+  {
+    id: 'personal-byok',
+    titleKey: 'Personal BYOK',
+    build: (settings: ModelSettings) => (
+      <PersonalByokSection
+        defaultValues={{
+          PersonalByokEnabled: settings.PersonalByokEnabled,
+          ByokFeeRatio: settings.ByokFeeRatio,
         }}
       />
     ),

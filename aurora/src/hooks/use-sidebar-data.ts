@@ -24,6 +24,7 @@ import {
   FileText,
   FlaskConical,
   Key,
+  KeyRound,
   LayoutDashboard,
   ListTodo,
   MessageSquare,
@@ -38,6 +39,7 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import { type NavItem, type SidebarData } from '@/components/layout/types'
+import { useStatus } from '@/hooks/use-status'
 import { ROLE } from '@/lib/roles'
 
 /**
@@ -48,6 +50,7 @@ import { ROLE } from '@/lib/roles'
  */
 export function useSidebarData(): SidebarData {
   const { t } = useTranslation()
+  const { status } = useStatus()
 
   // "My Organization" is shown to every user: those without an org land on the
   // self-service apply page, org owners/admins land on their console.
@@ -62,6 +65,17 @@ export function useSidebarData(): SidebarData {
       url: '/organization',
       icon: Building2,
     },
+    // Personal BYOK is an opt-in platform feature; only surface it when the
+    // backend status flag enables it.
+    ...(status?.personal_byok_enabled
+      ? [
+          {
+            title: t('Personal BYOK'),
+            url: '/personal-byok',
+            icon: KeyRound,
+          } as NavItem,
+        ]
+      : []),
     {
       title: t('Profile'),
       url: '/profile',

@@ -27,10 +27,10 @@ import { Loader2, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
+import { ByokProviderPicker } from '@/components/byok-provider-picker'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Combobox } from '@/components/ui/combobox'
 import {
   Dialog,
   DialogContent,
@@ -40,9 +40,6 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { CHANNEL_TYPES } from '@/features/channels/constants'
-import { getChannelTypeIcon } from '@/features/channels/lib/channel-utils'
-import { getLobeIcon } from '@/lib/lobe-icon'
 
 import {
   createOrgByok,
@@ -51,31 +48,6 @@ import {
 } from './api'
 import { Field, Td, Th } from './shared'
 import type { OrgByokChannel } from './types'
-
-// Mainstream providers offered in the BYOK dropdown. The base URLs are the
-// providers' official endpoints, mirroring the backend ChannelBaseURLs table
-// (constant/channel.go). Selecting one auto-fills the base URL (still editable)
-// and sets the numeric channel type sent to the backend.
-const BYOK_PROVIDERS: { id: number; baseUrl: string }[] = [
-  { id: 1, baseUrl: 'https://api.openai.com' }, // OpenAI
-  { id: 14, baseUrl: 'https://api.anthropic.com' }, // Anthropic
-  { id: 24, baseUrl: 'https://generativelanguage.googleapis.com' }, // Gemini
-  { id: 43, baseUrl: 'https://api.deepseek.com' }, // DeepSeek
-  { id: 25, baseUrl: 'https://api.moonshot.cn' }, // Moonshot
-  { id: 42, baseUrl: 'https://api.mistral.ai' }, // Mistral
-  { id: 20, baseUrl: 'https://openrouter.ai/api' }, // OpenRouter
-  { id: 16, baseUrl: 'https://open.bigmodel.cn' }, // Zhipu
-  { id: 17, baseUrl: 'https://dashscope.aliyuncs.com' }, // Ali / Qwen
-  { id: 45, baseUrl: 'https://ark.cn-beijing.volces.com' }, // VolcEngine / Doubao
-  { id: 48, baseUrl: 'https://api.x.ai' }, // xAI / Grok
-  { id: 40, baseUrl: 'https://api.siliconflow.cn' }, // SiliconFlow
-  { id: 27, baseUrl: 'https://api.perplexity.ai' }, // Perplexity
-  { id: 34, baseUrl: 'https://api.cohere.ai' }, // Cohere
-]
-
-const BYOK_BASE_URL: Record<number, string> = Object.fromEntries(
-  BYOK_PROVIDERS.map((p) => [p.id, p.baseUrl])
-)
 
 export function ByokTab() {
   const { t } = useTranslation()
@@ -221,18 +193,6 @@ function CreateByokDialog(props: {
     setModels('')
   }
 
-  const providerOptions = BYOK_PROVIDERS.map((p) => ({
-    value: String(p.id),
-    label: (CHANNEL_TYPES as Record<number, string>)[p.id] ?? `#${p.id}`,
-    icon: getLobeIcon(`${getChannelTypeIcon(p.id)}.Color`, 16),
-  }))
-
-  const selectProvider = (value: string) => {
-    setType(value)
-    const url = BYOK_BASE_URL[Number(value)]
-    if (url) setBaseUrl(url)
-  }
-
   const mutation = useMutation({
     mutationFn: () =>
       createOrgByok({
@@ -271,13 +231,12 @@ function CreateByokDialog(props: {
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </Field>
           <Field label={t('Provider')}>
-            <Combobox
-              options={providerOptions}
+            <ByokProviderPicker
               value={type}
-              onValueChange={(v) => v && selectProvider(v)}
-              placeholder={t('Select a provider')}
-              searchPlaceholder={t('Search providers...')}
-              emptyText={t('No provider found.')}
+              onSelect={(v, url) => {
+                setType(v)
+                if (url) setBaseUrl(url)
+              }}
             />
           </Field>
           <Field label={t('Key')}>
