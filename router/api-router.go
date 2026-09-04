@@ -221,6 +221,19 @@ func SetApiRouter(router *gin.Engine) {
 			orgRoute.GET("/audit", controller.ListMyOrgAudit)
 		}
 
+		// Fork: personal BYOK — an individual user brings its own upstream
+		// provider credentials (channels in the user's private group) and a
+		// BYOK key that routes only to them. Gated by PersonalByokEnabled.
+		personalByokRoute := apiRouter.Group("/personal_byok")
+		personalByokRoute.Use(middleware.UserAuth())
+		{
+			personalByokRoute.GET("/channels", controller.ListMyPersonalByok)
+			personalByokRoute.POST("/channels", controller.CreateMyPersonalByok)
+			personalByokRoute.DELETE("/channels/:channel_id", controller.DeleteMyPersonalByok)
+			personalByokRoute.GET("/keys", controller.ListMyPersonalByokKeys)
+			personalByokRoute.POST("/keys", middleware.CriticalRateLimit(), controller.CreateMyPersonalByokKey)
+		}
+
 		// Subscription billing (plans, purchase, admin management)
 		subscriptionRoute := apiRouter.Group("/subscription")
 		subscriptionRoute.Use(middleware.UserAuth())

@@ -460,7 +460,12 @@ func TokenAuth() func(c *gin.Context) {
 		tokenGroup := token.Group
 		if tokenGroup != "" {
 			// check common.UserUsableGroups[userGroup]
-			if _, ok := service.GetUserUsableGroups(userGroup)[tokenGroup]; !ok {
+			// Fork: a user's own BYOK private group (user-<id>) is deliberately
+			// NOT a globally-usable group — it must stay invisible to everyone
+			// else so no one can select another user's group. The owner reaches
+			// it only through this guard, which matches solely the caller's own
+			// id, so it can never permit a foreign private group.
+			if _, ok := service.GetUserUsableGroups(userGroup)[tokenGroup]; !ok && !model.IsOwnByokGroup(token.UserId, tokenGroup) {
 				abortWithOpenAiMessage(c, http.StatusForbidden, fmt.Sprintf("无权访问 %s 分组", tokenGroup))
 				return
 			}

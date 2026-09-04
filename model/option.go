@@ -122,6 +122,8 @@ func InitOptionMap() {
 	common.OptionMap["OrgEnterpriseAutoApprove"] = strconv.FormatBool(OrgEnterpriseAutoApprove)
 	common.OptionMap["OrgResellerAutoApprove"] = strconv.FormatBool(OrgResellerAutoApprove)
 	common.OptionMap["OrgDefaultPriceGroup"] = OrgDefaultPriceGroup
+	common.OptionMap["PersonalByokEnabled"] = strconv.FormatBool(setting.PersonalByokEnabled)
+	common.OptionMap["ByokFeeRatio"] = strconv.FormatFloat(setting.ByokFeeRatio, 'f', -1, 64)
 	common.OptionMap["WonderGateEnabled"] = strconv.FormatBool(setting.WonderGateEnabled)
 	common.OptionMap["WonderGateSandbox"] = strconv.FormatBool(setting.WonderGateSandbox)
 	common.OptionMap["WonderGateMerchantId"] = setting.WonderGateMerchantId
@@ -527,6 +529,10 @@ func updateOptionMap(key string, value string) (err error) {
 		OrgDefaultPriceGroup = value
 	case "AutoModelConfigs":
 		err = setting.UpdateAutoModelConfigs(value)
+	case "PersonalByokEnabled":
+		setting.PersonalByokEnabled = value == "true"
+	case "ByokFeeRatio":
+		setting.ByokFeeRatio, _ = strconv.ParseFloat(value, 64)
 	case "WonderGateEnabled":
 		setting.WonderGateEnabled = value == "true"
 	case "WonderGateSandbox":
