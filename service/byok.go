@@ -38,18 +38,23 @@ func EnsureByokGroupRatio(group string) error {
 	return persistGroupRatioMap(m)
 }
 
-// RemoveByokGroupRatio drops a BYOK private group's ratio entry (cleanup when
-// the user's last BYOK channel is deleted). A missing entry is a no-op.
+// RemoveByokGroupRatio drops a BYOK private group's ratio entry when the user's
+// last BYOK channel is deleted — but ONLY if it still equals the current
+// default. An admin per-user fee override (value != default) is deliberately
+// preserved, so a user cannot reset their fee to 0 by deleting and recreating
+// their last channel. A missing entry is a no-op.
 func RemoveByokGroupRatio(group string) error {
 	if group == "" {
 		return nil
 	}
 	byokGroupRatioMu.Lock()
 	defer byokGroupRatioMu.Unlock()
-	if !ratio_setting.ContainsGroupRatio(group) {
+	m := ratio_setting.GetGroupRatioCopy()
+	cur, ok := m[group]
+	if !ok || cur != setting.ByokFeeRatio {
+		// Absent, or an admin override — leave it in place.
 		return nil
 	}
-	m := ratio_setting.GetGroupRatioCopy()
 	delete(m, group)
 	return persistGroupRatioMap(m)
 }

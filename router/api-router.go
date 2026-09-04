@@ -228,7 +228,7 @@ func SetApiRouter(router *gin.Engine) {
 		personalByokRoute.Use(middleware.UserAuth())
 		{
 			personalByokRoute.GET("/channels", controller.ListMyPersonalByok)
-			personalByokRoute.POST("/channels", controller.CreateMyPersonalByok)
+			personalByokRoute.POST("/channels", middleware.CriticalRateLimit(), controller.CreateMyPersonalByok)
 			personalByokRoute.DELETE("/channels/:channel_id", controller.DeleteMyPersonalByok)
 			personalByokRoute.GET("/keys", controller.ListMyPersonalByokKeys)
 			personalByokRoute.POST("/keys", middleware.CriticalRateLimit(), controller.CreateMyPersonalByokKey)

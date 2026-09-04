@@ -6,6 +6,7 @@
 package controller
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -13,8 +14,13 @@ import (
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/gin-gonic/gin"
 )
+
+// maxPersonalByokChannels bounds how many BYOK provider channels one user may
+// own, so the feature can't be used to accumulate unbounded channels/abilities.
+const maxPersonalByokChannels = 20
 
 // personalByokUser gates the feature and returns the caller's user id.
 func personalByokUser(c *gin.Context) (int, bool) {
@@ -46,6 +52,13 @@ func CreateMyPersonalByok(c *gin.Context) {
 	}
 	if strings.TrimSpace(req.Name) == "" || strings.TrimSpace(req.Key) == "" || strings.TrimSpace(req.Models) == "" {
 		common.ApiErrorMsg(c, "name, key and models are required")
+		return
+	}
+	if count, err := model.CountUserChannels(userId); err != nil {
+		common.ApiError(c, err)
+		return
+	} else if count >= maxPersonalByokChannels {
+		common.ApiErrorMsg(c, fmt.Sprintf("已达到 BYOK 渠道数量上限 (%d)", maxPersonalByokChannels))
 		return
 	}
 	group := model.UserPrivateGroup(userId)
@@ -160,6 +173,16 @@ func CreateMyPersonalByokKey(c *gin.Context) {
 	}
 	if strings.TrimSpace(req.Name) == "" {
 		common.ApiErrorMsg(c, "key name is required")
+		return
+	}
+	// Enforce the same per-user token cap as the normal token-create path, so
+	// this route can't be used to exceed it.
+	maxTokens := operation_setting.GetMaxUserTokens()
+	if count, err := model.CountUserTokens(userId); err != nil {
+		common.ApiError(c, err)
+		return
+	} else if int(count) >= maxTokens {
+		common.ApiErrorMsg(c, fmt.Sprintf("已达到最大令牌数量限制 (%d)", maxTokens))
 		return
 	}
 	key, err := common.GenerateKey()
