@@ -274,6 +274,51 @@ func TestMemberSpendTolerantOfNonMember(t *testing.T) {
 	assert.True(t, ok, "no member row ⇒ no per-seat cap ⇒ allowed")
 }
 
+// A reseller provisions and funds customer orgs; the customer relationship is
+// ledger-derived and authorization is bounded to actual customers.
+func TestResellerCustomers(t *testing.T) {
+	migrateOrgTables(t)
+	reseller := mustCreateOrg(t, "acme-reseller", OrgTypeReseller, 1000)
+	enterprise := mustCreateOrg(t, "not-a-reseller", OrgTypeEnterprise, 1000)
+
+	// Only a reseller can create customers.
+	_, err := CreateResellerCustomer(enterprise.Id, "cust-x", "default", 100, 1)
+	require.Error(t, err)
+
+	// Initial allocation must be positive and within the reseller's wallet.
+	_, err = CreateResellerCustomer(reseller.Id, "cust-x", "retail", 0, 1)
+	require.Error(t, err)
+	_, err = CreateResellerCustomer(reseller.Id, "cust-x", "retail", 5000, 1)
+	require.Error(t, err, "over-wallet allocation must fail")
+
+	// Happy path: customer org created, funded, relationship established.
+	cust, err := CreateResellerCustomer(reseller.Id, "customer-one", "retail", 400, 1)
+	require.NoError(t, err)
+	require.NotNil(t, cust)
+	assert.Equal(t, OrgTypeEnterprise, cust.Type)
+	assert.Equal(t, "retail", cust.PriceGroup)
+	assert.Equal(t, 400, cust.WalletQuota, "customer funded with the initial allocation")
+
+	r, _ := GetOrganizationById(reseller.Id)
+	assert.Equal(t, 600, r.WalletQuota, "reseller wallet debited")
+
+	// The customer shows up in the reseller's customer list with net allocation.
+	customers, err := ListResellerCustomers(reseller.Id)
+	require.NoError(t, err)
+	require.Len(t, customers, 1)
+	assert.Equal(t, cust.Id, customers[0].Org.Id)
+	assert.Equal(t, 400, customers[0].NetAllocated)
+
+	// Authorization: the reseller's own customer is authorized; a stranger org
+	// (the enterprise it never allocated to) is not.
+	ok, err := IsResellerCustomer(reseller.Id, cust.Id)
+	require.NoError(t, err)
+	assert.True(t, ok)
+	ok, err = IsResellerCustomer(reseller.Id, enterprise.Id)
+	require.NoError(t, err)
+	assert.False(t, ok, "an org the reseller never allocated to is not its customer")
+}
+
 // SSO JIT provisioning attaches a user to the org mapped to its email domain,
 // but must never move an existing payer or claim an inactive org.
 func TestAutoProvisionOrgMembership(t *testing.T) {

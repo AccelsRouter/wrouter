@@ -197,6 +197,10 @@ func SetApiRouter(router *gin.Engine) {
 			orgRoute.GET("/ledger", controller.ListMyOrgLedger)
 			orgRoute.POST("/allocate", middleware.CriticalRateLimit(), controller.AllocateFromMyOrg)
 			orgRoute.POST("/revoke", middleware.CriticalRateLimit(), controller.RevokeFromMyOrg)
+			// Reseller customer management (reseller orgs only).
+			orgRoute.GET("/customers", controller.ListMyCustomers)
+			orgRoute.POST("/customers", middleware.CriticalRateLimit(), controller.CreateMyCustomer)
+			orgRoute.GET("/customers/:id/usage", controller.GetMyCustomerUsage)
 			orgRoute.GET("/workspaces", controller.ListMyWorkspaces)
 			orgRoute.POST("/workspaces", controller.CreateMyWorkspace)
 			orgRoute.PUT("/workspaces/:id", controller.UpdateMyWorkspace)
