@@ -5789,6 +5789,14 @@
     "Enable Personal BYOK": "啟用個人自帶金鑰",
     "Allow individual users to register their own upstream provider keys and mint keys that route only to those providers.": "允許個人使用者註冊自己的上游服務商金鑰，並產生僅路由到這些服務商的金鑰。",
     "Default BYOK fee ratio": "預設自帶金鑰費率",
-    "Platform fee applied to BYOK usage, as a fraction (e.g. 0 for free, 0.05 for 5%).": "對自帶金鑰用量收取的平台費用，以小數表示（例如 0 表示免費，0.05 表示 5%）。"
+    "Platform fee applied to BYOK usage, as a fraction (e.g. 0 for free, 0.05 for 5%).": "對自帶金鑰用量收取的平台費用，以小數表示（例如 0 表示免費，0.05 表示 5%）。",
+    "New customer": "新增客戶",
+    "Net Allocated": "淨分配額度",
+    "Create Customer": "建立客戶",
+    "Create a downstream customer organization.": "建立一個下游客戶組織。",
+    "Initial quota (raw units)": "初始額度（原始單位）",
+    "The customer's retail price group. Defaults to \"default\".": "客戶的零售價格組，預設為 “default”。",
+    "Customer created": "客戶已建立",
+    "Customer Usage": "客戶用量"
   }
 }

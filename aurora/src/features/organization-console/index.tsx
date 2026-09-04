@@ -42,6 +42,7 @@ import { getOrgSelf } from './api'
 import { AuditTab } from './audit-tab'
 import { ApplyPanel } from './apply-panel'
 import { ByokTab } from './byok-tab'
+import { CustomersTab } from './customers-tab'
 import { InvitationsTab } from './invitations-tab'
 import { LedgerTab } from './ledger-tab'
 import { SsoTab } from './sso-tab'
@@ -126,9 +127,12 @@ export function OrganizationConsole() {
 
             <Tabs value={tab} onValueChange={setTab}>
               <TabsList className='max-w-full flex-wrap justify-start group-data-horizontal/tabs:h-auto'>
-                <TabsTrigger value='accounts'>
-                  {isReseller ? t('Customers') : t('Members')}
-                </TabsTrigger>
+                <TabsTrigger value='accounts'>{t('Members')}</TabsTrigger>
+                {isReseller && (
+                  <TabsTrigger value='customers'>
+                    {t('Customers')}
+                  </TabsTrigger>
+                )}
                 <TabsTrigger value='invitations'>
                   {t('Invitations')}
                 </TabsTrigger>
@@ -142,6 +146,11 @@ export function OrganizationConsole() {
               <TabsContent value='accounts' className='pt-4'>
                 <AccountsTab orgType={self.type} />
               </TabsContent>
+              {isReseller && (
+                <TabsContent value='customers' className='pt-4'>
+                  <CustomersTab walletQuota={self.wallet_quota} />
+                </TabsContent>
+              )}
               <TabsContent value='invitations' className='pt-4'>
                 <InvitationsTab orgType={self.type} />
               </TabsContent>

@@ -5763,6 +5763,14 @@
     "Enable Personal BYOK": "Enable Personal BYOK",
     "Allow individual users to register their own upstream provider keys and mint keys that route only to those providers.": "Allow individual users to register their own upstream provider keys and mint keys that route only to those providers.",
     "Default BYOK fee ratio": "Default BYOK fee ratio",
-    "Platform fee applied to BYOK usage, as a fraction (e.g. 0 for free, 0.05 for 5%).": "Platform fee applied to BYOK usage, as a fraction (e.g. 0 for free, 0.05 for 5%)."
+    "Platform fee applied to BYOK usage, as a fraction (e.g. 0 for free, 0.05 for 5%).": "Platform fee applied to BYOK usage, as a fraction (e.g. 0 for free, 0.05 for 5%).",
+    "New customer": "New customer",
+    "Net Allocated": "Net Allocated",
+    "Create Customer": "Create Customer",
+    "Create a downstream customer organization.": "Create a downstream customer organization.",
+    "Initial quota (raw units)": "Initial quota (raw units)",
+    "The customer's retail price group. Defaults to \"default\".": "The customer's retail price group. Defaults to \"default\".",
+    "Customer created": "Customer created",
+    "Customer Usage": "Customer Usage"
   }
 }

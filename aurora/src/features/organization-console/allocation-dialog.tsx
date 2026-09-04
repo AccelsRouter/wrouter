@@ -46,18 +46,28 @@ export type AllocationMode = 'allocate' | 'revoke'
 export function AllocationDialog(props: {
   mode: AllocationMode | null
   onClose: () => void
+  // When set, the target organization is fixed (e.g. a reseller acting on one
+  // downstream customer): the ID field is prefilled and shown read-only.
+  fixedOrgId?: number
+  fixedOrgLabel?: string
 }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const mode = props.mode
+  const fixedOrgId = props.fixedOrgId
   const [toOrgId, setToOrgId] = useState('')
   const [quota, setQuota] = useState('')
   const [remark, setRemark] = useState('')
   const [loadedMode, setLoadedMode] = useState<AllocationMode | null>(null)
+  // Re-key the reset on both mode and target so reopening for a different
+  // customer clears the previous entry.
+  const openKey = mode ? `${mode}:${fixedOrgId ?? ''}` : null
+  const [loadedKey, setLoadedKey] = useState<string | null>(null)
 
-  if (mode && mode !== loadedMode) {
+  if (mode && (mode !== loadedMode || openKey !== loadedKey)) {
     setLoadedMode(mode)
-    setToOrgId('')
+    setLoadedKey(openKey)
+    setToOrgId(fixedOrgId ? String(fixedOrgId) : '')
     setQuota('')
     setRemark('')
   }
@@ -77,6 +87,7 @@ export function AllocationDialog(props: {
       )
       queryClient.invalidateQueries({ queryKey: ['org-self'] })
       queryClient.invalidateQueries({ queryKey: ['org-ledger'] })
+      queryClient.invalidateQueries({ queryKey: ['org-customers'] })
       setLoadedMode(null)
       props.onClose()
     },
@@ -104,7 +115,14 @@ export function AllocationDialog(props: {
               type='number'
               value={toOrgId}
               onChange={(e) => setToOrgId(e.target.value)}
+              readOnly={fixedOrgId != null}
+              disabled={fixedOrgId != null}
             />
+            {props.fixedOrgLabel && (
+              <span className='text-muted-foreground text-xs'>
+                {props.fixedOrgLabel}
+              </span>
+            )}
           </Field>
           <Field label={t('Quota (raw units)')}>
             <Input

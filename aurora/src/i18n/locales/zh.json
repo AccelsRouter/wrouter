@@ -5801,6 +5801,14 @@
     "Enable Personal BYOK": "启用个人自带密钥",
     "Allow individual users to register their own upstream provider keys and mint keys that route only to those providers.": "允许个人用户注册自己的上游服务商密钥，并生成仅路由到这些服务商的密钥。",
     "Default BYOK fee ratio": "默认自带密钥费率",
-    "Platform fee applied to BYOK usage, as a fraction (e.g. 0 for free, 0.05 for 5%).": "对自带密钥用量收取的平台费用，以小数表示（例如 0 表示免费，0.05 表示 5%）。"
+    "Platform fee applied to BYOK usage, as a fraction (e.g. 0 for free, 0.05 for 5%).": "对自带密钥用量收取的平台费用，以小数表示（例如 0 表示免费，0.05 表示 5%）。",
+    "New customer": "新增客户",
+    "Net Allocated": "净分配额度",
+    "Create Customer": "创建客户",
+    "Create a downstream customer organization.": "创建一个下游客户组织。",
+    "Initial quota (raw units)": "初始额度（原始单位）",
+    "The customer's retail price group. Defaults to \"default\".": "客户的零售价格组，默认为 “default”。",
+    "Customer created": "客户已创建",
+    "Customer Usage": "客户用量"
   }
 }

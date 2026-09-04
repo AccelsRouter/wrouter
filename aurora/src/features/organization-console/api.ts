@@ -36,6 +36,8 @@ import type {
   OrgUsageReport,
   OrgWorkspace,
   PagedResponse,
+  ResellerCustomer,
+  ResellerCustomerOrg,
   SsoDomain,
 } from './types'
 
@@ -347,6 +349,38 @@ export async function exportOrgUsage(
   a.click()
   a.remove()
   window.URL.revokeObjectURL(url)
+}
+
+// --- Reseller downstream customers ---
+
+export async function listCustomers(): Promise<ResellerCustomer[]> {
+  const res = await api.get<ApiResp<ResellerCustomer[]>>(
+    '/api/organization/customers'
+  )
+  return unwrap(res, 'Failed to load customers')
+}
+
+export async function createCustomer(payload: {
+  name: string
+  price_group: string
+  initial_quota: number
+}): Promise<ResellerCustomerOrg> {
+  const res = await api.post<ApiResp<ResellerCustomerOrg>>(
+    '/api/organization/customers',
+    payload
+  )
+  return unwrap(res, 'Failed to create customer')
+}
+
+export async function getCustomerUsage(
+  id: number,
+  from?: number,
+  to?: number
+): Promise<OrgUsageReport> {
+  const res = await api.get<ApiResp<OrgUsageReport>>(
+    `/api/organization/customers/${id}/usage${usageRangeQuery(from, to)}`
+  )
+  return unwrap(res, 'Failed to load customer usage')
 }
 
 // Read-only for the org: the platform admin manages these domain mappings.

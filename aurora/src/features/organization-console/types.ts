@@ -165,6 +165,25 @@ export type OrgUsageReport = {
   by_member: UsageBucket[]
 }
 
+// A downstream customer organization managed by a reseller. `org` is the
+// customer's org record; `net_allocated` is the running total the reseller has
+// allocated to it minus what has been revoked. Mirrors GET
+// /api/organization/customers.
+export type ResellerCustomerOrg = {
+  id: number
+  name: string
+  type: OrgType
+  status: OrgStatus
+  wallet_quota: number
+  price_group: string
+  created_time: number
+}
+
+export type ResellerCustomer = {
+  org: ResellerCustomerOrg
+  net_allocated: number
+}
+
 // A JIT-provisioning email-domain mapping. New members whose email matches an
 // org's domain are auto-added on login. Managed by the platform admin only.
 export type SsoDomain = {
