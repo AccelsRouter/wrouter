@@ -5809,6 +5809,8 @@
     "Initial quota (raw units)": "初始额度（原始单位）",
     "The customer's retail price group. Defaults to \"default\".": "客户的零售价格组，默认为 “default”。",
     "Customer created": "客户已创建",
-    "Customer Usage": "客户用量"
+    "Customer Usage": "客户用量",
+    "Distributor": "分销商",
+    "This area is for reseller organizations.": "此区域仅供经销商组织使用。"
   }
 }

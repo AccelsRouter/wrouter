@@ -36,9 +36,11 @@ import {
   Users,
   Wallet,
 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 
 import { type NavItem, type SidebarData } from '@/components/layout/types'
+import { getOrgSelf } from '@/features/organization-console/api'
 import { useStatus } from '@/hooks/use-status'
 import { ROLE } from '@/lib/roles'
 
@@ -52,19 +54,36 @@ export function useSidebarData(): SidebarData {
   const { t } = useTranslation()
   const { status } = useStatus()
 
-  // "My Organization" is shown to every user: those without an org land on the
-  // self-service apply page, org owners/admins land on their console.
+  // Resellers get the separate "Distributor" console; everyone else (enterprise
+  // owners, members, and users with no org) gets "My Organization" — those
+  // without an org land there on the self-service apply page. The self query is
+  // resilient: a 401/error/no-org falls back to the "My Organization" entry.
+  const { data: orgSelf } = useQuery({
+    queryKey: ['org-self'],
+    queryFn: getOrgSelf,
+    staleTime: 60_000,
+  })
+  const isReseller = orgSelf?.type === 'reseller'
+
+  const orgNavItem: NavItem = isReseller
+    ? {
+        title: t('Distributor'),
+        url: '/reseller',
+        icon: Building2,
+      }
+    : {
+        title: t('My Organization'),
+        url: '/organization',
+        icon: Building2,
+      }
+
   const personalItems: NavItem[] = [
     {
       title: t('Wallet'),
       url: '/wallet',
       icon: Wallet,
     },
-    {
-      title: t('My Organization'),
-      url: '/organization',
-      icon: Building2,
-    },
+    orgNavItem,
     // Personal BYOK is an opt-in platform feature; only surface it when the
     // backend status flag enables it.
     ...(status?.personal_byok_enabled

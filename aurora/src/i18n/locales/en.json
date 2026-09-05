@@ -5771,6 +5771,8 @@
     "Initial quota (raw units)": "Initial quota (raw units)",
     "The customer's retail price group. Defaults to \"default\".": "The customer's retail price group. Defaults to \"default\".",
     "Customer created": "Customer created",
-    "Customer Usage": "Customer Usage"
+    "Customer Usage": "Customer Usage",
+    "Distributor": "Distributor",
+    "This area is for reseller organizations.": "This area is for reseller organizations."
   }
 }
